@@ -1,0 +1,13 @@
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+  XPFM: "/opt/xilinx/platforms/xilinx_u55c_gen3x16_xdma_2_202110_1/xilinx_u55c_gen3x16_xdma_2_202110_1.xpfm"
+  TARGET_ALVEO: "u55"
+
+include:
+  # Alveo FPGA build common CI configuration
+  # Note: GitLab includes always grab the latest.
+  # This may not match the copy in our 'common' submodule!
+  - project: 'ska-telescope/low-cbf/ska-low-cbf-fw-common'
+    file: 'gitlab/build.yml'
+
+
