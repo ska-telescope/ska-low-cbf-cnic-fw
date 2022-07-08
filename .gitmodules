@@ -1,0 +1,3 @@
+[submodule "pub-timeslave"]
+	path = pub-timeslave
+	url = https://github.com/AtomicRulesLLC/pub-timeslave

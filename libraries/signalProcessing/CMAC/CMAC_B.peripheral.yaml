@@ -1,0 +1,215 @@
+schema_name   : args
+schema_version: 1.0
+schema_type   : peripheral
+
+hdl_library_name       : CMAC_B
+hdl_library_description: "100G interface information for 2nd instance"
+
+peripherals:
+  - peripheral_name        : CMAC_B
+    peripheral_description : "Statistics and control registers for 2nd instance"
+    slave_ports:
+      #########################################################################################                            
+      - slave_name        : CMAC_Stats_Interface
+        slave_type        : reg
+        number_of_slaves  : 1
+        slave_description : "Simple read/write interfaces."
+        dual_clock        : false
+        fields            :
+         #################################
+          - - field_name        : CMAC_stat_reset
+              width             : 8
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "Clears all stat counters. Set bit[0] to 1, this will trigger a reset process, this register will still need to set back to 0."     
+         #################################
+          - - field_name        : CMAC_stat_tx_total_packets
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment for total number of packets received."
+         #################################
+          - - field_name        : CMAC_stat_tx_total_good_packets
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment for total number of good packets, ie no errors."
+         #################################
+          - - field_name        : CMAC_stat_rx_total_packets
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment for total number of packets received."
+         #################################
+          - - field_name        : CMAC_stat_rx_total_good_packets
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment for total number of good packets, ie no errors."
+         #################################
+          - - field_name        : CMAC_stat_rx_packet_bad_fcs
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment for packets between 64 bytes and max length that have FCS errors."
+         #################################
+          - - field_name        : CMAC_stat_rx_stomped_fcs
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "A stomped FCS is defined as the bitwise inverse of the expected good FCS."
+         #################################
+          - - field_name        : CMAC_stat_rx_bad_fcs
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "A packet was received with a bad FCS but not a stomped FCS."
+         #################################
+          - - field_name        : CMAC_stat_rx_packet_64_bytes
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment for good and bad packets received that contain 64 bytes."
+         #################################
+          - - field_name        : CMAC_stat_rx_packet_65_127_bytes
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment for good and bad packets received that contain 65 to 127 bytes."
+         #################################
+          - - field_name        : CMAC_stat_rx_packet_128_255_bytes
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment for good and bad packets received that contain 128 to 255 bytes."
+         #################################
+          - - field_name        : CMAC_stat_rx_packet_256_511_bytes
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment for good and bad packets received that contain 256 to 511 bytes."
+         #################################
+          - - field_name        : CMAC_stat_rx_packet_512_1023_bytes
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment for good and bad packets received that contain 512 to 1023 bytes."
+         #################################
+          - - field_name        : CMAC_stat_rx_packet_1024_1518_bytes
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment for good and bad packets received that contain 1024 to 1518 bytes."
+         #################################
+          - - field_name        : CMAC_stat_rx_packet_1519_1522_bytes
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment for good and bad packets received that contain 1519 to 1522 bytes."
+         #################################
+          - - field_name        : CMAC_stat_rx_packet_1523_1548_bytes
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment for good and bad packets received that contain 1523 to 1548 bytes."
+         #################################
+          - - field_name        : CMAC_stat_rx_packet_1549_2047_bytes
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment for good and bad packets received that contain 1549 to 2047 bytes."
+         #################################
+          - - field_name        : CMAC_stat_rx_packet_2048_4095_bytes
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment for good and bad packets received that contain 2048 to 4095 bytes."
+         #################################
+          - - field_name        : CMAC_stat_rx_packet_4096_8191_bytes
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment for good and bad packets received that contain 4096 to 8191 bytes."
+         #################################
+          - - field_name        : CMAC_stat_rx_packet_8192_9215_bytes
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment for good and bad packets received that contain 8192 to 9215 bytes."
+         #################################
+          - - field_name        : CMAC_stat_rx_packet_small
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment for packets less than 64 bytes long."
+         #################################
+          - - field_name        : CMAC_stat_rx_packet_large
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment for packets more than 9215 bytes long."
+         #################################
+          - - field_name        : CMAC_stat_rx_unicast
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment for good unicast packets."
+         #################################
+          - - field_name        : CMAC_stat_rx_multicast
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment for good multicast packets."
+         #################################
+          - - field_name        : CMAC_stat_rx_broadcast
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment for good broadcast packets."
+         #################################
+          - - field_name        : CMAC_stat_rx_oversize
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment for packets longer than ctl_rx_max_packet_len with good FCS."
+         #################################
+          - - field_name        : CMAC_stat_rx_toolong
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment for packets longer than ctl_rx_max_packet_len with good and bad FCS."
+         #################################
+          - - field_name        : CMAC_stat_rx_undersize
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment for packets shorter than min packet length with good FCS."
+         #################################
+          - - field_name        : CMAC_stat_rx_fragment
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment for packets shorter than min packet length with bad FCS."
+         #################################
+          - - field_name        : CMAC_stat_rx_bad_code
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment for 64B/66B code violations."
+         #################################
+          - - field_name        : CMAC_stat_rx_bad_sfd
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment bad SFD. Packet received was preceded by a invalid SFD."
+         #################################
+          - - field_name        : CMAC_stat_rx_bad_preamble
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Increment bad preamble. Packet received was preceded by a invalid preamble."                            
+      
+
+
+          
+          
