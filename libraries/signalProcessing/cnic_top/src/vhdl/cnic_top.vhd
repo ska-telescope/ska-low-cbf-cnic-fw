@@ -37,7 +37,7 @@ use xpm.vcomponents.all;
 entity cnic_top is
     generic (
         g_DEBUG_ILA                     : BOOLEAN := FALSE;
-        g_MODIFIER_HEADER_BLOCK         : BOOLEAN := TRUE;
+        g_CODIF_MODIFIER_HEADER_BLOCK   : BOOLEAN := FALSE;
         g_LBUS_CMAC                     : BOOLEAN := FALSE
 
     );
@@ -225,7 +225,7 @@ STREAMING_AXI_VECTOR_GEN : IF (NOT g_LBUS_CMAC) GENERATE
 END GENERATE;    
 -----------------------------------------------------------------------------------------    
 -- Intercept UDP packet and modifier logic
-gen_mod : IF g_MODIFIER_HEADER_BLOCK GENERATE    
+gen_mod : IF g_CODIF_MODIFIER_HEADER_BLOCK GENERATE    
     header_mod : entity PSR_Packetiser_lib.CODIF_header_modifier
     Port Map( 
         i_clk                   => i_MACE_clk,
@@ -245,7 +245,7 @@ gen_mod : IF g_MODIFIER_HEADER_BLOCK GENERATE
     
 END GENERATE;
 
-not_gen_mod : IF (NOT g_MODIFIER_HEADER_BLOCK) GENERATE
+not_gen_mod : IF (NOT g_CODIF_MODIFIER_HEADER_BLOCK) GENERATE
 
     header_modifier_bytes_to_transmit   <= packetiser_bytes_to_transmit;
     header_modifier_data                <= swapped_packetiser_data;
