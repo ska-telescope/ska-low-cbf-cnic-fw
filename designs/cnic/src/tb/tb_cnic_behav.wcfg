@@ -1,0 +1,657 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="tb_trafgen_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="axi4_full_pkg" />
+            <top_module name="axi4_lite_pkg" />
+            <top_module name="axi4_stream_pkg" />
+            <top_module name="axi_bram_ctrl_funcs" />
+            <top_module name="axi_cdma_pkg" />
+            <top_module name="cbfpsrheader_pkg" />
+            <top_module name="common_mem_pkg" />
+            <top_module name="common_pkg" />
+            <top_module name="ethernet_pkg" />
+            <top_module name="glbl" />
+            <top_module name="hbm_pktcontroller_hbm_pktcontroller_reg_pkg" />
+            <top_module name="lib_pkg" />
+            <top_module name="tb_trafgen" />
+            <top_module name="tech_mac_100g_pkg" />
+            <top_module name="technology_pkg" />
+            <top_module name="technology_select_pkg" />
+            <top_module name="trafgen_bus_pkg" />
+            <top_module name="trafgen_system_reg_pkg" />
+            <top_module name="trafgen_top_pkg" />
+            <top_module name="vcomponents" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="0.000000 us"></ZoomStartTime>
+      <ZoomEndTime time="980.376027 us"></ZoomEndTime>
+      <Cursor1Time time="969.133858 us"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="520"></NameColumnWidth>
+      <ValueColumnWidth column_width="190"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="147" />
+   <wave_markers>
+      <marker label="" time="26950898" />
+      <marker label="" time="75415682" />
+   </wave_markers>
+   <wvobject fp_name="divider2242" type="divider">
+      <obj_property name="label">ARGS Config Registers</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/config_rw">
+      <obj_property name="ElementShortName">config_rw</obj_property>
+      <obj_property name="ObjectShortName">config_rw</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/config_ro">
+      <obj_property name="ElementShortName">config_ro</obj_property>
+      <obj_property name="ObjectShortName">config_ro</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+   </wvobject>
+   <wvobject fp_name="divider2573" type="divider">
+      <obj_property name="label">----- AXI BUS ----------</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/wait_fifo_reset_cnt">
+      <obj_property name="ElementShortName">wait_fifo_reset_cnt[31:0]</obj_property>
+      <obj_property name="ObjectShortName">wait_fifo_reset_cnt[31:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/rd_rst_busy">
+      <obj_property name="ElementShortName">rd_rst_busy</obj_property>
+      <obj_property name="ObjectShortName">rd_rst_busy</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/wr_rst_busy">
+      <obj_property name="ElementShortName">wr_rst_busy</obj_property>
+      <obj_property name="ObjectShortName">wr_rst_busy</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/rd_fsm">
+      <obj_property name="ElementShortName">rd_fsm</obj_property>
+      <obj_property name="ObjectShortName">rd_fsm</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/output_fsm">
+      <obj_property name="ElementShortName">output_fsm</obj_property>
+      <obj_property name="ObjectShortName">output_fsm</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/wait_fifo_reset_cnt">
+      <obj_property name="ElementShortName">wait_fifo_reset_cnt[31:0]</obj_property>
+      <obj_property name="ObjectShortName">wait_fifo_reset_cnt[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_rst">
+      <obj_property name="ElementShortName">FIFO_rst</obj_property>
+      <obj_property name="ObjectShortName">FIFO_rst</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/o_axi_arlen">
+      <obj_property name="ElementShortName">o_axi_arlen[7:0]</obj_property>
+      <obj_property name="ObjectShortName">o_axi_arlen[7:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/i_shared_clk">
+      <obj_property name="ElementShortName">i_shared_clk</obj_property>
+      <obj_property name="ObjectShortName">i_shared_clk</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/o_axi_araddr">
+      <obj_property name="ElementShortName">o_axi_araddr[29:0]</obj_property>
+      <obj_property name="ObjectShortName">o_axi_araddr[29:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/o_axi_arvalid">
+      <obj_property name="ElementShortName">o_axi_arvalid</obj_property>
+      <obj_property name="ObjectShortName">o_axi_arvalid</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/i_axi_arready">
+      <obj_property name="ElementShortName">i_axi_arready</obj_property>
+      <obj_property name="ObjectShortName">i_axi_arready</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider2572" type="divider">
+      <obj_property name="label">-------------------------</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/o_axi_rready">
+      <obj_property name="ElementShortName">o_axi_rready</obj_property>
+      <obj_property name="ObjectShortName">o_axi_rready</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/i_axi_rvalid">
+      <obj_property name="ElementShortName">i_axi_rvalid</obj_property>
+      <obj_property name="ObjectShortName">i_axi_rvalid</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/i_axi_rdata">
+      <obj_property name="ElementShortName">i_axi_rdata[511:0]</obj_property>
+      <obj_property name="ObjectShortName">i_axi_rdata[511:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_prog_full">
+      <obj_property name="ElementShortName">FIFO_prog_full</obj_property>
+      <obj_property name="ObjectShortName">FIFO_prog_full</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_din">
+      <obj_property name="ElementShortName">FIFO_din[511:0]</obj_property>
+      <obj_property name="ObjectShortName">FIFO_din[511:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_wr_en">
+      <obj_property name="ElementShortName">FIFO_wr_en</obj_property>
+      <obj_property name="ObjectShortName">FIFO_wr_en</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/i_axi_rlast">
+      <obj_property name="ElementShortName">i_axi_rlast</obj_property>
+      <obj_property name="ObjectShortName">i_axi_rlast</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/i_axi_rresp">
+      <obj_property name="ElementShortName">i_axi_rresp[1:0]</obj_property>
+      <obj_property name="ObjectShortName">i_axi_rresp[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider2574" type="divider">
+      <obj_property name="label">--------------------------</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_rst">
+      <obj_property name="ElementShortName">FIFO_rst</obj_property>
+      <obj_property name="ObjectShortName">FIFO_rst</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_dout">
+      <obj_property name="ElementShortName">FIFO_dout[511:0]</obj_property>
+      <obj_property name="ObjectShortName">FIFO_dout[511:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_empty">
+      <obj_property name="ElementShortName">FIFO_empty</obj_property>
+      <obj_property name="ObjectShortName">FIFO_empty</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_full">
+      <obj_property name="ElementShortName">FIFO_full</obj_property>
+      <obj_property name="ObjectShortName">FIFO_full</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_prog_full">
+      <obj_property name="ElementShortName">FIFO_prog_full</obj_property>
+      <obj_property name="ObjectShortName">FIFO_prog_full</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_almost_full">
+      <obj_property name="ElementShortName">FIFO_almost_full</obj_property>
+      <obj_property name="ObjectShortName">FIFO_almost_full</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_RdDataCount">
+      <obj_property name="ElementShortName">FIFO_RdDataCount[10:0]</obj_property>
+      <obj_property name="ObjectShortName">FIFO_RdDataCount[10:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_WrDataCount">
+      <obj_property name="ElementShortName">FIFO_WrDataCount[10:0]</obj_property>
+      <obj_property name="ObjectShortName">FIFO_WrDataCount[10:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_din">
+      <obj_property name="ElementShortName">FIFO_din[511:0]</obj_property>
+      <obj_property name="ObjectShortName">FIFO_din[511:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_rd_en">
+      <obj_property name="ElementShortName">FIFO_rd_en</obj_property>
+      <obj_property name="ObjectShortName">FIFO_rd_en</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_wr_en">
+      <obj_property name="ElementShortName">FIFO_wr_en</obj_property>
+      <obj_property name="ObjectShortName">FIFO_wr_en</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider193" type="divider">
+      <obj_property name="label">--------------------------</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/i_start_stop_tx">
+      <obj_property name="ElementShortName">i_start_stop_tx</obj_property>
+      <obj_property name="ObjectShortName">i_start_stop_tx</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/current_pkt_count">
+      <obj_property name="ElementShortName">current_pkt_count[31:0]</obj_property>
+      <obj_property name="ObjectShortName">current_pkt_count[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/readaddr">
+      <obj_property name="ElementShortName">readaddr[29:0]</obj_property>
+      <obj_property name="ObjectShortName">readaddr[29:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/wait_counter">
+      <obj_property name="ElementShortName">wait_counter[7:0]</obj_property>
+      <obj_property name="ObjectShortName">wait_counter[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/g_LFAA_BLOCKS_PER_FRAME_DIV3">
+      <obj_property name="ElementShortName">g_LFAA_BLOCKS_PER_FRAME_DIV3</obj_property>
+      <obj_property name="ObjectShortName">g_LFAA_BLOCKS_PER_FRAME_DIV3</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider289" type="divider">
+      <obj_property name="label">------ AXI COUNTERS -----</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/beats">
+      <obj_property name="ElementShortName">beats[7:0]</obj_property>
+      <obj_property name="ObjectShortName">beats[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/config_rw.number_of_packets_in_burst">
+      <obj_property name="ElementShortName">.number_of_packets_in_burst[31:0]</obj_property>
+      <obj_property name="ObjectShortName">.number_of_packets_in_burst[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/axi_beats_per_packet">
+      <obj_property name="ElementShortName">axi_beats_per_packet[7:0]</obj_property>
+      <obj_property name="ObjectShortName">axi_beats_per_packet[7:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/axi_burst_count">
+      <obj_property name="ElementShortName">axi_burst_count[31:0]</obj_property>
+      <obj_property name="ObjectShortName">axi_burst_count[31:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider322" type="divider">
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/axi_beats_per_packet">
+      <obj_property name="ElementShortName">axi_beats_per_packet[7:0]</obj_property>
+      <obj_property name="ObjectShortName">axi_beats_per_packet[7:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/current_pkt_count">
+      <obj_property name="ElementShortName">current_pkt_count[31:0]</obj_property>
+      <obj_property name="ObjectShortName">current_pkt_count[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/beats">
+      <obj_property name="ElementShortName">beats[7:0]</obj_property>
+      <obj_property name="ObjectShortName">beats[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/start_of_packet">
+      <obj_property name="ElementShortName">start_of_packet</obj_property>
+      <obj_property name="ObjectShortName">start_of_packet</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/end_of_packet">
+      <obj_property name="ElementShortName">end_of_packet</obj_property>
+      <obj_property name="ObjectShortName">end_of_packet</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider201" type="divider">
+      <obj_property name="label">------------</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/reset_state_100Mhz">
+      <obj_property name="ElementShortName">reset_state_100Mhz</obj_property>
+      <obj_property name="ObjectShortName">reset_state_100Mhz</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/start_next_burst">
+      <obj_property name="ElementShortName">start_next_burst</obj_property>
+      <obj_property name="ObjectShortName">start_next_burst</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/start_next_burst_100Mhz">
+      <obj_property name="ElementShortName">start_next_burst_100Mhz</obj_property>
+      <obj_property name="ObjectShortName">start_next_burst_100Mhz</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/ns_burst_timer_std_logic">
+      <obj_property name="ElementShortName">ns_burst_timer_std_logic[31:0]</obj_property>
+      <obj_property name="ObjectShortName">ns_burst_timer_std_logic[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/ns_total_time_std_logic">
+      <obj_property name="ElementShortName">ns_total_time_std_logic[31:0]</obj_property>
+      <obj_property name="ObjectShortName">ns_total_time_std_logic[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/ns_burst_timer_100Mhz">
+      <obj_property name="ElementShortName">ns_burst_timer_100Mhz[31:0]</obj_property>
+      <obj_property name="ObjectShortName">ns_burst_timer_100Mhz[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/ns_total_time_100Mhz">
+      <obj_property name="ElementShortName">ns_total_time_100Mhz[31:0]</obj_property>
+      <obj_property name="ObjectShortName">ns_total_time_100Mhz[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/time_between_bursts_ns_100Mhz">
+      <obj_property name="ElementShortName">time_between_bursts_ns_100Mhz[31:0]</obj_property>
+      <obj_property name="ObjectShortName">time_between_bursts_ns_100Mhz[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider240" type="divider">
+      <obj_property name="label">------ FIFO ------</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_rst">
+      <obj_property name="ElementShortName">FIFO_rst</obj_property>
+      <obj_property name="ObjectShortName">FIFO_rst</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_wr_en">
+      <obj_property name="ElementShortName">FIFO_wr_en</obj_property>
+      <obj_property name="ObjectShortName">FIFO_wr_en</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_din">
+      <obj_property name="ElementShortName">FIFO_din[511:0]</obj_property>
+      <obj_property name="ObjectShortName">FIFO_din[511:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_WrDataCount">
+      <obj_property name="ElementShortName">FIFO_WrDataCount[10:0]</obj_property>
+      <obj_property name="ObjectShortName">FIFO_WrDataCount[10:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_empty">
+      <obj_property name="ElementShortName">FIFO_empty</obj_property>
+      <obj_property name="ObjectShortName">FIFO_empty</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_full">
+      <obj_property name="ElementShortName">FIFO_full</obj_property>
+      <obj_property name="ObjectShortName">FIFO_full</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_prog_full">
+      <obj_property name="ElementShortName">FIFO_prog_full</obj_property>
+      <obj_property name="ObjectShortName">FIFO_prog_full</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider275" type="divider">
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_rd_en">
+      <obj_property name="ElementShortName">FIFO_rd_en</obj_property>
+      <obj_property name="ObjectShortName">FIFO_rd_en</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_dout">
+      <obj_property name="ElementShortName">FIFO_dout[511:0]</obj_property>
+      <obj_property name="ObjectShortName">FIFO_dout[511:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_RdDataCount">
+      <obj_property name="ElementShortName">FIFO_RdDataCount[10:0]</obj_property>
+      <obj_property name="ObjectShortName">FIFO_RdDataCount[10:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider298" type="divider">
+      <obj_property name="label">----</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/i_start_stop_tx">
+      <obj_property name="ElementShortName">i_start_stop_tx</obj_property>
+      <obj_property name="ObjectShortName">i_start_stop_tx</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_WrDataCount">
+      <obj_property name="ElementShortName">FIFO_WrDataCount[10:0]</obj_property>
+      <obj_property name="ObjectShortName">FIFO_WrDataCount[10:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider679" type="divider">
+      <obj_property name="label">-----READ FIFO------</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/i_shared_clk">
+      <obj_property name="ElementShortName">i_shared_clk</obj_property>
+      <obj_property name="ObjectShortName">i_shared_clk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_empty">
+      <obj_property name="ElementShortName">FIFO_empty</obj_property>
+      <obj_property name="ObjectShortName">FIFO_empty</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/output_fsm">
+      <obj_property name="ElementShortName">output_fsm</obj_property>
+      <obj_property name="ObjectShortName">output_fsm</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_RdDataCount">
+      <obj_property name="ElementShortName">FIFO_RdDataCount[10:0]</obj_property>
+      <obj_property name="ObjectShortName">FIFO_RdDataCount[10:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_rd_en">
+      <obj_property name="ElementShortName">FIFO_rd_en</obj_property>
+      <obj_property name="ObjectShortName">FIFO_rd_en</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/end_of_packet">
+      <obj_property name="ElementShortName">end_of_packet</obj_property>
+      <obj_property name="ObjectShortName">end_of_packet</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_rd_en">
+      <obj_property name="ElementShortName">FIFO_rd_en</obj_property>
+      <obj_property name="ObjectShortName">FIFO_rd_en</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/FIFO_dout">
+      <obj_property name="ElementShortName">FIFO_dout[511:0]</obj_property>
+      <obj_property name="ObjectShortName">FIFO_dout[511:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/current_pkt_count">
+      <obj_property name="ElementShortName">current_pkt_count[31:0]</obj_property>
+      <obj_property name="ObjectShortName">current_pkt_count[31:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/axi_burst_count">
+      <obj_property name="ElementShortName">axi_burst_count[31:0]</obj_property>
+      <obj_property name="ObjectShortName">axi_burst_count[31:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider83" type="divider">
+      <obj_property name="label">----- Packet_player input ------</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/i_shared_clk">
+      <obj_property name="ElementShortName">i_shared_clk</obj_property>
+      <obj_property name="ObjectShortName">i_shared_clk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/o_packetiser_data_in_wr">
+      <obj_property name="ElementShortName">o_packetiser_data_in_wr</obj_property>
+      <obj_property name="ObjectShortName">o_packetiser_data_in_wr</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/o_packetiser_data">
+      <obj_property name="ElementShortName">o_packetiser_data[511:0]</obj_property>
+      <obj_property name="ObjectShortName">o_packetiser_data[511:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/o_packetiser_bytes_to_transmit">
+      <obj_property name="ElementShortName">o_packetiser_bytes_to_transmit[13:0]</obj_property>
+      <obj_property name="ObjectShortName">o_packetiser_bytes_to_transmit[13:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider96" type="divider">
+      <obj_property name="label">----- Packet_player output ------</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_packet_player/i_cmac_clk">
+      <obj_property name="ElementShortName">i_cmac_clk</obj_property>
+      <obj_property name="ObjectShortName">i_cmac_clk</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_packet_player/o_data_to_transmit">
+      <obj_property name="ElementShortName">o_data_to_transmit</obj_property>
+      <obj_property name="ObjectShortName">o_data_to_transmit</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_packet_player/i_data_to_transmit_ctl">
+      <obj_property name="ElementShortName">i_data_to_transmit_ctl</obj_property>
+      <obj_property name="ObjectShortName">i_data_to_transmit_ctl</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider295" type="divider">
+      <obj_property name="label">Top</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_packet_player/ethernet_frame_DC_fifo/fifo_reset">
+      <obj_property name="ElementShortName">fifo_reset</obj_property>
+      <obj_property name="ObjectShortName">fifo_reset</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_packet_player/ethernet_frame_DC_fifo/fifo_rd_clk">
+      <obj_property name="ElementShortName">fifo_rd_clk</obj_property>
+      <obj_property name="ObjectShortName">fifo_rd_clk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_packet_player/ethernet_frame_DC_fifo/fifo_wr_clk">
+      <obj_property name="ElementShortName">fifo_wr_clk</obj_property>
+      <obj_property name="ObjectShortName">fifo_wr_clk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_packet_player/ethernet_frame_DC_fifo/fifo_wr">
+      <obj_property name="ElementShortName">fifo_wr</obj_property>
+      <obj_property name="ObjectShortName">fifo_wr</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_packet_player/ethernet_frame_DC_fifo/fifo_data">
+      <obj_property name="ElementShortName">fifo_data[511:0]</obj_property>
+      <obj_property name="ObjectShortName">fifo_data[511:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_packet_player/ethernet_frame_DC_fifo/fifo_wr_count">
+      <obj_property name="ElementShortName">fifo_wr_count[7:0]</obj_property>
+      <obj_property name="ObjectShortName">fifo_wr_count[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider1164" type="divider">
+      <obj_property name="label">-----Packet_player FIFO-----</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_packet_player/ethernet_frame_DC_fifo/fifo_rd_clk">
+      <obj_property name="ElementShortName">fifo_rd_clk</obj_property>
+      <obj_property name="ObjectShortName">fifo_rd_clk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_packet_player/ethernet_frame_DC_fifo/fifo_rd">
+      <obj_property name="ElementShortName">fifo_rd</obj_property>
+      <obj_property name="ObjectShortName">fifo_rd</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_packet_player/ethernet_frame_DC_fifo/fifo_q">
+      <obj_property name="ElementShortName">fifo_q[511:0]</obj_property>
+      <obj_property name="ObjectShortName">fifo_q[511:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_packet_player/ethernet_frame_DC_fifo/fifo_q_valid">
+      <obj_property name="ElementShortName">fifo_q_valid</obj_property>
+      <obj_property name="ObjectShortName">fifo_q_valid</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_packet_player/ethernet_frame_DC_fifo/fifo_empty">
+      <obj_property name="ElementShortName">fifo_empty</obj_property>
+      <obj_property name="ObjectShortName">fifo_empty</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_packet_player/ethernet_frame_DC_fifo/fifo_rd_count">
+      <obj_property name="ElementShortName">fifo_rd_count[7:0]</obj_property>
+      <obj_property name="ObjectShortName">fifo_rd_count[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_packet_player/ethernet_frame_DC_fifo/fifo_full">
+      <obj_property name="ElementShortName">fifo_full</obj_property>
+      <obj_property name="ObjectShortName">fifo_full</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/tb_trafgen/dut/i_trafgen_top/i_packet_player/ethernet_frame_DC_fifo/FIFO_DEPTH">
+      <obj_property name="ElementShortName">FIFO_DEPTH</obj_property>
+      <obj_property name="ObjectShortName">FIFO_DEPTH</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/tb_trafgen/dut/i_trafgen_top/i_packet_player/ethernet_frame_DC_fifo/DATA_WIDTH">
+      <obj_property name="ElementShortName">DATA_WIDTH</obj_property>
+      <obj_property name="ObjectShortName">DATA_WIDTH</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider623" type="divider">
+      <obj_property name="label">----packet_player_output----</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_data_rx_sosi">
+      <obj_property name="ElementShortName">i_data_rx_sosi</obj_property>
+      <obj_property name="ObjectShortName">i_data_rx_sosi</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/o_data_tx_sosi">
+      <obj_property name="ElementShortName">o_data_tx_sosi</obj_property>
+      <obj_property name="ObjectShortName">o_data_tx_sosi</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_data_tx_siso">
+      <obj_property name="ElementShortName">i_data_tx_siso</obj_property>
+      <obj_property name="ObjectShortName">i_data_tx_siso</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_clk_100GE">
+      <obj_property name="ElementShortName">i_clk_100GE</obj_property>
+      <obj_property name="ObjectShortName">i_clk_100GE</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_eth100G_locked">
+      <obj_property name="ElementShortName">i_eth100G_locked</obj_property>
+      <obj_property name="ObjectShortName">i_eth100G_locked</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_clk450">
+      <obj_property name="ElementShortName">i_clk450</obj_property>
+      <obj_property name="ObjectShortName">i_clk450</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_clk400">
+      <obj_property name="ElementShortName">i_clk400</obj_property>
+      <obj_property name="ObjectShortName">i_clk400</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/o_validMemRstActive">
+      <obj_property name="ElementShortName">o_validMemRstActive</obj_property>
+      <obj_property name="ObjectShortName">o_validMemRstActive</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_MACE_clk">
+      <obj_property name="ElementShortName">i_MACE_clk</obj_property>
+      <obj_property name="ObjectShortName">i_MACE_clk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_MACE_rst">
+      <obj_property name="ElementShortName">i_MACE_rst</obj_property>
+      <obj_property name="ObjectShortName">i_MACE_rst</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider125" type="divider">
+      <obj_property name="label">----New Signals-----</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/output_fsm">
+      <obj_property name="ElementShortName">output_fsm</obj_property>
+      <obj_property name="ObjectShortName">output_fsm</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/reset_state">
+      <obj_property name="ElementShortName">reset_state</obj_property>
+      <obj_property name="ObjectShortName">reset_state</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/packetizer_dout_count">
+      <obj_property name="ElementShortName">packetizer_dout_count[31:0]</obj_property>
+      <obj_property name="ObjectShortName">packetizer_dout_count[31:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/current_pkt_count">
+      <obj_property name="ElementShortName">current_pkt_count[31:0]</obj_property>
+      <obj_property name="ObjectShortName">current_pkt_count[31:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/current_pktburst_count">
+      <obj_property name="ElementShortName">current_pktburst_count[10:0]</obj_property>
+      <obj_property name="ObjectShortName">current_pktburst_count[10:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/start_next_burst">
+      <obj_property name="ElementShortName">start_next_burst</obj_property>
+      <obj_property name="ObjectShortName">start_next_burst</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/reset_ns_burst_timer">
+      <obj_property name="ElementShortName">reset_ns_burst_timer</obj_property>
+      <obj_property name="ObjectShortName">reset_ns_burst_timer</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/ns_burst_timer_std_logic">
+      <obj_property name="ElementShortName">ns_burst_timer_std_logic[31:0]</obj_property>
+      <obj_property name="ObjectShortName">ns_burst_timer_std_logic[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/ns_total_time_std_logic">
+      <obj_property name="ElementShortName">ns_total_time_std_logic[31:0]</obj_property>
+      <obj_property name="ObjectShortName">ns_total_time_std_logic[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/ns_burst_timer_100Mhz">
+      <obj_property name="ElementShortName">ns_burst_timer_100Mhz[31:0]</obj_property>
+      <obj_property name="ObjectShortName">ns_burst_timer_100Mhz[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/ns_total_time_100Mhz">
+      <obj_property name="ElementShortName">ns_total_time_100Mhz[31:0]</obj_property>
+      <obj_property name="ObjectShortName">ns_total_time_100Mhz[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/time_between_bursts_ns_100Mhz">
+      <obj_property name="ElementShortName">time_between_bursts_ns_100Mhz[31:0]</obj_property>
+      <obj_property name="ObjectShortName">time_between_bursts_ns_100Mhz[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_trafgen_top/i_HBM_PktController/reset_state_100Mhz">
+      <obj_property name="ElementShortName">reset_state_100Mhz</obj_property>
+      <obj_property name="ObjectShortName">reset_state_100Mhz</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider1181" type="divider">
+      <obj_property name="label">-----TOP-------</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/ap_clk">
+      <obj_property name="ElementShortName">ap_clk</obj_property>
+      <obj_property name="ObjectShortName">ap_clk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/ap_rst_n">
+      <obj_property name="ElementShortName">ap_rst_n</obj_property>
+      <obj_property name="ObjectShortName">ap_rst_n</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_eth100_rx_sosi">
+      <obj_property name="ElementShortName">i_eth100_rx_sosi</obj_property>
+      <obj_property name="ObjectShortName">i_eth100_rx_sosi</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/o_eth100_tx_sosi">
+      <obj_property name="ElementShortName">o_eth100_tx_sosi</obj_property>
+      <obj_property name="ObjectShortName">o_eth100_tx_sosi</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_trafgen/dut/i_eth100_tx_siso">
+      <obj_property name="ElementShortName">i_eth100_tx_siso</obj_property>
+      <obj_property name="ObjectShortName">i_eth100_tx_siso</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_trafgen/dut/i_clk_100GE">
+      <obj_property name="ElementShortName">i_clk_100GE</obj_property>
+      <obj_property name="ObjectShortName">i_clk_100GE</obj_property>
+   </wvobject>
+</wave_config>

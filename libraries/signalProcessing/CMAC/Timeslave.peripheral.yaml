@@ -1,0 +1,101 @@
+schema_name   : args
+schema_version: 1.0
+schema_type   : peripheral
+
+hdl_library_name       : Timeslave
+hdl_library_description: "PTP timing on 100G interface with CMAC(PG203), 1st instance."
+
+peripherals:
+  - peripheral_name        : Timeslave
+    peripheral_description : "Interface for IP from Atomic Rules"
+    slave_ports:
+      - slave_name        : Timeslave_space
+        slave_type        : RAM
+        number_of_slaves  : 1
+        slave_description : "Block of address space for interacting with TIMESLAVE IP. "
+        fields            :
+          - - field_name        : Timeslave_AXI
+              width             : 32
+              user_width        : 32
+              access_mode       : RW
+              number_of_fields  : 65536
+              interface         : simple
+              reset_value       : 0
+              field_description : "
+                                  Shared memory space starts at 0x2_0000 and has range 32K
+                                  Only some sections are valid refer to VHDL for map.
+                                  Address space is used in 4 bytes.
+                                  0xdec0de1c is returned if the address space is not used.
+                                  "
+      #########################################################################################                            
+      - slave_name        : Timeslave_scheduler
+        slave_type        : reg
+        number_of_slaves  : 1
+        slave_description : "Time derived from PTP in std 80-bit format."
+        dual_clock        : false
+        fields            :
+         #################################
+          - - field_name        : current_ptp_sub_seconds
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Live feed from hardware clock
+                                   bits 31 -> 0 ... bit 31 = 1/2 sec, bit 30 = 1/4 sec and so on..."
+          #################################
+          - - field_name        : current_ptp_seconds_lower
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Live feed from hardware clock
+                                   bits 63 -> 32 ... bit 32 = 1 sec"
+          #################################
+          - - field_name        : current_ptp_seconds_upper
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Live feed from hardware clock
+                                   0x0000 & bits 79 -> 64 ... Upper 16 bits of 80 bit time vector, upper section of seconds."
+          #################################
+          - - field_name        : schedule_ptp_sub_seconds
+              width             : 32
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "Target start time
+                                   bits 31 -> 0 ... bit 31 = 1/2 sec, bit 30 = 1/4 sec and so on..."
+          #################################
+          - - field_name        : schedule_ptp_seconds_lower
+              width             : 32
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "Target start time
+                                   bits 63 -> 32 ... bit 32 = 1 sec"
+          #################################
+          - - field_name        : schedule_ptp_seconds_upper
+              width             : 32
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "Target start time
+                                   0x0000 & bits 79 -> 64 ... Upper 16 bits of 80 bit time vector, upper section of seconds."
+          ################################# 
+          - - field_name        : schedule_control
+              width             : 32
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "Multi bit control vector that will allow different operations of scheduled hardware actions.
+                                   Assumes a valid future time has been set in the schedule_ptp_xxxx fields above.
+                                   This register will be polled and update the operations accordingly, will throttle update operations to every 1us.
+                                   Bit 0 = reset logic to be scheduled, this will run a 100us reset pulse at the start of the run.
+                                   Bit 1 = start run.
+                                   Bit 2 = end current run.
+                                   "
+          #################################
+          - - field_name        : schedule_debug
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Feedback from hardware..
+                                   Bit 0 = Running state, 1 - running ... 0 - stopped
+                                   Bit 1 = waiting to reach start time
+                                   Bit 2 = past start time
+                                   Bit 3 = error condition"
+     

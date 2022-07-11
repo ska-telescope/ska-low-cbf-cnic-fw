@@ -1,0 +1,267 @@
+schema_name   : args
+schema_version: 1.0
+schema_type   : peripheral
+
+hdl_library_name       : HBM_PktController
+hdl_library_description: "HBM_PktController configuration"
+
+peripherals:
+
+  - peripheral_name        : HBM_PktController
+    peripheral_description : "HBM_PktController Configuration"
+
+    slave_ports:
+      - slave_name        : config
+        slave_type        : reg
+        number_of_slaves  : 1
+        slave_description : "HBM_PktController control"
+        fields:
+          - - field_name        : Start_Stop_TX 
+              width             : 1
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "Start or stop the HBM_PktController."
+
+          - - field_name        : running
+              width             : 1
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Is the HBM_PktController turn running"
+              
+          - - field_name        : loop_tx
+              width             : 1
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "1: Loop traffic"
+
+          - - field_name        : looping
+              width             : 1
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Looping is running"
+
+          - - field_name        : expected_number_of_loops
+              width             : 32
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "Number of loops to do"
+            
+          - - field_name        : loop_cnt
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Loop Counter"
+
+
+          - - field_name        : Inplace_Header_Update
+              width             : 1
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "0 : packetizer to insert Header. 1: packetizer to update in place of packet header fields)"
+
+          - - field_name        : Increase_Header_Frame_Number
+              width             : 1
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "1 : Increase Frame Number"
+
+          - - field_name        : Packet_Type
+              width             : 4
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "0 :RAW pcap (full ethernet packet), 2: SPEAD pcap, 3 CODIF pcap"
+
+          - - field_name        : Packet_Size
+              width             : 32
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "size of the complete packet including ethernet header, spead header etc"
+
+          - - field_name        : Total_Number_TX_Packets
+              width             : 32
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "Total number of TX packets to play out"
+
+          - - field_name        : Time_Between_Bursts_ns
+              width             : 32
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "time in ns"
+
+          - - field_name        : expected_total_number_of_4k_axi
+              width             : 32
+              access_mode       : RW
+              reset_value       : 0x00
+              field_description : "expected_total_number_of_4k_axi"
+
+          - - field_name        : current_axi_4k_count 
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "AXI 4k count "
+
+                    
+          - - field_name        : Number_of_Packets_in_Burst
+              width             : 32
+              access_mode       : RW
+              reset_value       : 0x00
+              field_description : "Number of packets to send backtoback"
+        
+          - - field_name        : expected_packets_per_burst
+              width             : 32
+              access_mode       : RW
+              reset_value       : 0x00
+              field_description : "expected_packets_per_burst"
+
+          - - field_name        : expected_total_number_of_bursts
+              width             : 32
+              access_mode       : RW
+              reset_value       : 0x00
+              field_description : "expected_total_number_of_bursts"
+         
+          - - field_name        : expected_beats_per_packet
+              width             : 32
+              access_mode       : RW
+              reset_value       : 0x00
+              field_description : "expected_beats_per_packet"
+       
+          - - field_name        : expected_number_beats_per_burst
+              width             : 32
+              access_mode       : RW
+              reset_value       : 0x00
+              field_description : "expected_number_beats_per_burst"
+ 
+          - - field_name        : fpga_beat_in_burst_counter
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x00
+              field_description : "fpga_beat_in_burst_counter"              
+              
+          - - field_name        : burst_count
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x00
+              field_description : "current burst_count"
+
+          - - field_name        : beat_count
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "beat count in the current packet"
+
+          - - field_name        : total_beat_count
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Total Beat count"
+
+          - - field_name        : fpga_pkt_count_in_this_burst
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "fpga_pkt_count_in_this_burst"
+              
+
+
+          - - field_name        : current_pkt_count_high
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "number of packets read out of fifo upper 32 bits of 64 bit counter"
+
+
+          - - field_name        : current_pkt_count_low
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "number of packets read out of fifo upper 32 bits of 64 bit counter"
+
+
+
+
+          - - field_name        : tx_complete
+              width             : 1
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "tx_complete"
+
+          - - field_name        : axi_4k_finished
+              width             : 1
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "rd_fsm axi_4k_finished"
+
+          - - field_name        : fifo_prog_full
+              width             : 1
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "fifo_prog_full"
+
+          - - field_name        : fifo_full
+              width             : 1
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "fifo_full"
+
+          - - field_name        : axi_rvalid_but_fifo_full
+              width             : 1
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "axi_rvalid_but_fifo_full"
+              
+          - - field_name        : rd_fsm_debug
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "rd_fsm_debug"
+
+          - - field_name        : output_fsm_debug
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "output_fsm_debug"
+ 
+          - - field_name        : FIFO_RdDataCount
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "FIFO_RdDataCount"      
+
+          - - field_name        : FIFO_WrDataCount
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "FIFO_WrDataCount"      
+
+          - - field_name        : fpga_axi_beats_per_packet
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "FPGA calculated Number of AXI Beats_per_Packet calculated from the user supplied Packet_Size"
+ 
+          - - field_name        : ns_total_time
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "current time since start of running in ns"
+               
+          - - field_name        : ns_burst_timer
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "timer used to determine when to send the next burst of packets"
+              
+          - - field_name        : total_pkts_to_mac_high
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "count of the total number of packets sent to the 100G MAC upper 32 bits of 64 bit counter"
+
+          - - field_name        : total_pkts_to_mac_low
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "count of the total number of packets sent to the 100G MAC lower 32 bits of 64 bit counter"
+
+
