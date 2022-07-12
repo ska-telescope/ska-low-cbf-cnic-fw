@@ -79,12 +79,21 @@ entity CMAC_100G_wrap_w_timeslave is
 
         -----------------------------------------------------------------------
         -- streaming AXI to CMAC
+        -- TX
         i_tx_axis_tdata         : IN STD_LOGIC_VECTOR(511 downto 0);
         i_tx_axis_tkeep         : IN STD_LOGIC_VECTOR(63 downto 0);
         i_tx_axis_tvalid        : IN STD_LOGIC;
         i_tx_axis_tlast         : IN STD_LOGIC;
         i_tx_axis_tuser         : IN STD_LOGIC;
         o_tx_axis_tready        : OUT STD_LOGIC;
+        
+        -- RX
+        o_rx_axis_tdata         : out STD_LOGIC_VECTOR ( 511 downto 0 );
+        o_rx_axis_tkeep         : out STD_LOGIC_VECTOR ( 63 downto 0 );
+        o_rx_axis_tlast         : out STD_LOGIC;
+        i_rx_axis_tready        : in STD_LOGIC;
+        o_rx_axis_tuser         : out STD_LOGIC_VECTOR ( 79 downto 0 );
+        o_rx_axis_tvalid        : out STD_LOGIC;
         
         -----------------------------------------------------------------------
         
@@ -546,14 +555,13 @@ TOP_100G : IF U55_TOP_QSFP GENERATE
         CMAC_rx_axis_tvalid     => CMAC_rx_axis_tvalid,
         
         -- Datapath POST TIMESLAVE, IN and OUT.
-        RX_100G_m_axis_tdata    => open,
-        RX_100G_m_axis_tkeep    => open,
-        RX_100G_m_axis_tlast    => open,
-        RX_100G_m_axis_tready   => '1',
-        RX_100G_m_axis_tuser    => open,
-        RX_100G_m_axis_tvalid   => open,
-        
-                
+        RX_100G_m_axis_tdata    => o_rx_axis_tdata,
+        RX_100G_m_axis_tkeep    => o_rx_axis_tkeep,
+        RX_100G_m_axis_tlast    => o_rx_axis_tlast,
+        RX_100G_m_axis_tready   => i_rx_axis_tready,
+        RX_100G_m_axis_tuser    => o_rx_axis_tuser,
+        RX_100G_m_axis_tvalid   => o_rx_axis_tvalid,
+       
         TX_100G_s_axis_tdata    => i_tx_axis_tdata,
         TX_100G_s_axis_tkeep    => i_tx_axis_tkeep,
         TX_100G_s_axis_tlast    => i_tx_axis_tlast,
@@ -691,13 +699,12 @@ BOTTOM_100G : IF U55_BOTTOM_QSFP GENERATE
         CMAC_rx_axis_tvalid     => CMAC_rx_axis_tvalid,
         
         -- Datapath POST TIMESLAVE, IN and OUT.
-        RX_100G_m_axis_tdata    => open,
-        RX_100G_m_axis_tkeep    => open,
-        RX_100G_m_axis_tlast    => open,
-        RX_100G_m_axis_tready   => '1',
-        RX_100G_m_axis_tuser    => open,
-        RX_100G_m_axis_tvalid   => open,
-        
+        RX_100G_m_axis_tdata    => o_rx_axis_tdata,
+        RX_100G_m_axis_tkeep    => o_rx_axis_tkeep,
+        RX_100G_m_axis_tlast    => o_rx_axis_tlast,
+        RX_100G_m_axis_tready   => i_rx_axis_tready,
+        RX_100G_m_axis_tuser    => o_rx_axis_tuser,
+        RX_100G_m_axis_tvalid   => o_rx_axis_tvalid,
                 
         TX_100G_s_axis_tdata    => i_tx_axis_tdata,
         TX_100G_s_axis_tkeep    => i_tx_axis_tkeep,
