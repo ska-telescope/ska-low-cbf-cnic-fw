@@ -75,9 +75,11 @@ entity HBM_PktController is
         -- 512 bit wide AXI bus to the shared memory. 
         -- This has the aw, b, ar and r buses (the w bus is on the output of the LFAA decode module)
         -- w bus - write data
+        
+	-- m01
         m01_axi_awvalid  : out std_logic;
         m01_axi_awready  : in std_logic;
-        m01_axi_awaddr   : out std_logic_vector(32 downto 0);
+        m01_axi_awaddr   : out std_logic_vector(31 downto 0);
         m01_axi_awlen    : out std_logic_vector(7 downto 0);
         -- b bus - write response
         m01_axi_bvalid    : in std_logic;
@@ -85,14 +87,74 @@ entity HBM_PktController is
         -- ar bus - read address
         m01_axi_arvalid   : out std_logic;
         m01_axi_arready   : in std_logic;
-        m01_axi_araddr    : out std_logic_vector(32 downto 0);
+        m01_axi_araddr    : out std_logic_vector(31 downto 0);
         m01_axi_arlen     : out std_logic_vector(7 downto 0);
         -- r bus - read data
         m01_axi_rvalid    : in std_logic;
         m01_axi_rready    : out std_logic;
         m01_axi_rdata     : in std_logic_vector(511 downto 0);
         m01_axi_rlast     : in std_logic;
-        m01_axi_rresp     : in std_logic_vector(1 downto 0)   
+        m01_axi_rresp     : in std_logic_vector(1 downto 0);
+
+	-- m02
+        m02_axi_awvalid  : out std_logic;
+        m02_axi_awready  : in std_logic;
+        m02_axi_awaddr   : out std_logic_vector(31 downto 0);
+        m02_axi_awlen    : out std_logic_vector(7 downto 0);
+        -- b bus - write response
+        m02_axi_bvalid    : in std_logic;
+        m02_axi_bresp     : in std_logic_vector(1 downto 0);
+        -- ar bus - read address
+        m02_axi_arvalid   : out std_logic;
+        m02_axi_arready   : in std_logic;
+        m02_axi_araddr    : out std_logic_vector(31 downto 0);
+        m02_axi_arlen     : out std_logic_vector(7 downto 0);
+        -- r bus - read data
+        m02_axi_rvalid    : in std_logic;
+        m02_axi_rready    : out std_logic;
+        m02_axi_rdata     : in std_logic_vector(511 downto 0);
+        m02_axi_rlast     : in std_logic;
+        m02_axi_rresp     : in std_logic_vector(1 downto 0);
+
+	-- m03
+        m03_axi_awvalid  : out std_logic;
+        m03_axi_awready  : in std_logic;
+        m03_axi_awaddr   : out std_logic_vector(31 downto 0);
+        m03_axi_awlen    : out std_logic_vector(7 downto 0);
+        -- b bus - write response
+        m03_axi_bvalid    : in std_logic;
+        m03_axi_bresp     : in std_logic_vector(1 downto 0);
+        -- ar bus - read address
+        m03_axi_arvalid   : out std_logic;
+        m03_axi_arready   : in std_logic;
+        m03_axi_araddr    : out std_logic_vector(31 downto 0);
+        m03_axi_arlen     : out std_logic_vector(7 downto 0);
+        -- r bus - read data
+        m03_axi_rvalid    : in std_logic;
+        m03_axi_rready    : out std_logic;
+        m03_axi_rdata     : in std_logic_vector(511 downto 0);
+        m03_axi_rlast     : in std_logic;
+        m03_axi_rresp     : in std_logic_vector(1 downto 0);
+
+	-- m04
+        m04_axi_awvalid  : out std_logic;
+        m04_axi_awready  : in std_logic;
+        m04_axi_awaddr   : out std_logic_vector(31 downto 0);
+        m04_axi_awlen    : out std_logic_vector(7 downto 0);
+        -- b bus - write response
+        m04_axi_bvalid    : in std_logic;
+        m04_axi_bresp     : in std_logic_vector(1 downto 0);
+        -- ar bus - read address
+        m04_axi_arvalid   : out std_logic;
+        m04_axi_arready   : in std_logic;
+        m04_axi_araddr    : out std_logic_vector(31 downto 0);
+        m04_axi_arlen     : out std_logic_vector(7 downto 0);
+        -- r bus - read data
+        m04_axi_rvalid    : in std_logic;
+        m04_axi_rready    : out std_logic;
+        m04_axi_rdata     : in std_logic_vector(511 downto 0);
+        m04_axi_rlast     : in std_logic;
+        m04_axi_rresp     : in std_logic_vector(1 downto 0)   
     );
 end HBM_PktController;
 
@@ -114,7 +176,7 @@ architecture RTL of HBM_PktController is
 
     signal o_axi_arvalid :  std_logic;
     signal i_axi_arready :  std_logic;
-    signal o_axi_araddr  :  std_logic_vector(32 downto 0);
+    signal o_axi_araddr  :  std_logic_vector(31 downto 0);
     signal o_axi_arlen   :  std_logic_vector(7 downto 0);
 
     signal i_axi_rvalid  :  std_logic;
@@ -133,7 +195,7 @@ architecture RTL of HBM_PktController is
     signal packetizer_wr    : std_logic;
     signal packetizer_dout  :  std_logic_vector(511 downto 0);
     
-    signal readaddr         : unsigned(32 downto 0);    -- 30 bits = 1GB, 33 bits = 8GB
+    signal readaddr         : unsigned(31 downto 0);    -- 30 bits = 1GB, 33 bits = 8GB
     
     signal total_beat_count   :  unsigned(31 downto 0) := (others => '0');
     signal current_axi_4k_count   :  unsigned(31 downto 0);
