@@ -472,6 +472,12 @@ ARCHITECTURE RTL OF cnic_core IS
     signal tx_axis_tuser            : STD_LOGIC;
     signal tx_axis_tready           : STD_LOGIC;
     
+    signal rx_axis_tdata     : STD_LOGIC_VECTOR ( 511 downto 0 );
+    signal rx_axis_tkeep     : STD_LOGIC_VECTOR ( 63 downto 0 );
+    signal rx_axis_tlast     : STD_LOGIC;
+    signal rx_axis_tready    : STD_LOGIC;
+    signal rx_axis_tuser     : STD_LOGIC_VECTOR ( 79 downto 0 );
+    signal rx_axis_tvalid    : STD_LOGIC;
     
     signal m01_axi_awvalidi  : std_logic;
     signal m01_axi_awreadyi  : std_logic;
@@ -503,35 +509,35 @@ ARCHITECTURE RTL OF cnic_core IS
     signal m01_axi_ridi      : std_logic_vector(M01_AXI_ID_WIDTH - 1 downto 0);
     signal m01_axi_rrespi    : std_logic_vector(1 downto 0);
     
-    -- signal m02_axi_awvalidi, m03_axi_awvalidi, m04_axi_awvalidi, m05_axi_awvalidi  : std_logic;                                        
-    -- signal m02_axi_awreadyi, m03_axi_awreadyi, m04_axi_awreadyi, m05_axi_awreadyi  : std_logic;                                        
-    -- signal m02_axi_awaddri , m03_axi_awaddri , m04_axi_awaddri , m05_axi_awaddri   : std_logic_vector(M02_AXI_ADDR_WIDTH-1 downto 0);  
-    -- signal m02_axi_awidi   , m03_axi_awidi   , m04_axi_awidi   , m05_axi_awidi     : std_logic_vector(M02_AXI_ID_WIDTH - 1 downto 0);  
-    -- signal m02_axi_awleni  , m03_axi_awleni  , m04_axi_awleni  , m05_axi_awleni    : std_logic_vector(7 downto 0);                     
-    -- signal m02_axi_awsizei , m03_axi_awsizei , m04_axi_awsizei , m05_axi_awsizei   : std_logic_vector(2 downto 0);                     
-    -- signal m02_axi_awbursti, m03_axi_awbursti, m04_axi_awbursti, m05_axi_awbursti  : std_logic_vector(1 downto 0);                     
-    -- signal m02_axi_wvalidi , m03_axi_wvalidi , m04_axi_wvalidi , m05_axi_wvalidi   : std_logic;                                        
-    -- signal m02_axi_wreadyi , m03_axi_wreadyi , m04_axi_wreadyi , m05_axi_wreadyi   : std_logic;                                        
-    -- signal m02_axi_wdatai  , m03_axi_wdatai  , m04_axi_wdatai  , m05_axi_wdatai    : std_logic_vector(M02_AXI_DATA_WIDTH-1 downto 0);  
-    -- signal m02_axi_wstrbi  , m03_axi_wstrbi  , m04_axi_wstrbi  , m05_axi_wstrbi    : std_logic_vector(M02_AXI_DATA_WIDTH/8-1 downto 0);
-    -- signal m02_axi_wlasti  , m03_axi_wlasti  , m04_axi_wlasti  , m05_axi_wlasti    : std_logic;                                        
-    -- signal m02_axi_bvalidi , m03_axi_bvalidi , m04_axi_bvalidi , m05_axi_bvalidi   : std_logic;                                        
-    -- signal m02_axi_breadyi , m03_axi_breadyi , m04_axi_breadyi , m05_axi_breadyi   : std_logic;                                        
-    -- signal m02_axi_brespi  , m03_axi_brespi  , m04_axi_brespi  , m05_axi_brespi    : std_logic_vector(1 downto 0);                     
-    -- signal m02_axi_bidi    , m03_axi_bidi    , m04_axi_bidi    , m05_axi_bidi      : std_logic_vector(M02_AXI_ID_WIDTH - 1 downto 0);  
-    -- signal m02_axi_arvalidi, m03_axi_arvalidi, m04_axi_arvalidi, m05_axi_arvalidi  : std_logic;                                        
-    -- signal m02_axi_arreadyi, m03_axi_arreadyi, m04_axi_arreadyi, m05_axi_arreadyi  : std_logic;                                        
-    -- signal m02_axi_araddri , m03_axi_araddri , m04_axi_araddri , m05_axi_araddri   : std_logic_vector(M02_AXI_ADDR_WIDTH-1 downto 0);  
-    -- signal m02_axi_aridi   , m03_axi_aridi   , m04_axi_aridi   , m05_axi_aridi     : std_logic_vector(M02_AXI_ID_WIDTH-1 downto 0);    
-    -- signal m02_axi_arleni  , m03_axi_arleni  , m04_axi_arleni  , m05_axi_arleni    : std_logic_vector(7 downto 0);                     
-    -- signal m02_axi_arsizei , m03_axi_arsizei , m04_axi_arsizei , m05_axi_arsizei   : std_logic_vector(2 downto 0);                     
-    -- signal m02_axi_arbursti, m03_axi_arbursti, m04_axi_arbursti, m05_axi_arbursti  : std_logic_vector(1 downto 0);                     
-    -- signal m02_axi_rvalidi , m03_axi_rvalidi , m04_axi_rvalidi , m05_axi_rvalidi   : std_logic;                                        
-    -- signal m02_axi_rreadyi , m03_axi_rreadyi , m04_axi_rreadyi , m05_axi_rreadyi   : std_logic;                                        
-    -- signal m02_axi_rdatai  , m03_axi_rdatai  , m04_axi_rdatai  , m05_axi_rdatai    : std_logic_vector(M02_AXI_DATA_WIDTH-1 downto 0);  
-    -- signal m02_axi_rlasti  , m03_axi_rlasti  , m04_axi_rlasti  , m05_axi_rlasti    : std_logic;                                        
-    -- signal m02_axi_ridi    , m03_axi_ridi    , m04_axi_ridi    , m05_axi_ridi      : std_logic_vector(M02_AXI_ID_WIDTH - 1 downto 0);  
-    -- signal m02_axi_rrespi  , m03_axi_rrespi  , m04_axi_rrespi  , m05_axi_rrespi    : std_logic_vector(1 downto 0);                     
+     signal m02_axi_awvalidi, m03_axi_awvalidi, m04_axi_awvalidi, m05_axi_awvalidi  : std_logic;                                        
+     signal m02_axi_awreadyi, m03_axi_awreadyi, m04_axi_awreadyi, m05_axi_awreadyi  : std_logic;                                        
+     signal m02_axi_awaddri , m03_axi_awaddri , m04_axi_awaddri , m05_axi_awaddri   : std_logic_vector(M02_AXI_ADDR_WIDTH-1 downto 0);  
+     signal m02_axi_awidi   , m03_axi_awidi   , m04_axi_awidi   , m05_axi_awidi     : std_logic_vector(M02_AXI_ID_WIDTH - 1 downto 0);  
+     signal m02_axi_awleni  , m03_axi_awleni  , m04_axi_awleni  , m05_axi_awleni    : std_logic_vector(7 downto 0);                     
+     signal m02_axi_awsizei , m03_axi_awsizei , m04_axi_awsizei , m05_axi_awsizei   : std_logic_vector(2 downto 0);                     
+     signal m02_axi_awbursti, m03_axi_awbursti, m04_axi_awbursti, m05_axi_awbursti  : std_logic_vector(1 downto 0);                     
+     signal m02_axi_wvalidi , m03_axi_wvalidi , m04_axi_wvalidi , m05_axi_wvalidi   : std_logic;                                        
+     signal m02_axi_wreadyi , m03_axi_wreadyi , m04_axi_wreadyi , m05_axi_wreadyi   : std_logic;                                        
+     signal m02_axi_wdatai  , m03_axi_wdatai  , m04_axi_wdatai  , m05_axi_wdatai    : std_logic_vector(M02_AXI_DATA_WIDTH-1 downto 0);  
+     signal m02_axi_wstrbi  , m03_axi_wstrbi  , m04_axi_wstrbi  , m05_axi_wstrbi    : std_logic_vector(M02_AXI_DATA_WIDTH/8-1 downto 0);
+     signal m02_axi_wlasti  , m03_axi_wlasti  , m04_axi_wlasti  , m05_axi_wlasti    : std_logic;                                        
+     signal m02_axi_bvalidi , m03_axi_bvalidi , m04_axi_bvalidi , m05_axi_bvalidi   : std_logic;                                        
+     signal m02_axi_breadyi , m03_axi_breadyi , m04_axi_breadyi , m05_axi_breadyi   : std_logic;                                        
+     signal m02_axi_brespi  , m03_axi_brespi  , m04_axi_brespi  , m05_axi_brespi    : std_logic_vector(1 downto 0);                     
+     signal m02_axi_bidi    , m03_axi_bidi    , m04_axi_bidi    , m05_axi_bidi      : std_logic_vector(M02_AXI_ID_WIDTH - 1 downto 0);  
+     signal m02_axi_arvalidi, m03_axi_arvalidi, m04_axi_arvalidi, m05_axi_arvalidi  : std_logic;                                        
+     signal m02_axi_arreadyi, m03_axi_arreadyi, m04_axi_arreadyi, m05_axi_arreadyi  : std_logic;                                        
+     signal m02_axi_araddri , m03_axi_araddri , m04_axi_araddri , m05_axi_araddri   : std_logic_vector(M02_AXI_ADDR_WIDTH-1 downto 0);  
+     signal m02_axi_aridi   , m03_axi_aridi   , m04_axi_aridi   , m05_axi_aridi     : std_logic_vector(M02_AXI_ID_WIDTH-1 downto 0);    
+     signal m02_axi_arleni  , m03_axi_arleni  , m04_axi_arleni  , m05_axi_arleni    : std_logic_vector(7 downto 0);                     
+     signal m02_axi_arsizei , m03_axi_arsizei , m04_axi_arsizei , m05_axi_arsizei   : std_logic_vector(2 downto 0);                     
+     signal m02_axi_arbursti, m03_axi_arbursti, m04_axi_arbursti, m05_axi_arbursti  : std_logic_vector(1 downto 0);                     
+     signal m02_axi_rvalidi , m03_axi_rvalidi , m04_axi_rvalidi , m05_axi_rvalidi   : std_logic;                                        
+     signal m02_axi_rreadyi , m03_axi_rreadyi , m04_axi_rreadyi , m05_axi_rreadyi   : std_logic;                                        
+     signal m02_axi_rdatai  , m03_axi_rdatai  , m04_axi_rdatai  , m05_axi_rdatai    : std_logic_vector(M02_AXI_DATA_WIDTH-1 downto 0);  
+     signal m02_axi_rlasti  , m03_axi_rlasti  , m04_axi_rlasti  , m05_axi_rlasti    : std_logic;                                        
+     signal m02_axi_ridi    , m03_axi_ridi    , m04_axi_ridi    , m05_axi_ridi      : std_logic_vector(M02_AXI_ID_WIDTH - 1 downto 0);  
+     signal m02_axi_rrespi  , m03_axi_rrespi  , m04_axi_rrespi  , m05_axi_rrespi    : std_logic_vector(1 downto 0);                     
     
     -- create_ip -name axi_register_slice -vendor xilinx.com -library ip -version 2.1 -module_name axi_reg_slice512_LLFFL
     -- set_property -dict [list CONFIG.ADDR_WIDTH {64} CONFIG.DATA_WIDTH {512} CONFIG.REG_W {1} CONFIG.Component_Name {axi_reg_slice512_LLFFL}] [get_ips axi_reg_slice512_LLFFL]
@@ -720,10 +726,10 @@ begin
         dma_dest => DMA_dest_addr, -- output wire [31:0]
         dma_shared => DMASharedMemAddr, -- output wire [63:0]  -- Base Address of the shared memory block.
         dma_size => DMA_size,      -- output wire [31:0]
-        m01_shared => m01_shared  -- out(63:0)
-        -- m02_shared => m02_shared,  -- out(63:0)
-        -- m03_shared => m03_shared,  -- out(63:0)
-        -- m04_shared => m04_shared,  -- out(63:0)
+        m01_shared => m01_shared,  -- out(63:0)
+        m02_shared => m02_shared,  -- out(63:0)
+        m03_shared => m03_shared,  -- out(63:0)
+        m04_shared => m04_shared  -- out(63:0)
         -- m05_shared => m05_shared   -- out(63:0)
     );
     
@@ -1085,6 +1091,14 @@ u_100G_port_a : entity Timeslave_CMAC_lib.CMAC_100G_wrap_w_timeslave
         i_tx_axis_tuser     => tx_axis_tuser,
         o_tx_axis_tready    => tx_axis_tready,
         
+        -- RX
+        o_rx_axis_tdata     => rx_axis_tdata,
+        o_rx_axis_tkeep     => rx_axis_tkeep,
+        o_rx_axis_tlast     => rx_axis_tlast,
+        i_rx_axis_tready    => rx_axis_tready,
+        o_rx_axis_tuser     => rx_axis_tuser,
+        o_rx_axis_tvalid    => rx_axis_tvalid,
+        
         -----------------------------------------------------------------------
         
         -- PTP Data
@@ -1204,7 +1218,7 @@ END GENERATE;
         clk_freerun => clk_freerun, 
         -----------------------------------------------------------------------
 
-        
+        -- TX
         -- streaming AXI to CMAC
         o_tx_axis_tdata     => tx_axis_tdata,
         o_tx_axis_tkeep     => tx_axis_tkeep,
@@ -1219,6 +1233,16 @@ END GENERATE;
         -- Data to be transmitted on 100GE
         o_data_tx_sosi      => eth100_tx_sosi, -- out t_lbus_sosi;
         i_data_tx_siso      => eth100_tx_siso, -- in t_lbus_siso;
+        
+        -- RX
+        i_rx_axis_tdata     => rx_axis_tdata,
+        i_rx_axis_tkeep     => rx_axis_tkeep,
+        i_rx_axis_tlast     => rx_axis_tlast,
+        o_rx_axis_tready    => rx_axis_tready,
+        i_rx_axis_tuser     => rx_axis_tuser,
+        i_rx_axis_tvalid    => rx_axis_tvalid,
+        
+        
         i_clk_100GE         => eth100G_clk,      -- in std_logic;
         i_eth100G_locked    => eth100G_locked,
         -----------------------------------------------------------------------
@@ -1244,9 +1268,10 @@ END GENERATE;
         -----------------------------------------------------------------------
         -- AXI interfaces to shared memory
 
+	-- M01
         m01_axi_awvalid => m01_axi_awvalidi,   -- out std_logic;
         m01_axi_awready => m01_axi_awreadyi,   -- in std_logic;
-        m01_axi_awaddr  => m01_axi_awaddri(32 downto 0),    -- out std_logic_vector(29 downto 0);
+        m01_axi_awaddr  => m01_axi_awaddri(31 downto 0),    -- out std_logic_vector(29 downto 0);
         m01_axi_awlen   => m01_axi_awleni,     -- out std_logic_vector(7 downto 0); Number of beats in each burst is this value + 1.
         -- w bus - write data.
         m01_axi_wvalid   => m01_axi_wvalidi,   -- out std_logic;
@@ -1259,21 +1284,98 @@ END GENERATE;
         -- ar - read address
         m01_axi_arvalid  => m01_axi_arvalidi,  -- out std_logic;
         m01_axi_arready  => m01_axi_arreadyi,  -- in std_logic;
-        m01_axi_araddr   => m01_axi_araddri(32 downto 0),   -- out std_logic_vector(29 downto 0);
+        m01_axi_araddr   => m01_axi_araddri(31 downto 0),   -- out std_logic_vector(29 downto 0);
         m01_axi_arlen    => m01_axi_arleni,    -- out std_logic_vector(7 downto 0); --  Number of beats in each burst is this value + 1.
         -- r - read data
         m01_axi_rvalid   => m01_axi_rvalidi,   -- in std_logic;
         m01_axi_rready   => m01_axi_rreadyi,   -- out std_logic;
         m01_axi_rdata    => m01_axi_rdatai,    -- in std_logic_vector(511 downto 0);
         m01_axi_rlast    => m01_axi_rlasti,    -- in std_logic;        
-        m01_axi_rresp    => m01_axi_rrespi    -- in std_logic_vector(1 downto 0); -- read response; "00" and "01 are ok, "10" and "11" indicate an error.
+        m01_axi_rresp    => m01_axi_rrespi,    -- in std_logic_vector(1 downto 0); -- read response; "00" and "01 are ok, "10" and "11" indicate an error.
+
+	-- m02
+        m02_axi_awvalid => m02_axi_awvalidi,   -- out std_logic;
+        m02_axi_awready => m02_axi_awreadyi,   -- in std_logic;
+        m02_axi_awaddr  => m02_axi_awaddri(31 downto 0),    -- out std_logic_vector(29 downto 0);
+        m02_axi_awlen   => m02_axi_awleni,     -- out std_logic_vector(7 downto 0); Number of beats in each burst is this value + 1.
+        -- w bus - write data.
+        m02_axi_wvalid   => m02_axi_wvalidi,   -- out std_logic;
+        m02_axi_wready   => m02_axi_wreadyi,   -- in std_logic;
+        m02_axi_wdata    => m02_axi_wdatai,    -- out std_logic_vector(511 downto 0);
+        m02_axi_wlast    => m02_axi_wlasti,    -- out std_logic;
+        -- b bus - write response; "00" or "01" means ok, "10" or "11" means the write failed.
+        m02_axi_bvalid   => m02_axi_bvalidi,   -- in std_logic;
+        m02_axi_bresp    => m02_axi_brespi,    -- in std_logic_vector(1 downto 0);
+        -- ar - read address
+        m02_axi_arvalid  => m02_axi_arvalidi,  -- out std_logic;
+        m02_axi_arready  => m02_axi_arreadyi,  -- in std_logic;
+        m02_axi_araddr   => m02_axi_araddri(31 downto 0),   -- out std_logic_vector(29 downto 0);
+        m02_axi_arlen    => m02_axi_arleni,    -- out std_logic_vector(7 downto 0); --  Number of beats in each burst is this value + 1.
+        -- r - read data
+        m02_axi_rvalid   => m02_axi_rvalidi,   -- in std_logic;
+        m02_axi_rready   => m02_axi_rreadyi,   -- out std_logic;
+        m02_axi_rdata    => m02_axi_rdatai,    -- in std_logic_vector(511 downto 0);
+        m02_axi_rlast    => m02_axi_rlasti,    -- in std_logic;        
+        m02_axi_rresp    => m02_axi_rrespi,    -- in std_logic_vector(1 downto 0); -- read response; "00" and "01 are ok, "10" and "11" indicate an error.
+
+	-- m03
+        m03_axi_awvalid => m03_axi_awvalidi,   -- out std_logic;
+        m03_axi_awready => m03_axi_awreadyi,   -- in std_logic;
+        m03_axi_awaddr  => m03_axi_awaddri(31 downto 0),    -- out std_logic_vector(29 downto 0);
+        m03_axi_awlen   => m03_axi_awleni,     -- out std_logic_vector(7 downto 0); Number of beats in each burst is this value + 1.
+        -- w bus - write data.
+        m03_axi_wvalid   => m03_axi_wvalidi,   -- out std_logic;
+        m03_axi_wready   => m03_axi_wreadyi,   -- in std_logic;
+        m03_axi_wdata    => m03_axi_wdatai,    -- out std_logic_vector(511 downto 0);
+        m03_axi_wlast    => m03_axi_wlasti,    -- out std_logic;
+        -- b bus - write response; "00" or "01" means ok, "10" or "11" means the write failed.
+        m03_axi_bvalid   => m03_axi_bvalidi,   -- in std_logic;
+        m03_axi_bresp    => m03_axi_brespi,    -- in std_logic_vector(1 downto 0);
+        -- ar - read address
+        m03_axi_arvalid  => m03_axi_arvalidi,  -- out std_logic;
+        m03_axi_arready  => m03_axi_arreadyi,  -- in std_logic;
+        m03_axi_araddr   => m03_axi_araddri(31 downto 0),   -- out std_logic_vector(29 downto 0);
+        m03_axi_arlen    => m03_axi_arleni,    -- out std_logic_vector(7 downto 0); --  Number of beats in each burst is this value + 1.
+        -- r - read data
+        m03_axi_rvalid   => m03_axi_rvalidi,   -- in std_logic;
+        m03_axi_rready   => m03_axi_rreadyi,   -- out std_logic;
+        m03_axi_rdata    => m03_axi_rdatai,    -- in std_logic_vector(511 downto 0);
+        m03_axi_rlast    => m03_axi_rlasti,    -- in std_logic;        
+        m03_axi_rresp    => m03_axi_rrespi,    -- in std_logic_vector(1 downto 0); -- read response; "00" and "01 are ok, "10" and "11" indicate an error.
+
+	-- m04
+        m04_axi_awvalid => m04_axi_awvalidi,   -- out std_logic;
+        m04_axi_awready => m04_axi_awreadyi,   -- in std_logic;
+        m04_axi_awaddr  => m04_axi_awaddri(31 downto 0),    -- out std_logic_vector(29 downto 0);
+        m04_axi_awlen   => m04_axi_awleni,     -- out std_logic_vector(7 downto 0); Number of beats in each burst is this value + 1.
+        -- w bus - write data.
+        m04_axi_wvalid   => m04_axi_wvalidi,   -- out std_logic;
+        m04_axi_wready   => m04_axi_wreadyi,   -- in std_logic;
+        m04_axi_wdata    => m04_axi_wdatai,    -- out std_logic_vector(511 downto 0);
+        m04_axi_wlast    => m04_axi_wlasti,    -- out std_logic;
+        -- b bus - write response; "00" or "01" means ok, "10" or "11" means the write failed.
+        m04_axi_bvalid   => m04_axi_bvalidi,   -- in std_logic;
+        m04_axi_bresp    => m04_axi_brespi,    -- in std_logic_vector(1 downto 0);
+        -- ar - read address
+        m04_axi_arvalid  => m04_axi_arvalidi,  -- out std_logic;
+        m04_axi_arready  => m04_axi_arreadyi,  -- in std_logic;
+        m04_axi_araddr   => m04_axi_araddri(31 downto 0),   -- out std_logic_vector(29 downto 0);
+        m04_axi_arlen    => m04_axi_arleni,    -- out std_logic_vector(7 downto 0); --  Number of beats in each burst is this value + 1.
+        -- r - read data
+        m04_axi_rvalid   => m04_axi_rvalidi,   -- in std_logic;
+        m04_axi_rready   => m04_axi_rreadyi,   -- out std_logic;
+        m04_axi_rdata    => m04_axi_rdatai,    -- in std_logic_vector(511 downto 0);
+        m04_axi_rlast    => m04_axi_rlasti,    -- in std_logic;        
+        m04_axi_rresp    => m04_axi_rrespi    -- in std_logic_vector(1 downto 0); -- read response; "00" and "01 are ok, "10" and "11" indicate an error.
+
     );
 
-
-    
+---------------------------------------------------------------------------------------------------------------
+-- HBM mappings and AXI register slice for timing
+---------------------------------------------------------------------------------------------------------------    
     -- Default outgoing signals for m01 bus
-    m01_axi_araddri(63 downto 33) <= m01_shared(63 downto 33);  
-    m01_axi_awaddri(63 downto 33) <= m01_shared(63 downto 33);
+    m01_axi_araddri(63 downto 32) <= m01_shared(63 downto 32);  
+    m01_axi_awaddri(63 downto 32) <= m01_shared(63 downto 32);
     m01_axi_awidi(0) <= '0';   -- We only use a single ID -- out std_logic_vector(0 downto 0);
     m01_axi_awsizei  <= "110";  -- size of 6 indicates 64 bytes in each beat (i.e. 512 bit wide bus) -- out std_logic_vector(2 downto 0);
     m01_axi_awbursti <= "01";   -- "01" indicates incrementing addresses for each beat in the burst.  -- out std_logic_vector(1 downto 0);
@@ -1360,7 +1462,271 @@ END GENERATE;
     );
 
 
-
+    -- Default outgoing signals for m02 bus
+    m02_axi_araddri(63 downto 32) <= m02_shared(63 downto 32);  
+    m02_axi_awaddri(63 downto 32) <= m02_shared(63 downto 32);
+    m02_axi_awidi(0) <= '0';   -- We only use a single ID -- out std_logic_vector(0 downto 0);
+    m02_axi_awsizei  <= "110";  -- size of 6 indicates 64 bytes in each beat (i.e. 512 bit wide bus) -- out std_logic_vector(2 downto 0);
+    m02_axi_awbursti <= "01";   -- "01" indicates incrementing addresses for each beat in the burst.  -- out std_logic_vector(1 downto 0);
+    m02_axi_breadyi  <= '1';  -- Always accept acknowledgement of write transactions. -- out std_logic;
+    m02_axi_wstrbi  <= (others => '1');  -- We always write all bytes in the bus. --  out std_logic_vector(63 downto 0);
+    m02_axi_aridi(0) <= '0';     -- ID are not used. -- out std_logic_vector(0 downto 0);
+    m02_axi_arsizei  <= "110";   -- 6 = 64 bytes per beat = 512 bit wide bus. -- out std_logic_vector(2 downto 0);
+    m02_axi_arbursti <= "01";    -- "01" = incrementing address for each beat in the burst. -- out std_logic_vector(1 downto 0);
+   
+    -- these have no ports on the axi register slice
+    m02_axi_arlock <= "00";
+    m02_axi_awlock <= "00";
+    m02_axi_awcache <= "0011";  -- out std_logic_vector(3 downto 0); bufferable transaction. Default in Vitis environment.
+    m02_axi_awprot  <= "000";   -- Has no effect in Vitis environment. -- out std_logic_vector(2 downto 0);
+    m02_axi_awqos   <= "0000";  -- Has no effect in vitis environment, -- out std_logic_vector(3 downto 0);
+    m02_axi_awregion <= "0000"; -- Has no effect in Vitis environment. -- out std_logic_vector(3 downto 0);
+    m02_axi_arcache <= "0011";  -- out std_logic_vector(3 downto 0); bufferable transaction. Default in Vitis environment.
+    m02_axi_arprot  <= "000";   -- Has no effect in vitis environment; out std_logic_Vector(2 downto 0);
+    m02_axi_arqos    <= "0000"; -- Has no effect in vitis environment; out std_logic_vector(3 downto 0);
+    m02_axi_arregion <= "0000"; -- Has no effect in vitis environment; out std_logic_vector(3 downto 0);
+    -- Ignored incoming signals for m02 bus:
+    -- m02_axi_bid; Since we only use 1 ID, we can ignore this. -- in std_logic_vector(0 downto 0);
+    -- m02_axi_rid  -- in std_logic_vector(0 downto 0);
+    
+-------------------------------------------------------------------------------------------    
+    -- Register slice for the m02 AXI interface
+    m02_reg_slice : axi_reg_slice512_LLFFL
+    port map (
+        aclk    => ap_clk, --  IN STD_LOGIC;
+        aresetn => ap_rst_n, --  IN STD_LOGIC;
+        -- 
+        s_axi_awaddr   => m02_axi_awaddri, -- IN STD_LOGIC_VECTOR(63 DOWNTO 0);
+        s_axi_awlen    => m02_axi_awleni,  -- IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+        s_axi_awsize   => m02_axi_awsizei, -- IN STD_LOGIC_VECTOR(2 DOWNTO 0);
+        s_axi_awburst  => m02_axi_awbursti, -- IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+        s_axi_awvalid  => m02_axi_awvalidi,  -- IN STD_LOGIC;
+        s_axi_awready  => m02_axi_awreadyi,  -- OUT STD_LOGIC;
+        s_axi_wdata    => m02_axi_wdatai,    -- IN STD_LOGIC_VECTOR(511 DOWNTO 0);
+        s_axi_wstrb    => m02_axi_wstrbi,    -- IN STD_LOGIC_VECTOR(63 DOWNTO 0);
+        s_axi_wlast    => m02_axi_wlasti,    -- IN STD_LOGIC;
+        s_axi_wvalid   => m02_axi_wvalidi,   -- IN STD_LOGIC;
+        s_axi_wready   => m02_axi_wreadyi,   -- OUT STD_LOGIC;
+        s_axi_bresp    => m02_axi_brespi,    --  OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+        s_axi_bvalid   => m02_axi_bvalidi,   -- OUT STD_LOGIC;
+        s_axi_bready   => m02_axi_breadyi,   -- IN STD_LOGIC;
+        s_axi_araddr   => m02_axi_araddri,   -- IN STD_LOGIC_VECTOR(63 DOWNTO 0);
+        s_axi_arlen    => m02_axi_arleni,    -- IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+        s_axi_arsize   => m02_axi_arsizei,   -- IN STD_LOGIC_VECTOR(2 DOWNTO 0);
+        s_axi_arburst  => m02_axi_arbursti,  -- IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+        s_axi_arvalid  => m02_axi_arvalidi,  -- IN STD_LOGIC;
+        s_axi_arready  => m02_axi_arreadyi,  -- OUT STD_LOGIC;
+        s_axi_rdata    => m02_axi_rdatai,    -- OUT STD_LOGIC_VECTOR(511 DOWNTO 0);
+        s_axi_rresp    => m02_axi_rrespi,    -- OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+        s_axi_rlast    => m02_axi_rlasti,    -- OUT STD_LOGIC;
+        s_axi_rvalid   => m02_axi_rvalidi,   -- OUT STD_LOGIC;
+        s_axi_rready   => m02_axi_rreadyi,   -- IN STD_LOGIC;
+        --
+        m_axi_awaddr   => m02_axi_awaddr, -- OUT STD_LOGIC_VECTOR(63 DOWNTO 0);
+        m_axi_awlen    => m02_axi_awlen,  -- OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+        m_axi_awsize   => m02_axi_awsize, -- OUT STD_LOGIC_VECTOR(2 DOWNTO 0);
+        m_axi_awburst  => m02_axi_awburst, -- OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+        m_axi_awvalid  => m02_axi_awvalid,  -- OUT STD_LOGIC;
+        m_axi_awready  => m02_axi_awready,  -- IN STD_LOGIC;
+        m_axi_wdata    => m02_axi_wdata,    -- OUT STD_LOGIC_VECTOR(511 DOWNTO 0);
+        m_axi_wstrb    => m02_axi_wstrb,    -- OUT STD_LOGIC_VECTOR(63 DOWNTO 0);
+        m_axi_wlast    => m02_axi_wlast,    -- OUT STD_LOGIC;
+        m_axi_wvalid   => m02_axi_wvalid,   -- OUT STD_LOGIC;
+        m_axi_wready   => m02_axi_wready,   -- IN STD_LOGIC;
+        m_axi_bresp    => m02_axi_bresp,    -- IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+        m_axi_bvalid   => m02_axi_bvalid,   -- IN STD_LOGIC;
+        m_axi_bready   => m02_axi_bready,   -- OUT STD_LOGIC;
+        m_axi_araddr   => m02_axi_araddr,   -- OUT STD_LOGIC_VECTOR(63 DOWNTO 0);
+        m_axi_arlen    => m02_axi_arlen,    -- OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+        m_axi_arsize   => m02_axi_arsize,   -- OUT STD_LOGIC_VECTOR(2 DOWNTO 0);
+        m_axi_arburst  => m02_axi_arburst,  -- OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+       
+        m_axi_arvalid  => m02_axi_arvalid,  -- OUT STD_LOGIC;
+        m_axi_arready  => m02_axi_arready,  -- IN STD_LOGIC;
+        m_axi_rdata    => m02_axi_rdata,    -- IN STD_LOGIC_VECTOR(511 DOWNTO 0);
+        m_axi_rresp    => m02_axi_rresp,    -- IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+        m_axi_rlast    => m02_axi_rlast,    -- IN STD_LOGIC;
+        m_axi_rvalid   => m02_axi_rvalid,   -- IN STD_LOGIC;
+        m_axi_rready   => m02_axi_rready    --: OUT STD_LOGIC
+    );
+    
+-------------------------------------------------------------------------------------------    
+    -- Default outgoing signals for m03 bus
+    m03_axi_araddri(63 downto 32) <= m03_shared(63 downto 32);  
+    m03_axi_awaddri(63 downto 32) <= m03_shared(63 downto 32);
+    m03_axi_awidi(0) <= '0';   -- We only use a single ID -- out std_logic_vector(0 downto 0);
+    m03_axi_awsizei  <= "110";  -- size of 6 indicates 64 bytes in each beat (i.e. 512 bit wide bus) -- out std_logic_vector(2 downto 0);
+    m03_axi_awbursti <= "01";   -- "01" indicates incrementing addresses for each beat in the burst.  -- out std_logic_vector(1 downto 0);
+    m03_axi_breadyi  <= '1';  -- Always accept acknowledgement of write transactions. -- out std_logic;
+    m03_axi_wstrbi  <= (others => '1');  -- We always write all bytes in the bus. --  out std_logic_vector(63 downto 0);
+    m03_axi_aridi(0) <= '0';     -- ID are not used. -- out std_logic_vector(0 downto 0);
+    m03_axi_arsizei  <= "110";   -- 6 = 64 bytes per beat = 512 bit wide bus. -- out std_logic_vector(2 downto 0);
+    m03_axi_arbursti <= "01";    -- "01" = incrementing address for each beat in the burst. -- out std_logic_vector(1 downto 0);
+   
+    -- these have no ports on the axi register slice
+    m03_axi_arlock <= "00";
+    m03_axi_awlock <= "00";
+    m03_axi_awcache <= "0011";  -- out std_logic_vector(3 downto 0); bufferable transaction. Default in Vitis environment.
+    m03_axi_awprot  <= "000";   -- Has no effect in Vitis environment. -- out std_logic_vector(2 downto 0);
+    m03_axi_awqos   <= "0000";  -- Has no effect in vitis environment, -- out std_logic_vector(3 downto 0);
+    m03_axi_awregion <= "0000"; -- Has no effect in Vitis environment. -- out std_logic_vector(3 downto 0);
+    m03_axi_arcache <= "0011";  -- out std_logic_vector(3 downto 0); bufferable transaction. Default in Vitis environment.
+    m03_axi_arprot  <= "000";   -- Has no effect in vitis environment; out std_logic_Vector(2 downto 0);
+    m03_axi_arqos    <= "0000"; -- Has no effect in vitis environment; out std_logic_vector(3 downto 0);
+    m03_axi_arregion <= "0000"; -- Has no effect in vitis environment; out std_logic_vector(3 downto 0);
+    -- Ignored incoming signals for m03 bus:
+    -- m03_axi_bid; Since we only use 1 ID, we can ignore this. -- in std_logic_vector(0 downto 0);
+    -- m03_axi_rid  -- in std_logic_vector(0 downto 0);
+    
+    
+    -- Register slice for the m03 AXI interface
+    m03_reg_slice : axi_reg_slice512_LLFFL
+    port map (
+        aclk    => ap_clk, --  IN STD_LOGIC;
+        aresetn => ap_rst_n, --  IN STD_LOGIC;
+        -- 
+        s_axi_awaddr   => m03_axi_awaddri, -- IN STD_LOGIC_VECTOR(63 DOWNTO 0);
+        s_axi_awlen    => m03_axi_awleni,  -- IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+        s_axi_awsize   => m03_axi_awsizei, -- IN STD_LOGIC_VECTOR(2 DOWNTO 0);
+        s_axi_awburst  => m03_axi_awbursti, -- IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+        s_axi_awvalid  => m03_axi_awvalidi,  -- IN STD_LOGIC;
+        s_axi_awready  => m03_axi_awreadyi,  -- OUT STD_LOGIC;
+        s_axi_wdata    => m03_axi_wdatai,    -- IN STD_LOGIC_VECTOR(511 DOWNTO 0);
+        s_axi_wstrb    => m03_axi_wstrbi,    -- IN STD_LOGIC_VECTOR(63 DOWNTO 0);
+        s_axi_wlast    => m03_axi_wlasti,    -- IN STD_LOGIC;
+        s_axi_wvalid   => m03_axi_wvalidi,   -- IN STD_LOGIC;
+        s_axi_wready   => m03_axi_wreadyi,   -- OUT STD_LOGIC;
+        s_axi_bresp    => m03_axi_brespi,    --  OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+        s_axi_bvalid   => m03_axi_bvalidi,   -- OUT STD_LOGIC;
+        s_axi_bready   => m03_axi_breadyi,   -- IN STD_LOGIC;
+        s_axi_araddr   => m03_axi_araddri,   -- IN STD_LOGIC_VECTOR(63 DOWNTO 0);
+        s_axi_arlen    => m03_axi_arleni,    -- IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+        s_axi_arsize   => m03_axi_arsizei,   -- IN STD_LOGIC_VECTOR(2 DOWNTO 0);
+        s_axi_arburst  => m03_axi_arbursti,  -- IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+        s_axi_arvalid  => m03_axi_arvalidi,  -- IN STD_LOGIC;
+        s_axi_arready  => m03_axi_arreadyi,  -- OUT STD_LOGIC;
+        s_axi_rdata    => m03_axi_rdatai,    -- OUT STD_LOGIC_VECTOR(511 DOWNTO 0);
+        s_axi_rresp    => m03_axi_rrespi,    -- OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+        s_axi_rlast    => m03_axi_rlasti,    -- OUT STD_LOGIC;
+        s_axi_rvalid   => m03_axi_rvalidi,   -- OUT STD_LOGIC;
+        s_axi_rready   => m03_axi_rreadyi,   -- IN STD_LOGIC;
+        --
+        m_axi_awaddr   => m03_axi_awaddr, -- OUT STD_LOGIC_VECTOR(63 DOWNTO 0);
+        m_axi_awlen    => m03_axi_awlen,  -- OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+        m_axi_awsize   => m03_axi_awsize, -- OUT STD_LOGIC_VECTOR(2 DOWNTO 0);
+        m_axi_awburst  => m03_axi_awburst, -- OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+        m_axi_awvalid  => m03_axi_awvalid,  -- OUT STD_LOGIC;
+        m_axi_awready  => m03_axi_awready,  -- IN STD_LOGIC;
+        m_axi_wdata    => m03_axi_wdata,    -- OUT STD_LOGIC_VECTOR(511 DOWNTO 0);
+        m_axi_wstrb    => m03_axi_wstrb,    -- OUT STD_LOGIC_VECTOR(63 DOWNTO 0);
+        m_axi_wlast    => m03_axi_wlast,    -- OUT STD_LOGIC;
+        m_axi_wvalid   => m03_axi_wvalid,   -- OUT STD_LOGIC;
+        m_axi_wready   => m03_axi_wready,   -- IN STD_LOGIC;
+        m_axi_bresp    => m03_axi_bresp,    -- IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+        m_axi_bvalid   => m03_axi_bvalid,   -- IN STD_LOGIC;
+        m_axi_bready   => m03_axi_bready,   -- OUT STD_LOGIC;
+        m_axi_araddr   => m03_axi_araddr,   -- OUT STD_LOGIC_VECTOR(63 DOWNTO 0);
+        m_axi_arlen    => m03_axi_arlen,    -- OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+        m_axi_arsize   => m03_axi_arsize,   -- OUT STD_LOGIC_VECTOR(2 DOWNTO 0);
+        m_axi_arburst  => m03_axi_arburst,  -- OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+       
+        m_axi_arvalid  => m03_axi_arvalid,  -- OUT STD_LOGIC;
+        m_axi_arready  => m03_axi_arready,  -- IN STD_LOGIC;
+        m_axi_rdata    => m03_axi_rdata,    -- IN STD_LOGIC_VECTOR(511 DOWNTO 0);
+        m_axi_rresp    => m03_axi_rresp,    -- IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+        m_axi_rlast    => m03_axi_rlast,    -- IN STD_LOGIC;
+        m_axi_rvalid   => m03_axi_rvalid,   -- IN STD_LOGIC;
+        m_axi_rready   => m03_axi_rready    --: OUT STD_LOGIC
+    );
+    
+-------------------------------------------------------------------------------------------    
+    -- Default outgoing signals for m04 bus
+    m04_axi_araddri(63 downto 32) <= m04_shared(63 downto 32);  
+    m04_axi_awaddri(63 downto 32) <= m04_shared(63 downto 32);
+    m04_axi_awidi(0) <= '0';   -- We only use a single ID -- out std_logic_vector(0 downto 0);
+    m04_axi_awsizei  <= "110";  -- size of 6 indicates 64 bytes in each beat (i.e. 512 bit wide bus) -- out std_logic_vector(2 downto 0);
+    m04_axi_awbursti <= "01";   -- "01" indicates incrementing addresses for each beat in the burst.  -- out std_logic_vector(1 downto 0);
+    m04_axi_breadyi  <= '1';  -- Always accept acknowledgement of write transactions. -- out std_logic;
+    m04_axi_wstrbi  <= (others => '1');  -- We always write all bytes in the bus. --  out std_logic_vector(63 downto 0);
+    m04_axi_aridi(0) <= '0';     -- ID are not used. -- out std_logic_vector(0 downto 0);
+    m04_axi_arsizei  <= "110";   -- 6 = 64 bytes per beat = 512 bit wide bus. -- out std_logic_vector(2 downto 0);
+    m04_axi_arbursti <= "01";    -- "01" = incrementing address for each beat in the burst. -- out std_logic_vector(1 downto 0);
+   
+    -- these have no ports on the axi register slice
+    m04_axi_arlock <= "00";
+    m04_axi_awlock <= "00";
+    m04_axi_awcache <= "0011";  -- out std_logic_vector(3 downto 0); bufferable transaction. Default in Vitis environment.
+    m04_axi_awprot  <= "000";   -- Has no effect in Vitis environment. -- out std_logic_vector(2 downto 0);
+    m04_axi_awqos   <= "0000";  -- Has no effect in vitis environment, -- out std_logic_vector(3 downto 0);
+    m04_axi_awregion <= "0000"; -- Has no effect in Vitis environment. -- out std_logic_vector(3 downto 0);
+    m04_axi_arcache <= "0011";  -- out std_logic_vector(3 downto 0); bufferable transaction. Default in Vitis environment.
+    m04_axi_arprot  <= "000";   -- Has no effect in vitis environment; out std_logic_Vector(2 downto 0);
+    m04_axi_arqos    <= "0000"; -- Has no effect in vitis environment; out std_logic_vector(3 downto 0);
+    m04_axi_arregion <= "0000"; -- Has no effect in vitis environment; out std_logic_vector(3 downto 0);
+    -- Ignored incoming signals for m04 bus:
+    -- m04_axi_bid; Since we only use 1 ID, we can ignore this. -- in std_logic_vector(0 downto 0);
+    -- m04_axi_rid  -- in std_logic_vector(0 downto 0);
+    
+    
+    -- Register slice for the m04 AXI interface
+    m04_reg_slice : axi_reg_slice512_LLFFL
+    port map (
+        aclk    => ap_clk, --  IN STD_LOGIC;
+        aresetn => ap_rst_n, --  IN STD_LOGIC;
+        -- 
+        s_axi_awaddr   => m04_axi_awaddri, -- IN STD_LOGIC_VECTOR(63 DOWNTO 0);
+        s_axi_awlen    => m04_axi_awleni,  -- IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+        s_axi_awsize   => m04_axi_awsizei, -- IN STD_LOGIC_VECTOR(2 DOWNTO 0);
+        s_axi_awburst  => m04_axi_awbursti, -- IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+        s_axi_awvalid  => m04_axi_awvalidi,  -- IN STD_LOGIC;
+        s_axi_awready  => m04_axi_awreadyi,  -- OUT STD_LOGIC;
+        s_axi_wdata    => m04_axi_wdatai,    -- IN STD_LOGIC_VECTOR(511 DOWNTO 0);
+        s_axi_wstrb    => m04_axi_wstrbi,    -- IN STD_LOGIC_VECTOR(63 DOWNTO 0);
+        s_axi_wlast    => m04_axi_wlasti,    -- IN STD_LOGIC;
+        s_axi_wvalid   => m04_axi_wvalidi,   -- IN STD_LOGIC;
+        s_axi_wready   => m04_axi_wreadyi,   -- OUT STD_LOGIC;
+        s_axi_bresp    => m04_axi_brespi,    --  OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+        s_axi_bvalid   => m04_axi_bvalidi,   -- OUT STD_LOGIC;
+        s_axi_bready   => m04_axi_breadyi,   -- IN STD_LOGIC;
+        s_axi_araddr   => m04_axi_araddri,   -- IN STD_LOGIC_VECTOR(63 DOWNTO 0);
+        s_axi_arlen    => m04_axi_arleni,    -- IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+        s_axi_arsize   => m04_axi_arsizei,   -- IN STD_LOGIC_VECTOR(2 DOWNTO 0);
+        s_axi_arburst  => m04_axi_arbursti,  -- IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+        s_axi_arvalid  => m04_axi_arvalidi,  -- IN STD_LOGIC;
+        s_axi_arready  => m04_axi_arreadyi,  -- OUT STD_LOGIC;
+        s_axi_rdata    => m04_axi_rdatai,    -- OUT STD_LOGIC_VECTOR(511 DOWNTO 0);
+        s_axi_rresp    => m04_axi_rrespi,    -- OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+        s_axi_rlast    => m04_axi_rlasti,    -- OUT STD_LOGIC;
+        s_axi_rvalid   => m04_axi_rvalidi,   -- OUT STD_LOGIC;
+        s_axi_rready   => m04_axi_rreadyi,   -- IN STD_LOGIC;
+        --
+        m_axi_awaddr   => m04_axi_awaddr, -- OUT STD_LOGIC_VECTOR(63 DOWNTO 0);
+        m_axi_awlen    => m04_axi_awlen,  -- OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+        m_axi_awsize   => m04_axi_awsize, -- OUT STD_LOGIC_VECTOR(2 DOWNTO 0);
+        m_axi_awburst  => m04_axi_awburst, -- OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+        m_axi_awvalid  => m04_axi_awvalid,  -- OUT STD_LOGIC;
+        m_axi_awready  => m04_axi_awready,  -- IN STD_LOGIC;
+        m_axi_wdata    => m04_axi_wdata,    -- OUT STD_LOGIC_VECTOR(511 DOWNTO 0);
+        m_axi_wstrb    => m04_axi_wstrb,    -- OUT STD_LOGIC_VECTOR(63 DOWNTO 0);
+        m_axi_wlast    => m04_axi_wlast,    -- OUT STD_LOGIC;
+        m_axi_wvalid   => m04_axi_wvalid,   -- OUT STD_LOGIC;
+        m_axi_wready   => m04_axi_wready,   -- IN STD_LOGIC;
+        m_axi_bresp    => m04_axi_bresp,    -- IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+        m_axi_bvalid   => m04_axi_bvalid,   -- IN STD_LOGIC;
+        m_axi_bready   => m04_axi_bready,   -- OUT STD_LOGIC;
+        m_axi_araddr   => m04_axi_araddr,   -- OUT STD_LOGIC_VECTOR(63 DOWNTO 0);
+        m_axi_arlen    => m04_axi_arlen,    -- OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+        m_axi_arsize   => m04_axi_arsize,   -- OUT STD_LOGIC_VECTOR(2 DOWNTO 0);
+        m_axi_arburst  => m04_axi_arburst,  -- OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+       
+        m_axi_arvalid  => m04_axi_arvalid,  -- OUT STD_LOGIC;
+        m_axi_arready  => m04_axi_arready,  -- IN STD_LOGIC;
+        m_axi_rdata    => m04_axi_rdata,    -- IN STD_LOGIC_VECTOR(511 DOWNTO 0);
+        m_axi_rresp    => m04_axi_rresp,    -- IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+        m_axi_rlast    => m04_axi_rlast,    -- IN STD_LOGIC;
+        m_axi_rvalid   => m04_axi_rvalid,   -- IN STD_LOGIC;
+        m_axi_rready   => m04_axi_rready    --: OUT STD_LOGIC
+    );
 
     
 END RTL;
