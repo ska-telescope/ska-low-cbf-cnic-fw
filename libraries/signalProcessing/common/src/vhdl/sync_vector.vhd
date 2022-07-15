@@ -49,13 +49,19 @@ signal drain_sm : drain_statemachine;
 
 signal clock_b_rst : std_logic;
 
+signal fifo_wr_busy : std_logic;
+
+signal reset_combo_a : std_logic;
 
 begin
+
+
+reset_combo_a <= clock_a_rst OR fifo_wr_busy;
 
 update_fifo_proc : process(clock_a)
 begin
     if rising_edge(clock_a) then
-        if clock_a_rst = '1' then
+        if reset_combo_a = '1' then
             data_wr <= '0';
         else
             data_in_int <= data_in;
@@ -85,7 +91,7 @@ end process;
         dest_clk        => clock_b,   
         dest_out        => clock_b_rst,         
         src_clk         => clock_a,    
-        src_in          => clock_a_rst
+        src_in          => reset_combo_a
     );
 -------------------------------------------
 
@@ -163,7 +169,7 @@ CDC_fifo : xpm_fifo_async
         sbiterr         => open,      -- 1-bit output: Single Bit Error: Indicates that the ECC decoder detected and fixed a single-bit error.
         underflow       => open,    -- 1-bit output: Underflow: Indicates that the read request (rd_en).
         wr_ack          => open,       -- 1-bit output: Write Acknowledge: This signal indicates that a write request (wr_en) during the prior clock succeeded.
-        wr_rst_busy     => open,  -- 1-bit output: Write Reset Busy: Active-High indicator that the FIFO is busy with reset
+        wr_rst_busy     => fifo_wr_busy,  -- 1-bit output: Write Reset Busy: Active-High indicator that the FIFO is busy with reset
         injectdbiterr   => '0', -- 1-bit input: Double Bit Error Injection: Injects a double bit error.
         injectsbiterr   => '0', -- 1-bit input: Single Bit Error Injection
         sleep           => '0'         -- 1-bit input: Dynamic power saving

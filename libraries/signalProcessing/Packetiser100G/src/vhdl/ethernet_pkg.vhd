@@ -18,6 +18,7 @@ constant c_ones_byte 	: std_logic_vector(7 downto 0) 	 := c_ones_nibble & c_ones
 constant c_ones_word 	: std_logic_vector(15 downto 0)  := c_ones_byte & c_ones_byte;
 constant c_ones_dword 	: std_logic_vector(31 downto 0)  := c_ones_word & c_ones_word;
 constant c_ones_qword 	: std_logic_vector(63 downto 0)  := c_ones_dword & c_ones_dword;
+constant c_ones_64 	    : std_logic_vector(63 downto 0)  := c_ones_dword & c_ones_dword;
 constant c_ones_128 	: std_logic_vector(127 downto 0) := c_ones_qword & c_ones_qword;
 constant c_ones_256 	: std_logic_vector(255 downto 0) := c_ones_128 & c_ones_128;
 constant c_ones_512 	: std_logic_vector(511 downto 0) := c_ones_256 & c_ones_256;
@@ -27,6 +28,7 @@ constant zero_byte 	    : std_logic_vector(7 downto 0) 	:= zero_nibble & zero_ni
 constant zero_word 	    : std_logic_vector(15 downto 0) := zero_byte & zero_byte;
 constant zero_dword 	: std_logic_vector(31 downto 0) := zero_word & zero_word;
 constant zero_qword 	: std_logic_vector(63 downto 0) := zero_dword & zero_dword;
+constant zero_64 	    : std_logic_vector(63 downto 0) := zero_dword & zero_dword;
 constant zero_128 	    : std_logic_vector(127 downto 0):= zero_qword & zero_qword;
 constant zero_256 	    : std_logic_vector(255 downto 0):= zero_128 & zero_128;
 constant zero_512       : std_logic_vector(511 downto 0):= zero_256 & zero_256;
@@ -245,4 +247,42 @@ constant t_default_IPv4_header : t_IPv4_header(2 downto 0) := ( default_ipv4_hea
                                                                 default_ipv4_header_2,
                                                                 default_ipv4_header_3
                                                                 );                                                            
+
+Function byte_en_to_vector_count(byte_en: std_logic_vector(15 downto 0)) return std_logic_vector;
+
+end ethernet_pkg;
+
+PACKAGE BODY ethernet_pkg IS
+
+FUNCTION byte_en_to_vector_count(byte_en: std_logic_vector(15 downto 0)) RETURN STD_LOGIC_VECTOR IS
+    VARIABLE count : STD_LOGIC_VECTOR(4 DOWNTO 0);
+    BEGIN
+        CASE byte_en IS
+            WHEN x"0000" => count :=  ('0' & x"0");
+            WHEN x"0001" => count :=  ('0' & x"1");
+            WHEN x"0003" => count :=  ('0' & x"2");
+            WHEN x"0007" => count :=  ('0' & x"3");
+            WHEN x"000F" => count :=  ('0' & x"4");
+            WHEN x"001F" => count :=  ('0' & x"5");
+            WHEN x"003F" => count :=  ('0' & x"6");
+            WHEN x"007F" => count :=  ('0' & x"7");
+            WHEN x"00FF" => count :=  ('0' & x"8");
+            WHEN x"01FF" => count :=  ('0' & x"9");
+            WHEN x"03FF" => count :=  ('0' & x"A");
+            WHEN x"07FF" => count :=  ('0' & x"B");
+            WHEN x"0FFF" => count :=  ('0' & x"C");
+            WHEN x"1FFF" => count :=  ('0' & x"D");
+            WHEN x"3FFF" => count :=  ('0' & x"E");
+            WHEN x"7FFF" => count :=  ('0' & x"F");
+            WHEN x"FFFF" => count :=  ('1' & x"0");
+            
+            WHEN OTHERS  => count := "00000";
+        END CASE;
+        
+   RETURN count;
+END byte_en_to_vector_count;
+
+
+
+
 end ethernet_pkg;
