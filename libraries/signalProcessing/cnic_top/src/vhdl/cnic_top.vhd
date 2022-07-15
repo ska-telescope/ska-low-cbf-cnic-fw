@@ -12,7 +12,7 @@
 --  See the file LICENSE for more info.
 -------------------------------------------------------------------------------
 
-LIBRARY IEEE, common_lib, axi4_lib, cnic_lib;
+LIBRARY IEEE, common_lib, axi4_lib, cmac_s_axi_lib;
 library HBM_PktController_lib, cnic_lib, PSR_Packetiser_lib;
 
 use cnic_lib.cnic_top_pkg.all;
@@ -246,12 +246,45 @@ ARCHITECTURE structure OF cnic_top IS
     signal eth100G_reset : std_logic;
 
     signal dbg_ILA_trigger, bdbg_ILA_triggerDel1, bdbg_ILA_trigger, bdbg_ILA_triggerDel2 : std_logic;
-    -- signal dataMismatch_dbg, dataMismatch, datamismatchBFclk : std_logic;
+    
+    signal rx_packet_size       : std_logic_vector(13 downto 0);     -- Max size is 9000.
+    signal rx_reset_capture     : std_logic;
+    signal rx_reset_counter     : std_logic;
     
 begin
     
-    o_rx_axis_tready <= '1';
+    rx_s_axi : entity cmac_s_axi_lib.s_axi_packet_capture 
+    Port map ( 
+        --------------------------------------------------------
+        -- 100G 
+        i_clk_100GE             => i_clk_100GE,
+        i_eth100G_locked        => i_eth100G_locked,
+        
+        i_clk_300               => i_MACE_clk,
+        i_clk_300_rst           => i_MACE_rst,
+        
+        
+        i_rx_packet_size        => rx_packet_size,
+        i_rx_reset_capture      => rx_reset_capture,
+        i_reset_counter         => rx_reset_counter,
+        o_target_count          => open,
+        o_nontarget_count       => open,
+
+        -- 100G RX S_AXI interface ~322 MHz
+        i_rx_axis_tdata         => i_rx_axis_tdata,
+        i_rx_axis_tkeep         => i_rx_axis_tkeep,
+        i_rx_axis_tlast         => i_rx_axis_tlast,
+        o_rx_axis_tready        => o_rx_axis_tready,
+        i_rx_axis_tuser         => i_rx_axis_tuser,
+        i_rx_axis_tvalid        => i_rx_axis_tvalid,
+        
+        -- Data to HBM writer - 300 MHz
+        o_data_to_hbm           => open,
+        o_data_to_hbm_wr        => open
     
+    );
+    
+-------------------------------------------------------------------------------------------------------------    
     i_HBM_PktController : entity HBM_PktController_lib.HBM_PktController
     port map (
         clk_freerun => clk_freerun, 

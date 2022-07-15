@@ -295,9 +295,15 @@ set_property library PSR_Packetiser_lib [get_files {\
  *libraries/signalProcessing/Packetiser100G/src/vhdl/CODIF_header_modifier.vhd \
 }]
 
-## tcl scripts for ip generation
-#source $ARGS_PATH/Packetiser/packetiser/ip_Packetiser_packetiser_param_ram.tcl
-#source $RLIBRARIES_PATH/signalProcessing/Packetiser100G/src/vhdl/packetiser100G.tcl
+#############################################################
+# S AXI capture
+add_files -fileset sources_1 [glob \
+ $RLIBRARIES_PATH/signalProcessing/s_axi_packet_capture/vhdl/s_axi_packet_capture.vhd
+]
+set_property library cmac_s_axi_lib [get_files {\
+ *libraries/signalProcessing/s_axi_packet_capture/vhdl/s_axi_packet_capture.vhd
+}]
+
 
 #############################################################
 # Signal_processing_common
@@ -305,10 +311,12 @@ set_property library PSR_Packetiser_lib [get_files {\
 add_files -fileset sources_1 [glob \
  $RLIBRARIES_PATH/signalProcessing/common/src/vhdl/sync.vhd \
  $RLIBRARIES_PATH/signalProcessing/common/src/vhdl/sync_vector.vhd \
+ $RLIBRARIES_PATH/signalProcessing/common/src/vhdl/memory_dp_wrapper.vhd \
 ]
 set_property library signal_processing_common [get_files {\
  *libraries/signalProcessing/common/src/vhdl/sync.vhd \
  *libraries/signalProcessing/common/src/vhdl/sync_vector.vhd \
+ *libraries/signalProcessing/common/src/vhdl/memory_dp_wrapper.vhd \
 }]
 
 ## tcl scripts for ip generation
@@ -351,4 +359,14 @@ add_files -fileset sim_1 -norecurse $DESIGN_PATH/src/tb/tb_cnic_behav.wcfg
 set_property xsim.view $DESIGN_PATH/src/tb/tb_cnic_behav.wcfg [get_filesets sim_1]
 
 
+##############################################################
+# Add simulation set for S-AXI_100G Capture
 
+create_fileset -simset sim_s_axi_cap
+set_property SOURCE_SET sources_1 [get_filesets sim_s_axi_cap]
+add_files -fileset sim_s_axi_cap [glob \
+   $RLIBRARIES_PATH/signalProcessing/s_axi_packet_capture/tb/tb_s_axi.vhd
+]
+set_property top tb_s_axi [get_filesets sim_s_axi_cap]
+set_property top_lib xil_defaultlib [get_filesets sim_s_axi_cap]
+update_compile_order -fileset sim_s_axi_cap

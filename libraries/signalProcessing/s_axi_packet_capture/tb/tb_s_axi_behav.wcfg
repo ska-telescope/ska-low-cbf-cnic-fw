@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="tb_s_axi_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="cbfpsrheader_pkg" />
+            <top_module name="common_pkg" />
+            <top_module name="ethernet_pkg" />
+            <top_module name="glbl" />
+            <top_module name="tb_s_axi" />
+            <top_module name="vcomponents" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="0.000 ns"></ZoomStartTime>
+      <ZoomEndTime time="2,688.001 ns"></ZoomEndTime>
+      <Cursor1Time time="3,000.000 ns"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="229"></NameColumnWidth>
+      <ValueColumnWidth column_width="66"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="56" />
+   <wvobject type="logic" fp_name="/tb_s_axi/clock_300">
+      <obj_property name="ElementShortName">clock_300</obj_property>
+      <obj_property name="ObjectShortName">clock_300</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_s_axi/clock_400">
+      <obj_property name="ElementShortName">clock_400</obj_property>
+      <obj_property name="ObjectShortName">clock_400</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_s_axi/clock_322">
+      <obj_property name="ElementShortName">clock_322</obj_property>
+      <obj_property name="ObjectShortName">clock_322</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/tb_s_axi/testCount_400">
+      <obj_property name="ElementShortName">testCount_400</obj_property>
+      <obj_property name="ObjectShortName">testCount_400</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/tb_s_axi/testCount_300">
+      <obj_property name="ElementShortName">testCount_300</obj_property>
+      <obj_property name="ObjectShortName">testCount_300</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/tb_s_axi/testCount_322">
+      <obj_property name="ElementShortName">testCount_322</obj_property>
+      <obj_property name="ObjectShortName">testCount_322</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_s_axi/clock_400_rst">
+      <obj_property name="ElementShortName">clock_400_rst</obj_property>
+      <obj_property name="ObjectShortName">clock_400_rst</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_s_axi/clock_300_rst">
+      <obj_property name="ElementShortName">clock_300_rst</obj_property>
+      <obj_property name="ObjectShortName">clock_300_rst</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_s_axi/clock_322_rst">
+      <obj_property name="ElementShortName">clock_322_rst</obj_property>
+      <obj_property name="ObjectShortName">clock_322_rst</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/power_up_rst_clock_400">
+      <obj_property name="ElementShortName">power_up_rst_clock_400[31:0]</obj_property>
+      <obj_property name="ObjectShortName">power_up_rst_clock_400[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/power_up_rst_clock_300">
+      <obj_property name="ElementShortName">power_up_rst_clock_300[31:0]</obj_property>
+      <obj_property name="ObjectShortName">power_up_rst_clock_300[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/power_up_rst_clock_322">
+      <obj_property name="ElementShortName">power_up_rst_clock_322[31:0]</obj_property>
+      <obj_property name="ObjectShortName">power_up_rst_clock_322[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/DUT/o_data_to_hbm">
+      <obj_property name="ElementShortName">o_data_to_hbm[511:0]</obj_property>
+      <obj_property name="ObjectShortName">o_data_to_hbm[511:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_s_axi/DUT/o_data_to_hbm_wr">
+      <obj_property name="ElementShortName">o_data_to_hbm_wr</obj_property>
+      <obj_property name="ObjectShortName">o_data_to_hbm_wr</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/tb_s_axi/DUT/hbm_streaming_sm">
+      <obj_property name="ElementShortName">hbm_streaming_sm</obj_property>
+      <obj_property name="ObjectShortName">hbm_streaming_sm</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/DUT/rd_addr">
+      <obj_property name="ElementShortName">rd_addr[7:0]</obj_property>
+      <obj_property name="ObjectShortName">rd_addr[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/DUT/wr_addr">
+      <obj_property name="ElementShortName">wr_addr[7:0]</obj_property>
+      <obj_property name="ObjectShortName">wr_addr[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/DUT/words_to_send_to_hbm">
+      <obj_property name="ElementShortName">words_to_send_to_hbm[7:0]</obj_property>
+      <obj_property name="ObjectShortName">words_to_send_to_hbm[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_s_axi/DUT/rx_buffer_ram_din_wr">
+      <obj_property name="ElementShortName">rx_buffer_ram_din_wr</obj_property>
+      <obj_property name="ObjectShortName">rx_buffer_ram_din_wr</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider257" type="divider">
+      <obj_property name="label">Output</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_s_axi/DUT/calib_done">
+      <obj_property name="ElementShortName">calib_done</obj_property>
+      <obj_property name="ObjectShortName">calib_done</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/streaming_data">
+      <obj_property name="ElementShortName">streaming_data[511:0]</obj_property>
+      <obj_property name="ObjectShortName">streaming_data[511:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/ethernet_info">
+      <obj_property name="ElementShortName">ethernet_info</obj_property>
+      <obj_property name="ObjectShortName">ethernet_info</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/ipv4_info">
+      <obj_property name="ElementShortName">ipv4_info</obj_property>
+      <obj_property name="ObjectShortName">ipv4_info</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/udp_info">
+      <obj_property name="ElementShortName">udp_info</obj_property>
+      <obj_property name="ObjectShortName">udp_info</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/rx_packet_size">
+      <obj_property name="ElementShortName">rx_packet_size[13:0]</obj_property>
+      <obj_property name="ObjectShortName">rx_packet_size[13:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_s_axi/rx_reset_capture">
+      <obj_property name="ElementShortName">rx_reset_capture</obj_property>
+      <obj_property name="ObjectShortName">rx_reset_capture</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_s_axi/rx_reset_counter">
+      <obj_property name="ElementShortName">rx_reset_counter</obj_property>
+      <obj_property name="ObjectShortName">rx_reset_counter</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/i_rx_axis_tdata">
+      <obj_property name="ElementShortName">i_rx_axis_tdata[511:0]</obj_property>
+      <obj_property name="ObjectShortName">i_rx_axis_tdata[511:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/i_rx_axis_tkeep">
+      <obj_property name="ElementShortName">i_rx_axis_tkeep[63:0]</obj_property>
+      <obj_property name="ObjectShortName">i_rx_axis_tkeep[63:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_s_axi/i_rx_axis_tlast">
+      <obj_property name="ElementShortName">i_rx_axis_tlast</obj_property>
+      <obj_property name="ObjectShortName">i_rx_axis_tlast</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_s_axi/o_rx_axis_tready">
+      <obj_property name="ElementShortName">o_rx_axis_tready</obj_property>
+      <obj_property name="ObjectShortName">o_rx_axis_tready</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/i_rx_axis_tuser">
+      <obj_property name="ElementShortName">i_rx_axis_tuser[79:0]</obj_property>
+      <obj_property name="ObjectShortName">i_rx_axis_tuser[79:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_s_axi/i_rx_axis_tvalid">
+      <obj_property name="ElementShortName">i_rx_axis_tvalid</obj_property>
+      <obj_property name="ObjectShortName">i_rx_axis_tvalid</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/DUT/rx_axis_tdata_int">
+      <obj_property name="ElementShortName">rx_axis_tdata_int[511:0]</obj_property>
+      <obj_property name="ObjectShortName">rx_axis_tdata_int[511:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/DUT/rx_axis_tkeep_int">
+      <obj_property name="ElementShortName">rx_axis_tkeep_int[63:0]</obj_property>
+      <obj_property name="ObjectShortName">rx_axis_tkeep_int[63:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_s_axi/DUT/rx_axis_tlast_int">
+      <obj_property name="ElementShortName">rx_axis_tlast_int</obj_property>
+      <obj_property name="ObjectShortName">rx_axis_tlast_int</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_s_axi/DUT/rx_axis_tready_int">
+      <obj_property name="ElementShortName">rx_axis_tready_int</obj_property>
+      <obj_property name="ObjectShortName">rx_axis_tready_int</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/DUT/rx_axis_tuser_int">
+      <obj_property name="ElementShortName">rx_axis_tuser_int[79:0]</obj_property>
+      <obj_property name="ObjectShortName">rx_axis_tuser_int[79:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_s_axi/DUT/rx_axis_tvalid_int">
+      <obj_property name="ElementShortName">rx_axis_tvalid_int</obj_property>
+      <obj_property name="ObjectShortName">rx_axis_tvalid_int</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/DUT/wr_page">
+      <obj_property name="ElementShortName">wr_page[0:0]</obj_property>
+      <obj_property name="ObjectShortName">wr_page[0:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/DUT/rd_page">
+      <obj_property name="ElementShortName">rd_page[0:0]</obj_property>
+      <obj_property name="ObjectShortName">rd_page[0:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_s_axi/DUT/rd_page_cache">
+      <obj_property name="ElementShortName">rd_page_cache</obj_property>
+      <obj_property name="ObjectShortName">rd_page_cache</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_s_axi/DUT/rd_page_active">
+      <obj_property name="ElementShortName">rd_page_active</obj_property>
+      <obj_property name="ObjectShortName">rd_page_active</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/DUT/final_byte_vector">
+      <obj_property name="ElementShortName">final_byte_vector[63:0]</obj_property>
+      <obj_property name="ObjectShortName">final_byte_vector[63:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/DUT/expected_tx_last_byte">
+      <obj_property name="ElementShortName">expected_tx_last_byte[5:0]</obj_property>
+      <obj_property name="ObjectShortName">expected_tx_last_byte[5:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_s_axi/DUT/current_inc_close_to_target">
+      <obj_property name="ElementShortName">current_inc_close_to_target</obj_property>
+      <obj_property name="ObjectShortName">current_inc_close_to_target</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/DUT/inc_packet_byte_count">
+      <obj_property name="ElementShortName">inc_packet_byte_count[13:0]</obj_property>
+      <obj_property name="ObjectShortName">inc_packet_byte_count[13:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/DUT/rx_packet_size">
+      <obj_property name="ElementShortName">rx_packet_size[13:0]</obj_property>
+      <obj_property name="ObjectShortName">rx_packet_size[13:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/DUT/rx_buffer_ram_din">
+      <obj_property name="ElementShortName">rx_buffer_ram_din[511:0]</obj_property>
+      <obj_property name="ObjectShortName">rx_buffer_ram_din[511:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/DUT/rx_buffer_ram_addr_in">
+      <obj_property name="ElementShortName">rx_buffer_ram_addr_in[8:0]</obj_property>
+      <obj_property name="ObjectShortName">rx_buffer_ram_addr_in[8:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_s_axi/DUT/rx_buffer_ram_din_wr">
+      <obj_property name="ElementShortName">rx_buffer_ram_din_wr</obj_property>
+      <obj_property name="ObjectShortName">rx_buffer_ram_din_wr</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/DUT/rx_buffer_ram_dout">
+      <obj_property name="ElementShortName">rx_buffer_ram_dout[511:0]</obj_property>
+      <obj_property name="ObjectShortName">rx_buffer_ram_dout[511:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/DUT/rx_buffer_ram_addr_out">
+      <obj_property name="ElementShortName">rx_buffer_ram_addr_out[8:0]</obj_property>
+      <obj_property name="ObjectShortName">rx_buffer_ram_addr_out[8:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_s_axi/DUT/cmac_rx_reset_capture">
+      <obj_property name="ElementShortName">cmac_rx_reset_capture</obj_property>
+      <obj_property name="ObjectShortName">cmac_rx_reset_capture</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_s_axi/DUT/cmac_rx_packet_size">
+      <obj_property name="ElementShortName">cmac_rx_packet_size[13:0]</obj_property>
+      <obj_property name="ObjectShortName">cmac_rx_packet_size[13:0]</obj_property>
+   </wvobject>
+</wave_config>

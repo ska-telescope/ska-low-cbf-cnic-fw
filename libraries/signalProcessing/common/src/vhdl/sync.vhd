@@ -21,6 +21,7 @@ use UNISIM.VComponents.all;
 
 entity sync is
     generic (
+        DEST_SYNC_FF: integer   := 4;
         USE_XPM     : boolean   := true;        -- IF false see comment above about timing constraint.
         WIDTH       : integer   := 1;
         MAX_ROUTE   : string    := "400ps"
@@ -53,7 +54,7 @@ XPM_INST : IF USE_XPM GENERATE
 
         xpm_cdc_inst : xpm_cdc_single
             generic map (
-                DEST_SYNC_FF    => 4,   
+                DEST_SYNC_FF    => DEST_SYNC_FF,   
                 INIT_SYNC_FF    => 1,   
                 SRC_INPUT_REG   => 1,   
                 SIM_ASSERT_CHK  => 1    
