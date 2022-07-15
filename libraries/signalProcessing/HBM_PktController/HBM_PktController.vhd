@@ -50,27 +50,28 @@ entity HBM_PktController is
         -- config and status registers interface
         -- rx
     	i_rx_packet_size         : in  std_logic_vector(13 downto 0);
-        i_soft_reset             : in  std_logic;
+        i_rx_soft_reset          : in  std_logic;
         i_enable_capture         : in  std_logic;
 
-        1st_4GB_rx_addr          : out std_logic_vector(31 downto 0);
-        2nd_4GB_rx_addr          : out std_logic_vector(31 downto 0);
-        3rd_4GB_rx_addr          : out std_logic_vector(31 downto 0);
-        4th_4GB_rx_addr          : out std_logic_vector(31 downto 0);
+        o_1st_4GB_rx_addr        : out std_logic_vector(31 downto 0);
+        o_2nd_4GB_rx_addr        : out std_logic_vector(31 downto 0);
+        o_3rd_4GB_rx_addr        : out std_logic_vector(31 downto 0);
+        o_4th_4GB_rx_addr        : out std_logic_vector(31 downto 0);
 
-        capture_done             : out std_logic;
-        num_packets_received     : out std_logic_vector(31 downto 0);
+        o_capture_done           : out std_logic;
+        o_num_packets_received   : out std_logic_vector(31 downto 0);
 
         -- tx
+        i_tx_soft_reset          : in  std_logic;
         i_tx_packet_size         : in  std_logic_vector(13 downto 0);
         i_start_tx               : in  std_logic;
 
-        num_packets_transmitted  : out std_logic_vector(31 downto 0);
+        o_num_packets_transmitted: out std_logic_vector(31 downto 0);
         
-        1st_4GB_tx_addr          : out std_logic_vector(31 downto 0);
-        2nd_4GB_tx_addr          : out std_logic_vector(31 downto 0);
-        3rd_4GB_tx_addr          : out std_logic_vector(31 downto 0);
-        4th_4GB_tx_addr          : out std_logic_vector(31 downto 0);
+        o_1st_4GB_tx_addr        : out std_logic_vector(31 downto 0);
+        o_2nd_4GB_tx_addr        : out std_logic_vector(31 downto 0);
+        o_3rd_4GB_tx_addr        : out std_logic_vector(31 downto 0);
+        o_4th_4GB_tx_addr        : out std_logic_vector(31 downto 0);
         ------------------------------------------------------------------------------------
         -- Data output, to the packetizer
         -- Add the packetizer records here
@@ -209,7 +210,7 @@ architecture RTL of HBM_PktController is
     signal recv_pkt_counter : unsigned(31 downto 0) := 0;
 
     signal m01_fifo_rd_en, m02_fifo_rd_en, m03_fifo_rd_en, m04_fifo_rd_en  : std_logic := '0';
-    signal fifo_wr_en, fifo_rd_en, fifo_rd_wready, fifo_rst                : std_logic;  
+    signal fifo_wr_en, fifo_rd_en, fifo_rd_wready, tx_fifo_rst, rx_fifo_rst: std_logic;  
     signal fifo_rd_counter                                                 : unsigned(5 downto 0) := 0;
     signal axi_last, axi_wvalid, axi_wvalid_falling                        : std_logic; 
     signal axi_wvalid_del                                                  : std_logic := '0';  
@@ -236,19 +237,19 @@ architecture RTL of HBM_PktController is
     signal tx_fifo_din, tx_fifo_wr_en, tx_fifo_rd_en, tx_fifo_empty;
 begin
 
-    1st_4GB_rx_addr <= LFAAaddr1;
-    2nd_4GB_rx_addr <= LFAAaddr2;
-    3rd_4GB_rx_addr <= LFAAaddr3;
-    4th_4GB_rx_addr <= LFAAaddr4;
+    o_1st_4GB_rx_addr <= LFAAaddr1;
+    o_2nd_4GB_rx_addr <= LFAAaddr2;
+    o_3rd_4GB_rx_addr <= LFAAaddr3;
+    o_4th_4GB_rx_addr <= LFAAaddr4;
 
-    1st_4GB_tx_addr <= LFAAaddr1_tx;
-    2nd_4GB_tx_addr <= LFAAaddr2_tx;
-    3rd_4GB_tx_addr <= LFAAaddr3_tx;
-    4th_4GB_tx_addr <= LFAAaddr4_tx;
+    o_1st_4GB_tx_addr <= LFAAaddr1_tx;
+    o_2nd_4GB_tx_addr <= LFAAaddr2_tx;
+    o_3rd_4GB_tx_addr <= LFAAaddr3_tx;
+    o_4th_4GB_tx_addr <= LFAAaddr4_tx;
 
-    capture_done <= m04_axi_4G_full;
-    num_packets_received    <= std_logic_vector(recv_pkt_counter);
-    num_packets_transmitted <= std_logic_vector(trans_pkt_counter)
+    o_capture_done            <= m04_axi_4G_full;
+    o_num_packets_received    <= std_logic_vector(recv_pkt_counter);
+    o_num_packets_transmitted <= std_logic_vector(trans_pkt_counter)
     ---------------------------------------------------------------------------------------------------
     --HBM AXI write transaction part, it is assumed that the recevied packet is always multiple of 64B,
     --i.e no residual AXI trans where less then 64B trans is needed, all the bits of imcoming data is 
@@ -284,7 +285,7 @@ begin
     --//AXI AW part for m01, m02, m03, m04
     process(i_shared_clk)
     begin
-      if i_soft_reset = '1' then
+      if i_rx_soft_reset = '1' then
          input_fsm <= idle;
 	 m01_axi_awvalid <= '0';
          m01_axi_awaddr  <= (others => '0');
@@ -805,7 +806,7 @@ begin
     --MUX to select between m01 m02 m03 m04 AXI buses    
     process(i_shared_clk)
     begin
-      if i_soft_reset = '1' then
+      if i_rx_soft_reset = '1' then
       	 m01_axi_wvalid <= (others => '0');
          m01_axi_wdata  <= (others => '0');
          m01_axi_wstrb  <= (others => '1');
@@ -850,7 +851,7 @@ begin
 
     process(i_shared_clk)
     begin
-      if i_soft_reset = '1' then
+      if i_rx_soft_reset = '1' then
        	 m01_fifo_rd_en  <= '0';     
       elsif rising_edge(i_shared_clk) then
 	 if (m01_axi_awvalid = '1' and m01_axi_awready = '1') then
@@ -863,7 +864,7 @@ begin
 
     process(i_shared_clk)
     begin
-      if i_soft_reset = '1' then	    
+      if i_rx_soft_reset = '1' then	    
          m01_fifo_rd_en  <= '0'; 
       elsif rising_edge(i_shared_clk) then
          if (m02_axi_awvalid = '1' and m02_axi_awready = '1') then
@@ -876,7 +877,7 @@ begin
 
     process(i_shared_clk)
     begin
-      if i_soft_reset = '1' then
+      if i_rx_soft_reset = '1' then
          m03_fifo_rd_en  <= '0';	      
       elsif rising_edge(i_shared_clk) then
          if (m03_axi_awvalid = '1' and m03_axi_awready = '1') then
@@ -889,7 +890,7 @@ begin
 
     process(i_shared_clk)
     begin
-      if i_soft_reset = '1' then
+      if i_rx_soft_reset = '1' then
          m04_fifo_rd_en  <= '0';   
       elsif rising_edge(i_shared_clk) then
          if (m04_axi_awvalid = '1' and m04_axi_awready = '1') then
@@ -903,11 +904,11 @@ begin
  fifo_wr_en <= i_data_valid_from_cmac and i_enable_capture; 
  fifo_rd_en <= (m01_fifo_rd_en and m01_axi_wready) or (m02_fifo_rd_en and m02_axi_wready) or (m03_fifo_rd_en and m03_axi_wready) or (m04_fifo_rd_en and m04_axi_wready);
  fifo_rd_wready <= m01_axi_wready or m02_axi_wready or m03_axi_wready or m04_axi_wready; 
- fifo_rst       <= i_soft_reset or i_shared_rst; 
+ rx_fifo_rst    <= i_rx_soft_reset or i_shared_rst; 
 
     process(i_shared_clk)
     begin
-      if i_soft_reset = '1' then
+      if i_rx_soft_reset = '1' then
          fifo_rd_counter <= (others=>'0');
          axi_last        <= '0';
       elsif rising_edge(i_shared_clk) then
@@ -977,7 +978,7 @@ begin
         injectdbiterr => '0',     
         injectsbiterr => '0',      
         rd_en         => fifo_rd_en,  
-        rst           => fifo_rst, 
+        rst           => rx_fifo_rst, 
         sleep         => '0', 
         wr_clk        => i_shared_clk,   
         wr_en         => fifo_wr_en 
@@ -1022,7 +1023,7 @@ begin
     --//AXI AR part for m01, m02, m03, m04
     process(i_shared_clk)
     begin
-      if i_soft_reset = '1' then
+      if i_tx_soft_reset = '1' then
 	 m01_axi_arvalid                 <= '0';
          m01_axi_araddr                  <= (others => '0');
          m01_axi_arlen                   <= (others => '0');
@@ -1627,7 +1628,7 @@ begin
     --------------------------------------------------------------------------------------------
     process(i_shared_clk)
     begin
-      if (i_soft_reset = '1') then
+      if (i_tx_soft_reset = '1') then
          tx_fifo_din      <= (others => '0');
          tx_fifo_wr_en    <= '0';	 
       elsif rising_edge(i_shared_clk) then
@@ -1652,7 +1653,7 @@ begin
 
     process(i_shared_clk)
     begin
-      if i_soft_reset = '1' then
+      if i_tx_soft_reset = '1' then
    	 tx_fifo_rd_en  <= '0';     
       elsif rising_edge(i_shared_clk) then
          if output_fsm = generate_ar1 or output_fsm = generate_ar1_residual or 
@@ -1719,6 +1720,8 @@ begin
        end if;
     end process;
 
+    tx_fifo_rst <= i_tx_soft_reset and i_shared_rst; 
+
     fifo_rdata_inst : xpm_fifo_sync
     generic map (
         DOUT_RESET_VALUE    => "0",
@@ -1760,7 +1763,7 @@ begin
         injectdbiterr => '0',
         injectsbiterr => '0',
         rd_en         => tx_fifo_rd_en,
-        rst           => fifo_rst,
+        rst           => tx_fifo_rst,
         sleep         => '0',
         wr_clk        => i_shared_clk,
         wr_en         => tx_fifo_wr_en
