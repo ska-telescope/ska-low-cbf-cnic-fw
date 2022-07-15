@@ -166,18 +166,18 @@ ENTITY cnic_core IS
         m00_axi_rresp     : in std_logic_vector(1 downto 0);
         ---------------------------------------------------------------------------------------
 
-        m01_axi_awvalid : out std_logic;
-        m01_axi_awready : in std_logic;
-        m01_axi_awaddr : out std_logic_vector(M01_AXI_ADDR_WIDTH-1 downto 0);
-        m01_axi_awid   : out std_logic_vector(M01_AXI_ID_WIDTH - 1 downto 0);
-        m01_axi_awlen   : out std_logic_vector(7 downto 0);
-        m01_axi_awsize   : out std_logic_vector(2 downto 0);
-        m01_axi_awburst  : out std_logic_vector(1 downto 0);
-        m01_axi_awlock   : out std_logic_vector(1 downto 0);
-        m01_axi_awcache  : out std_logic_vector(3 downto 0);
-        m01_axi_awprot   : out std_logic_vector(2 downto 0);
-        m01_axi_awqos    : out std_logic_vector(3 downto 0);
-        m01_axi_awregion : out std_logic_vector(3 downto 0);
+        m01_axi_awvalid   : out std_logic;
+        m01_axi_awready   : in std_logic;
+        m01_axi_awaddr    : out std_logic_vector(M01_AXI_ADDR_WIDTH-1 downto 0);
+        m01_axi_awid      : out std_logic_vector(M01_AXI_ID_WIDTH - 1 downto 0);
+        m01_axi_awlen     : out std_logic_vector(7 downto 0);
+        m01_axi_awsize    : out std_logic_vector(2 downto 0);
+        m01_axi_awburst   : out std_logic_vector(1 downto 0);
+        m01_axi_awlock    : out std_logic_vector(1 downto 0);
+        m01_axi_awcache   : out std_logic_vector(3 downto 0);
+        m01_axi_awprot    : out std_logic_vector(2 downto 0);
+        m01_axi_awqos     : out std_logic_vector(3 downto 0);
+        m01_axi_awregion  : out std_logic_vector(3 downto 0);
     
         m01_axi_wvalid    : out std_logic;
         m01_axi_wready    : in std_logic;
@@ -209,18 +209,18 @@ ENTITY cnic_core IS
 
         ---------------------------------------------------------------------------------------
 
-        m02_axi_awvalid : out std_logic;
-        m02_axi_awready : in std_logic;
-        m02_axi_awaddr : out std_logic_vector(M02_AXI_ADDR_WIDTH-1 downto 0);
-        m02_axi_awid   : out std_logic_vector(M02_AXI_ID_WIDTH - 1 downto 0);
-        m02_axi_awlen   : out std_logic_vector(7 downto 0);
-        m02_axi_awsize   : out std_logic_vector(2 downto 0);
-        m02_axi_awburst  : out std_logic_vector(1 downto 0);
-        m02_axi_awlock   : out std_logic_vector(1 downto 0);
-        m02_axi_awcache  : out std_logic_vector(3 downto 0);
-        m02_axi_awprot   : out std_logic_vector(2 downto 0);
-        m02_axi_awqos    : out std_logic_vector(3 downto 0);
-        m02_axi_awregion : out std_logic_vector(3 downto 0);
+        m02_axi_awvalid   : out std_logic;
+        m02_axi_awready   : in std_logic;
+        m02_axi_awaddr    : out std_logic_vector(M02_AXI_ADDR_WIDTH-1 downto 0);
+        m02_axi_awid      : out std_logic_vector(M02_AXI_ID_WIDTH - 1 downto 0);
+        m02_axi_awlen     : out std_logic_vector(7 downto 0);
+        m02_axi_awsize    : out std_logic_vector(2 downto 0);
+        m02_axi_awburst   : out std_logic_vector(1 downto 0);
+        m02_axi_awlock    : out std_logic_vector(1 downto 0);
+        m02_axi_awcache   : out std_logic_vector(3 downto 0);
+        m02_axi_awprot    : out std_logic_vector(2 downto 0);
+        m02_axi_awqos     : out std_logic_vector(3 downto 0);
+        m02_axi_awregion  : out std_logic_vector(3 downto 0);
     
         m02_axi_wvalid    : out std_logic;
         m02_axi_wready    : in std_logic;
@@ -251,18 +251,18 @@ ENTITY cnic_core IS
         m02_axi_rresp     : in std_logic_vector(1 downto 0);        
 
         -- AXI4 master interface for accessing HBM for the Filterbank corner turn : m03_axi
-        m03_axi_awvalid : out std_logic;
-        m03_axi_awready : in std_logic;
-        m03_axi_awaddr : out std_logic_vector(M03_AXI_ADDR_WIDTH-1 downto 0);
-        m03_axi_awid   : out std_logic_vector(M03_AXI_ID_WIDTH - 1 downto 0);
-        m03_axi_awlen   : out std_logic_vector(7 downto 0);
-        m03_axi_awsize   : out std_logic_vector(2 downto 0);
-        m03_axi_awburst  : out std_logic_vector(1 downto 0);
-        m03_axi_awlock   : out std_logic_vector(1 downto 0);
-        m03_axi_awcache  : out std_logic_vector(3 downto 0);
-        m03_axi_awprot   : out std_logic_vector(2 downto 0);
-        m03_axi_awqos    : out std_logic_vector(3 downto 0);
-        m03_axi_awregion : out std_logic_vector(3 downto 0);
+        m03_axi_awvalid   : out std_logic;
+        m03_axi_awready   : in std_logic;
+        m03_axi_awaddr    : out std_logic_vector(M03_AXI_ADDR_WIDTH-1 downto 0);
+        m03_axi_awid      : out std_logic_vector(M03_AXI_ID_WIDTH - 1 downto 0);
+        m03_axi_awlen     : out std_logic_vector(7 downto 0);
+        m03_axi_awsize    : out std_logic_vector(2 downto 0);
+        m03_axi_awburst   : out std_logic_vector(1 downto 0);
+        m03_axi_awlock    : out std_logic_vector(1 downto 0);
+        m03_axi_awcache   : out std_logic_vector(3 downto 0);
+        m03_axi_awprot    : out std_logic_vector(2 downto 0);
+        m03_axi_awqos     : out std_logic_vector(3 downto 0);
+        m03_axi_awregion  : out std_logic_vector(3 downto 0);
     
         m03_axi_wvalid    : out std_logic;
         m03_axi_wready    : in std_logic;
@@ -293,18 +293,18 @@ ENTITY cnic_core IS
         m03_axi_rresp     : in std_logic_vector(1 downto 0);       
 
         -- AXI4 master interface for accessing HBM for the Filterbank corner turn : m04_axi
-        m04_axi_awvalid : out std_logic;
-        m04_axi_awready : in std_logic;
-        m04_axi_awaddr : out std_logic_vector(M04_AXI_ADDR_WIDTH-1 downto 0);
-        m04_axi_awid   : out std_logic_vector(M04_AXI_ID_WIDTH - 1 downto 0);
-        m04_axi_awlen   : out std_logic_vector(7 downto 0);
-        m04_axi_awsize   : out std_logic_vector(2 downto 0);
-        m04_axi_awburst  : out std_logic_vector(1 downto 0);
-        m04_axi_awlock   : out std_logic_vector(1 downto 0);
-        m04_axi_awcache  : out std_logic_vector(3 downto 0);
-        m04_axi_awprot   : out std_logic_vector(2 downto 0);
-        m04_axi_awqos    : out std_logic_vector(3 downto 0);
-        m04_axi_awregion : out std_logic_vector(3 downto 0);
+        m04_axi_awvalid   : out std_logic;
+        m04_axi_awready   : in std_logic;
+        m04_axi_awaddr    : out std_logic_vector(M04_AXI_ADDR_WIDTH-1 downto 0);
+        m04_axi_awid      : out std_logic_vector(M04_AXI_ID_WIDTH - 1 downto 0);
+        m04_axi_awlen     : out std_logic_vector(7 downto 0);
+        m04_axi_awsize    : out std_logic_vector(2 downto 0);
+        m04_axi_awburst   : out std_logic_vector(1 downto 0);
+        m04_axi_awlock    : out std_logic_vector(1 downto 0);
+        m04_axi_awcache   : out std_logic_vector(3 downto 0);
+        m04_axi_awprot    : out std_logic_vector(2 downto 0);
+        m04_axi_awqos     : out std_logic_vector(3 downto 0);
+        m04_axi_awregion  : out std_logic_vector(3 downto 0);
     
         m04_axi_wvalid    : out std_logic;
         m04_axi_wready    : in std_logic;
@@ -1269,18 +1269,16 @@ END GENERATE;
         -- AXI interfaces to shared memory
 
 	-- M01
-        m01_axi_awvalid => m01_axi_awvalidi,   -- out std_logic;
-        m01_axi_awready => m01_axi_awreadyi,   -- in std_logic;
-        m01_axi_awaddr  => m01_axi_awaddri(31 downto 0),    -- out std_logic_vector(29 downto 0);
-        m01_axi_awlen   => m01_axi_awleni,     -- out std_logic_vector(7 downto 0); Number of beats in each burst is this value + 1.
+        m01_axi_awvalid  => m01_axi_awvalidi,   -- out std_logic;
+        m01_axi_awready  => m01_axi_awreadyi,   -- in std_logic;
+        m01_axi_awaddr   => m01_axi_awaddri(31 downto 0),    -- out std_logic_vector(29 downto 0);
+        m01_axi_awlen    => m01_axi_awleni,     -- out std_logic_vector(7 downto 0); Number of beats in each burst is this value + 1.
         -- w bus - write data.
         m01_axi_wvalid   => m01_axi_wvalidi,   -- out std_logic;
         m01_axi_wready   => m01_axi_wreadyi,   -- in std_logic;
         m01_axi_wdata    => m01_axi_wdatai,    -- out std_logic_vector(511 downto 0);
+	m01_axi_wstrb    => m01_axi_wstrbi,
         m01_axi_wlast    => m01_axi_wlasti,    -- out std_logic;
-        -- b bus - write response; "00" or "01" means ok, "10" or "11" means the write failed.
-        m01_axi_bvalid   => m01_axi_bvalidi,   -- in std_logic;
-        m01_axi_bresp    => m01_axi_brespi,    -- in std_logic_vector(1 downto 0);
         -- ar - read address
         m01_axi_arvalid  => m01_axi_arvalidi,  -- out std_logic;
         m01_axi_arready  => m01_axi_arreadyi,  -- in std_logic;
@@ -1302,10 +1300,9 @@ END GENERATE;
         m02_axi_wvalid   => m02_axi_wvalidi,   -- out std_logic;
         m02_axi_wready   => m02_axi_wreadyi,   -- in std_logic;
         m02_axi_wdata    => m02_axi_wdatai,    -- out std_logic_vector(511 downto 0);
-        m02_axi_wlast    => m02_axi_wlasti,    -- out std_logic;
-        -- b bus - write response; "00" or "01" means ok, "10" or "11" means the write failed.
-        m02_axi_bvalid   => m02_axi_bvalidi,   -- in std_logic;
-        m02_axi_bresp    => m02_axi_brespi,    -- in std_logic_vector(1 downto 0);
+        m02_axi_wstrb    => m02_axi_wstrbi,
+	m02_axi_wlast    => m02_axi_wlasti,    -- out std_logic;
+        
         -- ar - read address
         m02_axi_arvalid  => m02_axi_arvalidi,  -- out std_logic;
         m02_axi_arready  => m02_axi_arreadyi,  -- in std_logic;
@@ -1327,10 +1324,9 @@ END GENERATE;
         m03_axi_wvalid   => m03_axi_wvalidi,   -- out std_logic;
         m03_axi_wready   => m03_axi_wreadyi,   -- in std_logic;
         m03_axi_wdata    => m03_axi_wdatai,    -- out std_logic_vector(511 downto 0);
-        m03_axi_wlast    => m03_axi_wlasti,    -- out std_logic;
-        -- b bus - write response; "00" or "01" means ok, "10" or "11" means the write failed.
-        m03_axi_bvalid   => m03_axi_bvalidi,   -- in std_logic;
-        m03_axi_bresp    => m03_axi_brespi,    -- in std_logic_vector(1 downto 0);
+        m03_axi_wstrb    => m03_axi_wstrbi,
+	m03_axi_wlast    => m03_axi_wlasti,    -- out std_logic;
+        
         -- ar - read address
         m03_axi_arvalid  => m03_axi_arvalidi,  -- out std_logic;
         m03_axi_arready  => m03_axi_arreadyi,  -- in std_logic;
@@ -1352,10 +1348,9 @@ END GENERATE;
         m04_axi_wvalid   => m04_axi_wvalidi,   -- out std_logic;
         m04_axi_wready   => m04_axi_wreadyi,   -- in std_logic;
         m04_axi_wdata    => m04_axi_wdatai,    -- out std_logic_vector(511 downto 0);
+	m04_axi_wstrb    => m04_axi_wstrbi,
         m04_axi_wlast    => m04_axi_wlasti,    -- out std_logic;
-        -- b bus - write response; "00" or "01" means ok, "10" or "11" means the write failed.
-        m04_axi_bvalid   => m04_axi_bvalidi,   -- in std_logic;
-        m04_axi_bresp    => m04_axi_brespi,    -- in std_logic_vector(1 downto 0);
+        
         -- ar - read address
         m04_axi_arvalid  => m04_axi_arvalidi,  -- out std_logic;
         m04_axi_arready  => m04_axi_arreadyi,  -- in std_logic;
@@ -1376,26 +1371,25 @@ END GENERATE;
     -- Default outgoing signals for m01 bus
     m01_axi_araddri(63 downto 32) <= m01_shared(63 downto 32);  
     m01_axi_awaddri(63 downto 32) <= m01_shared(63 downto 32);
-    m01_axi_awidi(0) <= '0';   -- We only use a single ID -- out std_logic_vector(0 downto 0);
-    m01_axi_awsizei  <= "110";  -- size of 6 indicates 64 bytes in each beat (i.e. 512 bit wide bus) -- out std_logic_vector(2 downto 0);
-    m01_axi_awbursti <= "01";   -- "01" indicates incrementing addresses for each beat in the burst.  -- out std_logic_vector(1 downto 0);
-    m01_axi_breadyi  <= '1';  -- Always accept acknowledgement of write transactions. -- out std_logic;
-    m01_axi_wstrbi  <= (others => '1');  -- We always write all bytes in the bus. --  out std_logic_vector(63 downto 0);
-    m01_axi_aridi(0) <= '0';     -- ID are not used. -- out std_logic_vector(0 downto 0);
-    m01_axi_arsizei  <= "110";   -- 6 = 64 bytes per beat = 512 bit wide bus. -- out std_logic_vector(2 downto 0);
-    m01_axi_arbursti <= "01";    -- "01" = incrementing address for each beat in the burst. -- out std_logic_vector(1 downto 0);
+    m01_axi_awidi(0)              <= '0';    -- We only use a single ID -- out std_logic_vector(0 downto 0);
+    m01_axi_awsizei               <= "110";  -- size of 6 indicates 64 bytes in each beat (i.e. 512 bit wide bus) -- out std_logic_vector(2 downto 0);
+    m01_axi_awbursti              <= "01";   -- "01" indicates incrementing addresses for each beat in the burst.  -- out std_logic_vector(1 downto 0);
+    m01_axi_breadyi               <= '1';    -- Always accept acknowledgement of write transactions. -- out std_logic;
+    m01_axi_aridi(0)              <= '0';    -- ID are not used. -- out std_logic_vector(0 downto 0);
+    m01_axi_arsizei               <= "110";  -- 6 = 64 bytes per beat = 512 bit wide bus. -- out std_logic_vector(2 downto 0);
+    m01_axi_arbursti              <= "01";   -- "01" = incrementing address for each beat in the burst. -- out std_logic_vector(1 downto 0);
    
     -- these have no ports on the axi register slice
-    m01_axi_arlock <= "00";
-    m01_axi_awlock <= "00";
-    m01_axi_awcache <= "0011";  -- out std_logic_vector(3 downto 0); bufferable transaction. Default in Vitis environment.
-    m01_axi_awprot  <= "000";   -- Has no effect in Vitis environment. -- out std_logic_vector(2 downto 0);
-    m01_axi_awqos   <= "0000";  -- Has no effect in vitis environment, -- out std_logic_vector(3 downto 0);
-    m01_axi_awregion <= "0000"; -- Has no effect in Vitis environment. -- out std_logic_vector(3 downto 0);
-    m01_axi_arcache <= "0011";  -- out std_logic_vector(3 downto 0); bufferable transaction. Default in Vitis environment.
-    m01_axi_arprot  <= "000";   -- Has no effect in vitis environment; out std_logic_Vector(2 downto 0);
-    m01_axi_arqos    <= "0000"; -- Has no effect in vitis environment; out std_logic_vector(3 downto 0);
-    m01_axi_arregion <= "0000"; -- Has no effect in vitis environment; out std_logic_vector(3 downto 0);
+    m01_axi_arlock                <= "00";
+    m01_axi_awlock                <= "00";
+    m01_axi_awcache               <= "0011";  -- out std_logic_vector(3 downto 0); bufferable transaction. Default in Vitis environment.
+    m01_axi_awprot                <= "000";   -- Has no effect in Vitis environment. -- out std_logic_vector(2 downto 0);
+    m01_axi_awqos                 <= "0000";  -- Has no effect in vitis environment, -- out std_logic_vector(3 downto 0);
+    m01_axi_awregion              <= "0000";  -- Has no effect in Vitis environment. -- out std_logic_vector(3 downto 0);
+    m01_axi_arcache               <= "0011";  -- out std_logic_vector(3 downto 0); bufferable transaction. Default in Vitis environment.
+    m01_axi_arprot                <= "000";   -- Has no effect in vitis environment; out std_logic_Vector(2 downto 0);
+    m01_axi_arqos                 <= "0000";  -- Has no effect in vitis environment; out std_logic_vector(3 downto 0);
+    m01_axi_arregion              <= "0000";  -- Has no effect in vitis environment; out std_logic_vector(3 downto 0);
     -- Ignored incoming signals for m01 bus:
     -- m01_axi_bid; Since we only use 1 ID, we can ignore this. -- in std_logic_vector(0 downto 0);
     -- m01_axi_rid  -- in std_logic_vector(0 downto 0);
@@ -1465,26 +1459,25 @@ END GENERATE;
     -- Default outgoing signals for m02 bus
     m02_axi_araddri(63 downto 32) <= m02_shared(63 downto 32);  
     m02_axi_awaddri(63 downto 32) <= m02_shared(63 downto 32);
-    m02_axi_awidi(0) <= '0';   -- We only use a single ID -- out std_logic_vector(0 downto 0);
-    m02_axi_awsizei  <= "110";  -- size of 6 indicates 64 bytes in each beat (i.e. 512 bit wide bus) -- out std_logic_vector(2 downto 0);
-    m02_axi_awbursti <= "01";   -- "01" indicates incrementing addresses for each beat in the burst.  -- out std_logic_vector(1 downto 0);
-    m02_axi_breadyi  <= '1';  -- Always accept acknowledgement of write transactions. -- out std_logic;
-    m02_axi_wstrbi  <= (others => '1');  -- We always write all bytes in the bus. --  out std_logic_vector(63 downto 0);
-    m02_axi_aridi(0) <= '0';     -- ID are not used. -- out std_logic_vector(0 downto 0);
-    m02_axi_arsizei  <= "110";   -- 6 = 64 bytes per beat = 512 bit wide bus. -- out std_logic_vector(2 downto 0);
-    m02_axi_arbursti <= "01";    -- "01" = incrementing address for each beat in the burst. -- out std_logic_vector(1 downto 0);
+    m02_axi_awidi(0)              <= '0';   -- We only use a single ID -- out std_logic_vector(0 downto 0);
+    m02_axi_awsizei               <= "110";  -- size of 6 indicates 64 bytes in each beat (i.e. 512 bit wide bus) -- out std_logic_vector(2 downto 0);
+    m02_axi_awbursti              <= "01";   -- "01" indicates incrementing addresses for each beat in the burst.  -- out std_logic_vector(1 downto 0);
+    m02_axi_breadyi               <= '1';  -- Always accept acknowledgement of write transactions. -- out std_logic;
+    m02_axi_aridi(0)              <= '0';     -- ID are not used. -- out std_logic_vector(0 downto 0);
+    m02_axi_arsizei               <= "110";   -- 6 = 64 bytes per beat = 512 bit wide bus. -- out std_logic_vector(2 downto 0);
+    m02_axi_arbursti              <= "01";    -- "01" = incrementing address for each beat in the burst. -- out std_logic_vector(1 downto 0);
    
     -- these have no ports on the axi register slice
-    m02_axi_arlock <= "00";
-    m02_axi_awlock <= "00";
-    m02_axi_awcache <= "0011";  -- out std_logic_vector(3 downto 0); bufferable transaction. Default in Vitis environment.
-    m02_axi_awprot  <= "000";   -- Has no effect in Vitis environment. -- out std_logic_vector(2 downto 0);
-    m02_axi_awqos   <= "0000";  -- Has no effect in vitis environment, -- out std_logic_vector(3 downto 0);
-    m02_axi_awregion <= "0000"; -- Has no effect in Vitis environment. -- out std_logic_vector(3 downto 0);
-    m02_axi_arcache <= "0011";  -- out std_logic_vector(3 downto 0); bufferable transaction. Default in Vitis environment.
-    m02_axi_arprot  <= "000";   -- Has no effect in vitis environment; out std_logic_Vector(2 downto 0);
-    m02_axi_arqos    <= "0000"; -- Has no effect in vitis environment; out std_logic_vector(3 downto 0);
-    m02_axi_arregion <= "0000"; -- Has no effect in vitis environment; out std_logic_vector(3 downto 0);
+    m02_axi_arlock                <= "00";
+    m02_axi_awlock                <= "00";
+    m02_axi_awcache               <= "0011";  -- out std_logic_vector(3 downto 0); bufferable transaction. Default in Vitis environment.
+    m02_axi_awprot                <= "000";   -- Has no effect in Vitis environment. -- out std_logic_vector(2 downto 0);
+    m02_axi_awqos                 <= "0000";  -- Has no effect in vitis environment, -- out std_logic_vector(3 downto 0);
+    m02_axi_awregion              <= "0000"; -- Has no effect in Vitis environment. -- out std_logic_vector(3 downto 0);
+    m02_axi_arcache               <= "0011";  -- out std_logic_vector(3 downto 0); bufferable transaction. Default in Vitis environment.
+    m02_axi_arprot                <= "000";   -- Has no effect in vitis environment; out std_logic_Vector(2 downto 0);
+    m02_axi_arqos                 <= "0000"; -- Has no effect in vitis environment; out std_logic_vector(3 downto 0);
+    m02_axi_arregion              <= "0000"; -- Has no effect in vitis environment; out std_logic_vector(3 downto 0);
     -- Ignored incoming signals for m02 bus:
     -- m02_axi_bid; Since we only use 1 ID, we can ignore this. -- in std_logic_vector(0 downto 0);
     -- m02_axi_rid  -- in std_logic_vector(0 downto 0);
@@ -1554,26 +1547,25 @@ END GENERATE;
     -- Default outgoing signals for m03 bus
     m03_axi_araddri(63 downto 32) <= m03_shared(63 downto 32);  
     m03_axi_awaddri(63 downto 32) <= m03_shared(63 downto 32);
-    m03_axi_awidi(0) <= '0';   -- We only use a single ID -- out std_logic_vector(0 downto 0);
-    m03_axi_awsizei  <= "110";  -- size of 6 indicates 64 bytes in each beat (i.e. 512 bit wide bus) -- out std_logic_vector(2 downto 0);
-    m03_axi_awbursti <= "01";   -- "01" indicates incrementing addresses for each beat in the burst.  -- out std_logic_vector(1 downto 0);
-    m03_axi_breadyi  <= '1';  -- Always accept acknowledgement of write transactions. -- out std_logic;
-    m03_axi_wstrbi  <= (others => '1');  -- We always write all bytes in the bus. --  out std_logic_vector(63 downto 0);
-    m03_axi_aridi(0) <= '0';     -- ID are not used. -- out std_logic_vector(0 downto 0);
-    m03_axi_arsizei  <= "110";   -- 6 = 64 bytes per beat = 512 bit wide bus. -- out std_logic_vector(2 downto 0);
-    m03_axi_arbursti <= "01";    -- "01" = incrementing address for each beat in the burst. -- out std_logic_vector(1 downto 0);
+    m03_axi_awidi(0)              <= '0';   -- We only use a single ID -- out std_logic_vector(0 downto 0);
+    m03_axi_awsizei               <= "110"; -- size of 6 indicates 64 bytes in each beat (i.e. 512 bit wide bus) -- out std_logic_vector(2 downto 0);
+    m03_axi_awbursti              <= "01";  -- "01" indicates incrementing addresses for each beat in the burst.  -- out std_logic_vector(1 downto 0);
+    m03_axi_breadyi               <= '1';   -- Always accept acknowledgement of write transactions. -- out std_logic;
+    m03_axi_aridi(0)              <= '0';   -- ID are not used. -- out std_logic_vector(0 downto 0);
+    m03_axi_arsizei               <= "110"; -- 6 = 64 bytes per beat = 512 bit wide bus. -- out std_logic_vector(2 downto 0);
+    m03_axi_arbursti              <= "01";  -- "01" = incrementing address for each beat in the burst. -- out std_logic_vector(1 downto 0);
    
     -- these have no ports on the axi register slice
-    m03_axi_arlock <= "00";
-    m03_axi_awlock <= "00";
-    m03_axi_awcache <= "0011";  -- out std_logic_vector(3 downto 0); bufferable transaction. Default in Vitis environment.
-    m03_axi_awprot  <= "000";   -- Has no effect in Vitis environment. -- out std_logic_vector(2 downto 0);
-    m03_axi_awqos   <= "0000";  -- Has no effect in vitis environment, -- out std_logic_vector(3 downto 0);
-    m03_axi_awregion <= "0000"; -- Has no effect in Vitis environment. -- out std_logic_vector(3 downto 0);
-    m03_axi_arcache <= "0011";  -- out std_logic_vector(3 downto 0); bufferable transaction. Default in Vitis environment.
-    m03_axi_arprot  <= "000";   -- Has no effect in vitis environment; out std_logic_Vector(2 downto 0);
-    m03_axi_arqos    <= "0000"; -- Has no effect in vitis environment; out std_logic_vector(3 downto 0);
-    m03_axi_arregion <= "0000"; -- Has no effect in vitis environment; out std_logic_vector(3 downto 0);
+    m03_axi_arlock                <= "00";
+    m03_axi_awlock                <= "00";
+    m03_axi_awcache               <= "0011";  -- out std_logic_vector(3 downto 0); bufferable transaction. Default in Vitis environment.
+    m03_axi_awprot                <= "000";   -- Has no effect in Vitis environment. -- out std_logic_vector(2 downto 0);
+    m03_axi_awqos                 <= "0000";  -- Has no effect in vitis environment, -- out std_logic_vector(3 downto 0);
+    m03_axi_awregion              <= "0000"; -- Has no effect in Vitis environment. -- out std_logic_vector(3 downto 0);
+    m03_axi_arcache               <= "0011";  -- out std_logic_vector(3 downto 0); bufferable transaction. Default in Vitis environment.
+    m03_axi_arprot                <= "000";   -- Has no effect in vitis environment; out std_logic_Vector(2 downto 0);
+    m03_axi_arqos                 <= "0000"; -- Has no effect in vitis environment; out std_logic_vector(3 downto 0);
+    m03_axi_arregion              <= "0000"; -- Has no effect in vitis environment; out std_logic_vector(3 downto 0);
     -- Ignored incoming signals for m03 bus:
     -- m03_axi_bid; Since we only use 1 ID, we can ignore this. -- in std_logic_vector(0 downto 0);
     -- m03_axi_rid  -- in std_logic_vector(0 downto 0);
@@ -1643,26 +1635,25 @@ END GENERATE;
     -- Default outgoing signals for m04 bus
     m04_axi_araddri(63 downto 32) <= m04_shared(63 downto 32);  
     m04_axi_awaddri(63 downto 32) <= m04_shared(63 downto 32);
-    m04_axi_awidi(0) <= '0';   -- We only use a single ID -- out std_logic_vector(0 downto 0);
-    m04_axi_awsizei  <= "110";  -- size of 6 indicates 64 bytes in each beat (i.e. 512 bit wide bus) -- out std_logic_vector(2 downto 0);
-    m04_axi_awbursti <= "01";   -- "01" indicates incrementing addresses for each beat in the burst.  -- out std_logic_vector(1 downto 0);
-    m04_axi_breadyi  <= '1';  -- Always accept acknowledgement of write transactions. -- out std_logic;
-    m04_axi_wstrbi  <= (others => '1');  -- We always write all bytes in the bus. --  out std_logic_vector(63 downto 0);
-    m04_axi_aridi(0) <= '0';     -- ID are not used. -- out std_logic_vector(0 downto 0);
-    m04_axi_arsizei  <= "110";   -- 6 = 64 bytes per beat = 512 bit wide bus. -- out std_logic_vector(2 downto 0);
-    m04_axi_arbursti <= "01";    -- "01" = incrementing address for each beat in the burst. -- out std_logic_vector(1 downto 0);
+    m04_axi_awidi(0)              <= '0';   -- We only use a single ID -- out std_logic_vector(0 downto 0);
+    m04_axi_awsizei               <= "110";  -- size of 6 indicates 64 bytes in each beat (i.e. 512 bit wide bus) -- out std_logic_vector(2 downto 0);
+    m04_axi_awbursti              <= "01";   -- "01" indicates incrementing addresses for each beat in the burst.  -- out std_logic_vector(1 downto 0);
+    m04_axi_breadyi               <= '1';  -- Always accept acknowledgement of write transactions. -- out std_logic;
+    m04_axi_aridi(0)              <= '0';     -- ID are not used. -- out std_logic_vector(0 downto 0);
+    m04_axi_arsizei               <= "110";   -- 6 = 64 bytes per beat = 512 bit wide bus. -- out std_logic_vector(2 downto 0);
+    m04_axi_arbursti              <= "01";    -- "01" = incrementing address for each beat in the burst. -- out std_logic_vector(1 downto 0);
    
     -- these have no ports on the axi register slice
-    m04_axi_arlock <= "00";
-    m04_axi_awlock <= "00";
-    m04_axi_awcache <= "0011";  -- out std_logic_vector(3 downto 0); bufferable transaction. Default in Vitis environment.
-    m04_axi_awprot  <= "000";   -- Has no effect in Vitis environment. -- out std_logic_vector(2 downto 0);
-    m04_axi_awqos   <= "0000";  -- Has no effect in vitis environment, -- out std_logic_vector(3 downto 0);
-    m04_axi_awregion <= "0000"; -- Has no effect in Vitis environment. -- out std_logic_vector(3 downto 0);
-    m04_axi_arcache <= "0011";  -- out std_logic_vector(3 downto 0); bufferable transaction. Default in Vitis environment.
-    m04_axi_arprot  <= "000";   -- Has no effect in vitis environment; out std_logic_Vector(2 downto 0);
-    m04_axi_arqos    <= "0000"; -- Has no effect in vitis environment; out std_logic_vector(3 downto 0);
-    m04_axi_arregion <= "0000"; -- Has no effect in vitis environment; out std_logic_vector(3 downto 0);
+    m04_axi_arlock                <= "00";
+    m04_axi_awlock                <= "00";
+    m04_axi_awcache               <= "0011";  -- out std_logic_vector(3 downto 0); bufferable transaction. Default in Vitis environment.
+    m04_axi_awprot                <= "000";   -- Has no effect in Vitis environment. -- out std_logic_vector(2 downto 0);
+    m04_axi_awqos                 <= "0000";  -- Has no effect in vitis environment, -- out std_logic_vector(3 downto 0);
+    m04_axi_awregion              <= "0000"; -- Has no effect in Vitis environment. -- out std_logic_vector(3 downto 0);
+    m04_axi_arcache               <= "0011";  -- out std_logic_vector(3 downto 0); bufferable transaction. Default in Vitis environment.
+    m04_axi_arprot                <= "000";   -- Has no effect in vitis environment; out std_logic_Vector(2 downto 0);
+    m04_axi_arqos                 <= "0000"; -- Has no effect in vitis environment; out std_logic_vector(3 downto 0);
+    m04_axi_arregion              <= "0000"; -- Has no effect in vitis environment; out std_logic_vector(3 downto 0);
     -- Ignored incoming signals for m04 bus:
     -- m04_axi_bid; Since we only use 1 ID, we can ignore this. -- in std_logic_vector(0 downto 0);
     -- m04_axi_rid  -- in std_logic_vector(0 downto 0);

@@ -103,44 +103,40 @@ entity cnic_top is
 
 	--------------------------------------------------------------------------
 	-- M01
-        m01_axi_awvalid  : out std_logic;
-        m01_axi_awready  : in std_logic;
-        m01_axi_awaddr   : out std_logic_vector(31 downto 0);
-        m01_axi_awlen    : out std_logic_vector(7 downto 0);
+        m01_axi_awvalid   : out std_logic;
+        m01_axi_awready   : in  std_logic;
+        m01_axi_awaddr    : out std_logic_vector(31 downto 0);
+        m01_axi_awlen     : out std_logic_vector(7 downto 0);
         -- w bus - write data
         m01_axi_wvalid    : out std_logic;
-        m01_axi_wready    : in std_logic;
+        m01_axi_wready    : in  std_logic;
         m01_axi_wdata     : out std_logic_vector(511 downto 0);
+        m01_axi_wstrb     : out std_logic_vector(63  downto 0);
         m01_axi_wlast     : out std_logic;
-        -- b bus - write response
-        m01_axi_bvalid    : in std_logic;
-        m01_axi_bresp     : in std_logic_vector(1 downto 0);
         -- ar bus - read address
         m01_axi_arvalid   : out std_logic;
-        m01_axi_arready   : in std_logic;
+        m01_axi_arready   : in  std_logic;
         m01_axi_araddr    : out std_logic_vector(31 downto 0);
         m01_axi_arlen     : out std_logic_vector(7 downto 0);
         -- r bus - read data
-        m01_axi_rvalid    : in std_logic;
+        m01_axi_rvalid    : in  std_logic;
         m01_axi_rready    : out std_logic;
-        m01_axi_rdata     : in std_logic_vector(511 downto 0);
-        m01_axi_rlast     : in std_logic;
-        m01_axi_rresp     : in std_logic_vector(1 downto 0);
+        m01_axi_rdata     : in  std_logic_vector(511 downto 0);
+        m01_axi_rlast     : in  std_logic;
+        m01_axi_rresp     : in  std_logic_vector(1 downto 0);
 
 	--------------------------------------------------------------------------
 	-- m02
-        m02_axi_awvalid  : out std_logic;
-        m02_axi_awready  : in std_logic;
-        m02_axi_awaddr   : out std_logic_vector(31 downto 0);
-        m02_axi_awlen    : out std_logic_vector(7 downto 0);
+        m02_axi_awvalid   : out std_logic;
+        m02_axi_awready   : in  std_logic;
+        m02_axi_awaddr    : out std_logic_vector(31 downto 0);
+        m02_axi_awlen     : out std_logic_vector(7 downto 0);
         -- w bus - write data
         m02_axi_wvalid    : out std_logic;
-        m02_axi_wready    : in std_logic;
+        m02_axi_wready    : in  std_logic;
         m02_axi_wdata     : out std_logic_vector(511 downto 0);
+        m02_axi_wstrb     : out std_logic_vector(63  downto 0);
         m02_axi_wlast     : out std_logic;
-        -- b bus - write response
-        m02_axi_bvalid    : in std_logic;
-        m02_axi_bresp     : in std_logic_vector(1 downto 0);
         -- ar bus - read address
         m02_axi_arvalid   : out std_logic;
         m02_axi_arready   : in std_logic;
@@ -155,57 +151,51 @@ entity cnic_top is
 
 	--------------------------------------------------------------------------
 	-- m03
-        m03_axi_awvalid  : out std_logic;
-        m03_axi_awready  : in std_logic;
-        m03_axi_awaddr   : out std_logic_vector(31 downto 0);
-        m03_axi_awlen    : out std_logic_vector(7 downto 0);
+        m03_axi_awvalid   : out std_logic;
+        m03_axi_awready   : in  std_logic;
+        m03_axi_awaddr    : out std_logic_vector(31 downto 0);
+        m03_axi_awlen     : out std_logic_vector(7 downto 0);
         -- w bus - write data
         m03_axi_wvalid    : out std_logic;
-        m03_axi_wready    : in std_logic;
+        m03_axi_wready    : in  std_logic;
         m03_axi_wdata     : out std_logic_vector(511 downto 0);
+        m03_axi_wstrb     : out std_logic_vector(63  downto 0);
         m03_axi_wlast     : out std_logic;
-        -- b bus - write response
-        m03_axi_bvalid    : in std_logic;
-        m03_axi_bresp     : in std_logic_vector(1 downto 0);
         -- ar bus - read address
         m03_axi_arvalid   : out std_logic;
-        m03_axi_arready   : in std_logic;
+        m03_axi_arready   : in  std_logic;
         m03_axi_araddr    : out std_logic_vector(31 downto 0);
         m03_axi_arlen     : out std_logic_vector(7 downto 0);
         -- r bus - read data
-        m03_axi_rvalid    : in std_logic;
+        m03_axi_rvalid    : in  std_logic;
         m03_axi_rready    : out std_logic;
-        m03_axi_rdata     : in std_logic_vector(511 downto 0);
-        m03_axi_rlast     : in std_logic;
-        m03_axi_rresp     : in std_logic_vector(1 downto 0);
+        m03_axi_rdata     : in  std_logic_vector(511 downto 0);
+        m03_axi_rlast     : in  std_logic;
+        m03_axi_rresp     : in  std_logic_vector(1 downto 0);
 
 	--------------------------------------------------------------------------
 	-- m04
-        m04_axi_awvalid  : out std_logic;
-        m04_axi_awready  : in std_logic;
-        m04_axi_awaddr   : out std_logic_vector(31 downto 0);
-        m04_axi_awlen    : out std_logic_vector(7 downto 0);
+        m04_axi_awvalid   : out std_logic;
+        m04_axi_awready   : in  std_logic;
+        m04_axi_awaddr    : out std_logic_vector(31 downto 0);
+        m04_axi_awlen     : out std_logic_vector(7 downto 0);
         -- w bus - write data
         m04_axi_wvalid    : out std_logic;
-        m04_axi_wready    : in std_logic;
+        m04_axi_wready    : in  std_logic;
         m04_axi_wdata     : out std_logic_vector(511 downto 0);
+        m04_axi_wstrb     : out std_logic_vector(63  downto 0);
         m04_axi_wlast     : out std_logic;
-        -- b bus - write response
-        m04_axi_bvalid    : in std_logic;
-        m04_axi_bresp     : in std_logic_vector(1 downto 0);
         -- ar bus - read address
         m04_axi_arvalid   : out std_logic;
-        m04_axi_arready   : in std_logic;
+        m04_axi_arready   : in  std_logic;
         m04_axi_araddr    : out std_logic_vector(31 downto 0);
         m04_axi_arlen     : out std_logic_vector(7 downto 0);
         -- r bus - read data
-        m04_axi_rvalid    : in std_logic;
+        m04_axi_rvalid    : in  std_logic;
         m04_axi_rready    : out std_logic;
-        m04_axi_rdata     : in std_logic_vector(511 downto 0);
-        m04_axi_rlast     : in std_logic;
-        m04_axi_rresp     : in std_logic_vector(1 downto 0)
-
-
+        m04_axi_rdata     : in  std_logic_vector(511 downto 0);
+        m04_axi_rlast     : in  std_logic;
+        m04_axi_rresp     : in  std_logic_vector(1 downto 0)
     );
 END cnic_top;
 
@@ -250,7 +240,9 @@ ARCHITECTURE structure OF cnic_top IS
     signal rx_packet_size       : std_logic_vector(13 downto 0);     -- Max size is 9000.
     signal rx_reset_capture     : std_logic;
     signal rx_reset_counter     : std_logic;
-    
+    signal rx_data_to_HBM       : std_logic_vector(511 downto 0);
+    signal rx_data_to_HBM_wr    : std_logic;
+
 begin
     
     rx_s_axi : entity cmac_s_axi_lib.s_axi_packet_capture 
@@ -279,123 +271,150 @@ begin
         i_rx_axis_tvalid        => i_rx_axis_tvalid,
         
         -- Data to HBM writer - 300 MHz
-        o_data_to_hbm           => open,
-        o_data_to_hbm_wr        => open
-    
+        o_data_to_hbm           => rx_data_to_HBM,
+        o_data_to_hbm_wr        => rx_data_to_HBM_wr
     );
     
 -------------------------------------------------------------------------------------------------------------    
     i_HBM_PktController : entity HBM_PktController_lib.HBM_PktController
     port map (
-        clk_freerun => clk_freerun, 
         -- shared memory interface clock (300 MHz)
-        i_shared_clk => i_MACE_clk, -- in std_logic;
-        i_shared_rst => i_MACE_rst, -- in std_logic;
+        i_shared_clk                    => i_MACE_clk, -- in std_logic;
+        i_shared_rst                    => i_MACE_rst, -- in std_logic;
 
-        o_reset_packet_player => i_reset_packet_player, 
+        i_data_from_cmac                => rx_data_to_HBM,
+        i_data_valid_from_cmac          => rx_data_to_HBM_wr,
 
-        --AXI Lite Interface for registers
-        i_saxi_mosi => i_HBM_Pktcontroller_Lite_axi_mosi , -- in t_axi4_lite_mosi;
-        o_saxi_miso => o_HBM_Pktcontroller_Lite_axi_miso , -- out t_axi4_lite_miso;
-
-        --Register outputs
-        o_start_stop_tx => start_stop_tx, -- reset output from a register in the corner turn; used to reset downstream modules.
-    
-        o_packetiser_data_in_wr => packetiser_data_in_wr, 
-        o_packetiser_data => packetiser_data, 
-        o_packetiser_bytes_to_transmit => packetiser_bytes_to_transmit, 
+        o_packetiser_data_in_wr         => packetiser_data_in_wr, 
+        o_packetiser_data               => packetiser_data, 
+        o_packetiser_bytes_to_transmit  => packetiser_bytes_to_transmit, 
         i_packetiser_data_to_player_rdy => packetiser_data_to_player_rdy, 
-        
-        -------------------------------------------------------------
-        i_schedule_action   => i_schedule_action,
-        -------------------------------------------------------------
+      
+
+        ------------------------------------------------------------------------------------
+        -- config and status registers interface
+        -- rx
+        i_rx_packet_size                => (others => '0'),
+        i_rx_soft_reset                 => '0',
+        i_enable_capture                => '0',
+
+        o_1st_4GB_rx_addr               => open,
+        o_2nd_4GB_rx_addr               => open,
+        o_3rd_4GB_rx_addr               => open,
+        o_4th_4GB_rx_addr               => open,
+
+        o_capture_done                  => open,
+        o_num_packets_received          => open,
+
+        -- tx
+        i_tx_soft_reset                 => '0',
+        i_tx_packet_size                => (others => '0'),
+        i_start_tx                      => '0',
+
+        o_num_packets_transmitted       => open,
+
+        o_1st_4GB_tx_addr               => open,
+        o_2nd_4GB_tx_addr               => open,
+        o_3rd_4GB_tx_addr               => open,
+        o_4th_4GB_tx_addr               => open,
+        -----------------------------------------------------------------	
         -- AXI bus to the shared memory. 
         -- This has the aw, b, ar and r buses (the w bus is on the output of the LFAA decode module)
-        -- aw bus - write address
 	-----------------------------------------------------------------
 	-- M01
-        m01_axi_awvalid => m01_axi_awvalid, -- out std_logic;
-        m01_axi_awready => m01_axi_awready, -- in std_logic;
-        m01_axi_awaddr  => m01_axi_awaddr,  
-        m01_axi_awlen   => m01_axi_awlen,   -- out std_logic_vector(7 downto 0);
-        -- b bus - write response
-        m01_axi_bvalid  => m01_axi_bvalid, -- in std_logic;
-        m01_axi_bresp   => m01_axi_bresp,  -- in std_logic_vector(1 downto 0);
+        m01_axi_awvalid                 => m01_axi_awvalid, -- out std_logic;
+        m01_axi_awready                 => m01_axi_awready, -- in std_logic;
+        m01_axi_awaddr                  => m01_axi_awaddr,  
+        m01_axi_awlen                   => m01_axi_awlen,   -- out std_logic_vector(7 downto 0);
+        m01_axi_wvalid                  => m01_axi_wvalid,
+        m01_axi_wdata                   => m01_axi_wdata,
+        m01_axi_wstrb                   => m01_axi_wstrb,
+        m01_axi_wlast                   => m01_axi_wlast,
+        m01_axi_wready                  => m01_axi_wready,
+
         -- ar bus - read address
-        m01_axi_arvalid => m01_axi_arvalid, -- out std_logic;
-        m01_axi_arready => m01_axi_arready, -- in std_logic;
-        m01_axi_araddr  => m01_axi_araddr,  
-        m01_axi_arlen   => m01_axi_arlen,   -- out std_logic_vector(7 downto 0);
+        m01_axi_arvalid                 => m01_axi_arvalid, -- out std_logic;
+        m01_axi_arready                 => m01_axi_arready, -- in std_logic;
+        m01_axi_araddr                  => m01_axi_araddr,  
+        m01_axi_arlen                   => m01_axi_arlen,   -- out std_logic_vector(7 downto 0);
         -- r bus - read data
-        m01_axi_rvalid  => m01_axi_rvalid,  -- in std_logic;
-        m01_axi_rready  => m01_axi_rready,  -- out std_logic;
-        m01_axi_rdata   => m01_axi_rdata,   -- in std_logic_vector(511 downto 0);
-        m01_axi_rlast   => m01_axi_rlast,   -- in std_logic;
-        m01_axi_rresp   => m01_axi_rresp,    -- in std_logic_vector(1 downto 0);
+        m01_axi_rvalid                  => m01_axi_rvalid,  -- in std_logic;
+        m01_axi_rready                  => m01_axi_rready,  -- out std_logic;
+        m01_axi_rdata                   => m01_axi_rdata,   -- in std_logic_vector(511 downto 0);
+        m01_axi_rlast                   => m01_axi_rlast,   -- in std_logic;
+        m01_axi_rresp                   => m01_axi_rresp,   -- in std_logic_vector(1 downto 0);
 
 	-----------------------------------------------------------------
 	-- M02
-	    m02_axi_awvalid => m02_axi_awvalid, -- out std_logic;
-        m02_axi_awready => m02_axi_awready, -- in std_logic;
-        m02_axi_awaddr  => m02_axi_awaddr,  
-        m02_axi_awlen   => m02_axi_awlen,   -- out std_logic_vector(7 downto 0);
-        -- b bus - write response
-        m02_axi_bvalid  => m02_axi_bvalid, -- in std_logic;
-        m02_axi_bresp   => m02_axi_bresp,  -- in std_logic_vector(1 downto 0);
+	m02_axi_awvalid                 => m02_axi_awvalid, -- out std_logic;
+        m02_axi_awready                 => m02_axi_awready, -- in std_logic;
+        m02_axi_awaddr                  => m02_axi_awaddr,  
+        m02_axi_awlen                   => m02_axi_awlen,   -- out std_logic_vector(7 downto 0);
+	m02_axi_wvalid                  => m02_axi_wvalid,
+        m02_axi_wdata                   => m02_axi_wdata,
+        m02_axi_wstrb                   => m02_axi_wstrb,
+        m02_axi_wlast                   => m02_axi_wlast,
+        m02_axi_wready                  => m02_axi_wready,
+
         -- ar bus - read address
-        m02_axi_arvalid => m02_axi_arvalid, -- out std_logic;
-        m02_axi_arready => m02_axi_arready, -- in std_logic;
-        m02_axi_araddr  => m02_axi_araddr,  
-        m02_axi_arlen   => m02_axi_arlen,   -- out std_logic_vector(7 downto 0);
+        m02_axi_arvalid                 => m02_axi_arvalid, -- out std_logic;
+        m02_axi_arready                 => m02_axi_arready, -- in std_logic;
+        m02_axi_araddr                  => m02_axi_araddr,  
+        m02_axi_arlen                   => m02_axi_arlen,   -- out std_logic_vector(7 downto 0);
         -- r bus - read data
-        m02_axi_rvalid  => m02_axi_rvalid,  -- in std_logic;
-        m02_axi_rready  => m02_axi_rready,  -- out std_logic;
-        m02_axi_rdata   => m02_axi_rdata,   -- in std_logic_vector(511 downto 0);
-        m02_axi_rlast   => m02_axi_rlast,   -- in std_logic;
-        m02_axi_rresp   => m02_axi_rresp,    -- in std_logic_vector(1 downto 0);
+        m02_axi_rvalid                  => m02_axi_rvalid,  -- in std_logic;
+        m02_axi_rready                  => m02_axi_rready,  -- out std_logic;
+        m02_axi_rdata                   => m02_axi_rdata,   -- in std_logic_vector(511 downto 0);
+        m02_axi_rlast                   => m02_axi_rlast,   -- in std_logic;
+        m02_axi_rresp                   => m02_axi_rresp,   -- in std_logic_vector(1 downto 0);
 
 	-----------------------------------------------------------------
 	-- m03
-	    m03_axi_awvalid => m03_axi_awvalid, -- out std_logic;
-        m03_axi_awready => m03_axi_awready, -- in std_logic;
-        m03_axi_awaddr  => m03_axi_awaddr,  
-        m03_axi_awlen   => m03_axi_awlen,   -- out std_logic_vector(7 downto 0);
-        -- b bus - write response
-        m03_axi_bvalid  => m03_axi_bvalid, -- in std_logic;
-        m03_axi_bresp   => m03_axi_bresp,  -- in std_logic_vector(1 downto 0);
-        -- ar bus - read address
-        m03_axi_arvalid => m03_axi_arvalid, -- out std_logic;
-        m03_axi_arready => m03_axi_arready, -- in std_logic;
-        m03_axi_araddr  => m03_axi_araddr,  
-        m03_axi_arlen   => m03_axi_arlen,   -- out std_logic_vector(7 downto 0);
+	m03_axi_awvalid                 => m03_axi_awvalid, -- out std_logic;
+        m03_axi_awready                 => m03_axi_awready, -- in std_logic;
+        m03_axi_awaddr                  => m03_axi_awaddr,  
+        m03_axi_awlen                   => m03_axi_awlen,   -- out std_logic_vector(7 downto 0);
+        m03_axi_wvalid                  => m03_axi_wvalid,
+        m03_axi_wdata                   => m03_axi_wdata,
+        m03_axi_wstrb                   => m03_axi_wstrb,
+        m03_axi_wlast                   => m03_axi_wlast,
+        m03_axi_wready                  => m03_axi_wready,
+
+	-- ar bus - read address
+        m03_axi_arvalid                 => m03_axi_arvalid, -- out std_logic;
+        m03_axi_arready                 => m03_axi_arready, -- in std_logic;
+        m03_axi_araddr                  => m03_axi_araddr,  
+        m03_axi_arlen                   => m03_axi_arlen,   -- out std_logic_vector(7 downto 0);
         -- r bus - read data
-        m03_axi_rvalid  => m03_axi_rvalid,  -- in std_logic;
-        m03_axi_rready  => m03_axi_rready,  -- out std_logic;
-        m03_axi_rdata   => m03_axi_rdata,   -- in std_logic_vector(511 downto 0);
-        m03_axi_rlast   => m03_axi_rlast,   -- in std_logic;
-        m03_axi_rresp   => m03_axi_rresp,    -- in std_logic_vector(1 downto 0);
+        m03_axi_rvalid                  => m03_axi_rvalid,  -- in std_logic;
+        m03_axi_rready                  => m03_axi_rready,  -- out std_logic;
+        m03_axi_rdata                   => m03_axi_rdata,   -- in std_logic_vector(511 downto 0);
+        m03_axi_rlast                   => m03_axi_rlast,   -- in std_logic;
+        m03_axi_rresp                   => m03_axi_rresp,    -- in std_logic_vector(1 downto 0);
 
 	-----------------------------------------------------------------
 	-- m04
-	    m04_axi_awvalid => m04_axi_awvalid, -- out std_logic;
-        m04_axi_awready => m04_axi_awready, -- in std_logic;
-        m04_axi_awaddr  => m04_axi_awaddr,  
-        m04_axi_awlen   => m04_axi_awlen,   -- out std_logic_vector(7 downto 0);
-        -- b bus - write response
-        m04_axi_bvalid  => m04_axi_bvalid, -- in std_logic;
-        m04_axi_bresp   => m04_axi_bresp,  -- in std_logic_vector(1 downto 0);
-        -- ar bus - read address
-        m04_axi_arvalid => m04_axi_arvalid, -- out std_logic;
-        m04_axi_arready => m04_axi_arready, -- in std_logic;
-        m04_axi_araddr  => m04_axi_araddr,  
-        m04_axi_arlen   => m04_axi_arlen,   -- out std_logic_vector(7 downto 0);
+	m04_axi_awvalid                 => m04_axi_awvalid, -- out std_logic;
+        m04_axi_awready                 => m04_axi_awready, -- in std_logic;
+        m04_axi_awaddr                  => m04_axi_awaddr,  
+        m04_axi_awlen                   => m04_axi_awlen,   -- out std_logic_vector(7 downto 0);
+        m04_axi_wvalid                  => m04_axi_wvalid,
+        m04_axi_wdata                   => m04_axi_wdata,
+        m04_axi_wstrb                   => m04_axi_wstrb,
+        m04_axi_wlast                   => m04_axi_wlast,
+        m04_axi_wready                  => m04_axi_wready,
+	
+	-- ar bus - read address
+        m04_axi_arvalid                 => m04_axi_arvalid, -- out std_logic;
+        m04_axi_arready                 => m04_axi_arready, -- in std_logic;
+        m04_axi_araddr                  => m04_axi_araddr,  
+        m04_axi_arlen                   => m04_axi_arlen,   -- out std_logic_vector(7 downto 0);
         -- r bus - read data
-        m04_axi_rvalid  => m04_axi_rvalid,  -- in std_logic;
-        m04_axi_rready  => m04_axi_rready,  -- out std_logic;
-        m04_axi_rdata   => m04_axi_rdata,   -- in std_logic_vector(511 downto 0);
-        m04_axi_rlast   => m04_axi_rlast,   -- in std_logic;
-        m04_axi_rresp   => m04_axi_rresp    -- in std_logic_vector(1 downto 0);
-
+        m04_axi_rvalid                  => m04_axi_rvalid,  -- in std_logic;
+        m04_axi_rready                  => m04_axi_rready,  -- out std_logic;
+        m04_axi_rdata                   => m04_axi_rdata,   -- in std_logic_vector(511 downto 0);
+        m04_axi_rlast                   => m04_axi_rlast,   -- in std_logic;
+        m04_axi_rresp                   => m04_axi_rresp    -- in std_logic_vector(1 downto 0);
     );
 
 -----------------------------------------------------------------------------------------
