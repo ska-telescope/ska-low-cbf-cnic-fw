@@ -261,10 +261,14 @@ set_property library tech_memory_lib [get_files {\
 #############################################################
 # HBM_PktController
 add_files -fileset sources_1 [glob \
+  $ARGS_PATH/HBM_PktController/hbm_pktcontroller/HBM_PktController_hbm_pktcontroller_reg_pkg.vhd \
+  $ARGS_PATH/HBM_PktController/hbm_pktcontroller/HBM_PktController_hbm_pktcontroller_reg.vhd \	
   $RLIBRARIES_PATH/signalProcessing/HBM_PktController/HBM_PktController.vhd \
 ]
 
 set_property library HBM_PktController_lib [get_files {\
+ $ARGS_PATH/HBM_PktController/hbm_pktcontroller/HBM_PktController_hbm_pktcontroller_reg_pkg.vhd \
+ $ARGS_PATH/HBM_PktController/hbm_pktcontroller/HBM_PktController_hbm_pktcontroller_reg.vhd \
  *libraries/signalProcessing/HBM_PktController/HBM_PktController.vhd \
  }]
 source $RLIBRARIES_PATH/signalProcessing/HBM_PktController/HBM_PktController.tcl

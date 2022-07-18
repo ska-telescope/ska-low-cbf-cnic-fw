@@ -278,10 +278,12 @@ begin
 -------------------------------------------------------------------------------------------------------------    
     i_HBM_PktController : entity HBM_PktController_lib.HBM_PktController
     port map (
+        clk_freerun                     => clk_freerun,
         -- shared memory interface clock (300 MHz)
         i_shared_clk                    => i_MACE_clk, -- in std_logic;
         i_shared_rst                    => i_MACE_rst, -- in std_logic;
 
+	o_reset_packet_player           => i_reset_packet_player, 
         i_data_from_cmac                => rx_data_to_HBM,
         i_data_valid_from_cmac          => rx_data_to_HBM_wr,
 
@@ -307,16 +309,23 @@ begin
         o_num_packets_received          => open,
 
         -- tx
-        i_tx_soft_reset                 => '0',
-        i_tx_packet_size                => (others => '0'),
+	i_tx_packet_size                => (others => '0'),
         i_start_tx                      => '0',
 
-        o_num_packets_transmitted       => open,
+        i_loop_tx                       => '0',
+        i_expected_total_number_of_4k_axi => (others => '0'),
+        i_expected_number_beats_per_burst => (others => '0'), 
+        i_expected_beats_per_packet       => (others => '0'),
+        i_expected_packets_per_burst      => (others => '0'),
+        i_expected_total_number_of_bursts => (others => '0'),
+        i_expected_number_of_loops        => (others => '0'),
+        i_time_between_bursts_ns          => (others => '0'),
 
-        o_1st_4GB_tx_addr               => open,
-        o_2nd_4GB_tx_addr               => open,
-        o_3rd_4GB_tx_addr               => open,
-        o_4th_4GB_tx_addr               => open,
+        o_tx_addr                         => open,
+        o_tx_boundary_across_num          => open,
+        o_axi_rvalid_but_fifo_full        => open,
+
+	i_schedule_action                 => i_schedule_action,         
         -----------------------------------------------------------------	
         -- AXI bus to the shared memory. 
         -- This has the aw, b, ar and r buses (the w bus is on the output of the LFAA decode module)
