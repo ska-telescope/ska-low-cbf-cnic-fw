@@ -122,12 +122,10 @@ set_property library ${PERSONALITY}_lib [get_files {\
 */src/vhdl/mac_100g_wrapper.vhd \
 */src/vhdl/krnl_control_axi.vhd \
 */src/vhdl/highLatencyRamModel.vhd \
-*/src/vhdl/HBM_axi_tbModel.vhd \
 */src/tb/registers_tb.txt \
 */src/tb/registers.txt \
 }]
 set_property file_type {VHDL 2008} [get_files  $DESIGN_PATH/src/vhdl/highLatencyRamModel.vhd]
-set_property file_type {VHDL 2008} [get_files  $DESIGN_PATH/src/vhdl/HBM_axi_tbModel.vhd]
 set_property file_type {VHDL 2008} [get_files  $DESIGN_PATH/src/vhdl/$env(VITIS_TARGET)/cnic.vhd]
 set_property file_type {VHDL 2008} [get_files  $DESIGN_PATH/src/vhdl/cnic_core.vhd]
 
@@ -262,14 +260,16 @@ set_property library tech_memory_lib [get_files {\
 # HBM_PktController
 add_files -fileset sources_1 [glob \
   $ARGS_PATH/HBM_PktController/hbm_pktcontroller/HBM_PktController_hbm_pktcontroller_reg_pkg.vhd \
-  $ARGS_PATH/HBM_PktController/hbm_pktcontroller/HBM_PktController_hbm_pktcontroller_reg.vhd \	
+  $ARGS_PATH/HBM_PktController/hbm_pktcontroller/HBM_PktController_hbm_pktcontroller_reg.vhd \
   $RLIBRARIES_PATH/signalProcessing/HBM_PktController/HBM_PktController.vhd \
+  $DESIGN_PATH/src/vhdl/HBM_axi_tbModel.vhd \
 ]
 
 set_property library HBM_PktController_lib [get_files {\
- $ARGS_PATH/HBM_PktController/hbm_pktcontroller/HBM_PktController_hbm_pktcontroller_reg_pkg.vhd \
- $ARGS_PATH/HBM_PktController/hbm_pktcontroller/HBM_PktController_hbm_pktcontroller_reg.vhd \
+ */HBM_PktController/hbm_pktcontroller/HBM_PktController_hbm_pktcontroller_reg_pkg.vhd \
+ */HBM_PktController/hbm_pktcontroller/HBM_PktController_hbm_pktcontroller_reg.vhd \
  *libraries/signalProcessing/HBM_PktController/HBM_PktController.vhd \
+ */src/vhdl/HBM_axi_tbModel.vhd \
  }]
 source $RLIBRARIES_PATH/signalProcessing/HBM_PktController/HBM_PktController.tcl
 set_property file_type {VHDL 2008} [get_files  $RLIBRARIES_PATH/signalProcessing/HBM_PktController/HBM_PktController.vhd]
@@ -367,3 +367,18 @@ add_files -fileset sim_s_axi_cap [glob \
 set_property top tb_s_axi [get_filesets sim_s_axi_cap]
 set_property top_lib xil_defaultlib [get_filesets sim_s_axi_cap]
 update_compile_order -fileset sim_s_axi_cap
+
+
+##############################################################
+# Add simulation set for HBM packet controller
+
+create_fileset -simset sim_HBM_PktController
+set_property SOURCE_SET sources_1 [get_filesets sim_HBM_PktController]
+add_files -fileset sim_HBM_PktController [glob\
+   $RLIBRARIES_PATH/signalProcessing/HBM_PktController/tb/tb_HBM_PktController.vhd
+]
+set_property file_type {VHDL 2008} [get_files $DESIGN_PATH/src/vhdl/HBM_axi_tbModel.vhd]
+set_property top tb_HBM_PktController [get_filesets sim_HBM_PktController]
+set_property top_lib xil_defaultlib [get_filesets sim_HBM_PktController]
+update_compile_order -fileset sim_HBM_PktController
+

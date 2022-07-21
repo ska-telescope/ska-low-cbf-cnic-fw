@@ -596,7 +596,7 @@ o_bytes_transmitted_last_hsec   <= bytes_transmitted_last_hsec;
         probe0(68) => first_time, 
         probe0(69) => sop,
         probe0(70) => ethernet_frame_DC_fifo_empty,
-        probe0(79 downto 71) => open, 
+        probe0(79 downto 71) => (others=>'0'), 
         probe0(80) => ethernet_frame_DC_fifo_q_valid,
         --probe0(84 downto 81) => data_to_transmit_int.sop,  
         
@@ -624,7 +624,7 @@ o_bytes_transmitted_last_hsec   <= bytes_transmitted_last_hsec;
         probe0(64)                  => ethernet_frame_DC_fifo_wr, 
         probe0(65)                  => ethernet_frame_DC_fifo_full, 
         probe0(66)                  => ethernet_frame_DC_fifo_empty,
-        probe0(75 downto 67)        => open, 
+        probe0(75 downto 67)        => (others=>'0'), 
         probe0(191 downto 76)       => (others =>'0')
     );
 
