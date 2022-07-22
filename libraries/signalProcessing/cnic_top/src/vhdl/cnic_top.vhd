@@ -300,6 +300,12 @@ begin
         i_rx_soft_reset                 => '0',
         i_enable_capture                => '0',
 
+        i_lfaa_bank1_addr               => (others => '0'),
+        i_lfaa_bank2_addr               => (others => '0'),
+        i_lfaa_bank3_addr               => (others => '0'),
+        i_lfaa_bank4_addr               => (others => '0'),
+        update_start_addr               => '0',
+
         o_1st_4GB_rx_addr               => open,
         o_2nd_4GB_rx_addr               => open,
         o_3rd_4GB_rx_addr               => open,
