@@ -33,6 +33,9 @@ library UNISIM;
 use UNISIM.VComponents.all;
 
 entity s_axi_packet_capture is
+    Generic (
+        g_DEBUG_ILA             : IN BOOLEAN := TRUE
+    );
     Port ( 
         --------------------------------------------------------
         -- 100G 
@@ -65,6 +68,13 @@ entity s_axi_packet_capture is
 end s_axi_packet_capture;
 
 architecture RTL of s_axi_packet_capture is
+
+COMPONENT ila_0
+    PORT (
+        clk     : IN STD_LOGIC;
+        probe0  : IN STD_LOGIC_VECTOR(191 DOWNTO 0)
+    );       
+END COMPONENT;
 
 signal rx_axis_tdata_int        : std_logic_vector ( 511 downto 0 );
 signal rx_axis_tkeep_int        : std_logic_vector ( 63 downto 0 );
@@ -340,5 +350,37 @@ end process;
 
 o_data_to_hbm           <= rx_buffer_ram_dout;
 o_data_to_hbm_wr        <= data_to_hbm_wr_int;
+
+
+------------------------------------------------------------------------------
+
+        
+debug_packet_capture_in : IF g_DEBUG_ILA GENERATE
+    cmac_in_ila : ila_0
+    port map (
+        clk                     => i_clk_100GE, 
+        probe0(127 downto 0)    => rx_buffer_ram_din(127 downto 0),
+        probe0(136 downto 128)  => rx_buffer_ram_addr_in,
+        probe0(137)             => rx_buffer_ram_din_wr, 
+        
+        probe0(138)             => rx_axis_tlast_int_d1,
+        probe0(139)             => rx_axis_tvalid_int_d1,
+        
+        probe0(191 downto 140)  => (others => '0')
+    );
+    
+
+    hbm_out_ila : ila_0
+    port map (
+        clk                     => i_clk_300, 
+        probe0(127 downto 0)    => rx_buffer_ram_dout(127 downto 0),
+        probe0(136 downto 128)  => rx_buffer_ram_addr_out,
+        probe0(137)             => data_to_hbm_wr_int, 
+        probe0(145 downto 138)  => words_to_send_to_hbm,
+
+        probe0(191 downto 146)  => (others => '0')
+    );
+
+end generate;
 
 end RTL;

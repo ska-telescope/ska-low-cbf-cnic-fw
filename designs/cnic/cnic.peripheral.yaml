@@ -41,7 +41,7 @@ peripherals:
               width             : 1
               access_mode       : RW
               reset_value       : 0x0
-              field_description : "Reset 100G ethernet interface"
+              field_description : "Reset all 100G ethernet interface"
           #################################
           - - field_name        : build_date
               width             : 32
@@ -121,18 +121,7 @@ peripherals:
               access_mode       : RW
               reset_value       : 0x0
               field_description : "Set to 1 to enable FEC, 0 to disable"
-          #################################
-          - - field_name        : eth100G_bytes_transmitted_hsec
-              width             : 32
-              access_mode       : RO
-              reset_value       : 0x0
-              field_description : "Half second of bytes sent"
-          #################################
-          - - field_name        : eth100G_cycles_between_packets
-              width             : 16
-              access_mode       : RO
-              reset_value       : 0x0
-              field_description : "Largest number of idle cycles in the last half sec"
+
 
   - peripheral_name        : vitis_shared
     peripheral_description : "shared memory page for Vitis register access"

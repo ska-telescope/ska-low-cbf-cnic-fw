@@ -257,11 +257,69 @@ peripherals:
               access_mode       : RO
               reset_value       : 0x0
               field_description : "count of the total number of packets sent to the 100G MAC upper 32 bits of 64 bit counter"
-
+         #################################
           - - field_name        : total_pkts_to_mac_low
               width             : 32
               access_mode       : RO
               reset_value       : 0x0
               field_description : "count of the total number of packets sent to the 100G MAC lower 32 bits of 64 bit counter"
-
-
+         #################################
+          - - field_name        : rx_packet_size
+              width             : 32
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "byte count of packet we want to capture"
+         #################################
+          - - field_name        : rx_reset_capture
+              width             : 1
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "reset capture logic chain"
+         #################################
+          - - field_name        : rx_reset_counter
+              width             : 1
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "reset capture logic stats"
+         #################################
+          - - field_name        : rx_enable_capture
+              width             : 1
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "reset capture logic enable"
+         #################################
+          - - field_name        : rx_1st_4GB_rx_addr
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "HBM addr"
+         #################################
+          - - field_name        : rx_2nd_4GB_rx_addr
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "HBM addr"
+         #################################
+          - - field_name        : rx_3rd_4GB_rx_addr
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "HBM addr"
+         #################################
+          - - field_name        : rx_4th_4GB_rx_addr
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "HBM addr"
+         #################################
+          - - field_name        : rx_capture_done
+              width             : 1
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "capture full"
+         #################################
+          - - field_name        : rx_number_of_packets_received
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Total of captured packets"              

@@ -69,10 +69,7 @@ entity packet_player is
         
         o_cmac_ready            : OUT STD_LOGIC;
         
-        -- traffic stats
-        o_time_between_packets_largest  : OUT STD_LOGIC_VECTOR(15 downto 0);
-        o_bytes_transmitted_last_hsec   : OUT STD_LOGIC_VECTOR(31 downto 0);
-    
+   
         -- streaming AXI to CMAC
         o_tx_axis_tdata         : OUT STD_LOGIC_VECTOR(511 downto 0);
         o_tx_axis_tkeep         : OUT STD_LOGIC_VECTOR(63 downto 0);
@@ -532,8 +529,7 @@ begin
 end process;
 
 
-o_time_between_packets_largest  <= time_between_packets_largest;
-o_bytes_transmitted_last_hsec   <= bytes_transmitted_last_hsec;
+
 -----------------------------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------------------

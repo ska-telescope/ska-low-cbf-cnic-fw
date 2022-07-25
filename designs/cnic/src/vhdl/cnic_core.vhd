@@ -471,13 +471,22 @@ ARCHITECTURE RTL OF cnic_core IS
     signal tx_axis_tlast            : STD_LOGIC;
     signal tx_axis_tuser            : STD_LOGIC;
     signal tx_axis_tready           : STD_LOGIC;
-    
+        
     signal rx_axis_tdata     : STD_LOGIC_VECTOR ( 511 downto 0 );
     signal rx_axis_tkeep     : STD_LOGIC_VECTOR ( 63 downto 0 );
     signal rx_axis_tlast     : STD_LOGIC;
     signal rx_axis_tready    : STD_LOGIC;
     signal rx_axis_tuser     : STD_LOGIC_VECTOR ( 79 downto 0 );
     signal rx_axis_tvalid    : STD_LOGIC;
+    
+    -- 2nd CMAC instance
+    signal eth100G_clk_b, eth100G_locked_b : std_logic;
+    signal tx_axis_tdata_b          : STD_LOGIC_VECTOR(511 downto 0);
+    signal tx_axis_tkeep_b          : STD_LOGIC_VECTOR(63 downto 0);
+    signal tx_axis_tvalid_b         : STD_LOGIC;
+    signal tx_axis_tlast_b          : STD_LOGIC;
+    signal tx_axis_tuser_b          : STD_LOGIC;
+    signal tx_axis_tready_b         : STD_LOGIC;
     
     signal m01_axi_awvalidi  : std_logic;
     signal m01_axi_awreadyi  : std_logic;
@@ -985,12 +994,6 @@ begin
 
     END GENERATE;
 
-    packetiser_stats(0)         <= x"0000" & time_between_packets_largest;
-    packetiser_stats(1)         <= bytes_transmitted_last_hsec;
-
-
-    system_fields_ro.eth100G_cycles_between_packets     <= packetiser_stats_crossed(0)(15 downto 0);
-    system_fields_ro.eth100G_bytes_transmitted_hsec     <= packetiser_stats_crossed(1); 
     
 
     
@@ -1118,6 +1121,78 @@ u_100G_port_a : entity Timeslave_CMAC_lib.CMAC_100G_wrap_w_timeslave
         i_Timeslave_Full_axi_mosi   => mc_full_mosi(c_timeslave_full_index),
         o_Timeslave_Full_axi_miso   => mc_full_miso(c_timeslave_full_index)
     );
+    
+    U55_2nd_port : IF g_ALVEO_U55 GENERATE
+        u_100G_port_b : entity Timeslave_CMAC_lib.CMAC_100G_wrap_w_timeslave
+        Generic map (
+            U55_TOP_QSFP        => FALSE,
+            U55_BOTTOM_QSFP     => g_ALVEO_U55         -- THIS CONFIG IS VALID FOR U50 as well.
+        )
+        Port map(
+            gt_rxp_in   => gt_b_rxp_in, -- in(3:0);
+            gt_rxn_in   => gt_b_rxn_in, -- in(3:0);
+            gt_txp_out  => gt_b_txp_out, -- out(3:0);
+            gt_txn_out  => gt_b_txn_out, -- out(3:0);
+            gt_refclk_p => gt_refclk_b_p, -- IN STD_LOGIC;
+            gt_refclk_n => gt_refclk_b_n, -- IN STD_LOGIC;
+            sys_reset   => eth100_reset_final,   -- IN STD_LOGIC;   -- sys_reset, clocked by dclk.
+            i_dclk_100  => clk_gt_freerun_use, --  IN STD_LOGIC;   -- stable clock for the core; The frequency is specified in the wizard. See comments above about the actual frequency supplied by the Alveo platform.       
+            clk250      => clk100, 
+            
+            i_fec_enable                => fec_enable_322m,
+            -- All remaining signals are clocked on tx_clk_out
+            tx_clk_out                  => eth100G_clk_b, -- out std_logic; This is the clock used by the data in and out of the core. 322 MHz.
+            
+            -- User Interface Signals
+            rx_locked                   => eth100G_locked_b, -- out std_logic; 
+    
+            user_rx_reset               => open,
+            user_tx_reset               => open,
+    
+            -- Statistics Interface, on eth100_clk
+            rx_total_packets => open, -- out(31:0);
+            rx_bad_fcs       => open,       -- out(31:0);
+            rx_bad_code      => open,      -- out(31:0);
+            tx_total_packets => open, -- out(31:0);
+            
+            -----------------------------------------------------------------------
+            -- streaming AXI to CMAC
+            i_tx_axis_tdata     => tx_axis_tdata_b,
+            i_tx_axis_tkeep     => tx_axis_tkeep_b,
+            i_tx_axis_tvalid    => tx_axis_tvalid_b,
+            i_tx_axis_tlast     => tx_axis_tlast_b,
+            i_tx_axis_tuser     => tx_axis_tuser_b,
+            o_tx_axis_tready    => tx_axis_tready_b,
+            
+            -- RX
+            o_rx_axis_tdata     => open,
+            o_rx_axis_tkeep     => open,
+            o_rx_axis_tlast     => open,
+            i_rx_axis_tready    => '1',
+            o_rx_axis_tuser     => open,
+            o_rx_axis_tvalid    => open,
+            
+            -----------------------------------------------------------------------
+            
+            -- PTP Data
+            PTP_time_CMAC_clk           => open,
+            PTP_pps_CMAC_clk            => open,
+            
+            PTP_time_ARGs_clk           => open,
+            PTP_pps_ARGs_clk            => open,
+            
+            -- ARGs Interface
+            i_ARGs_clk                  => ap_clk, -- in std_logic;
+            i_ARGs_rst                  => ap_rst, -- in std_logic;
+            
+            i_CMAC_Lite_axi_mosi        => mc_lite_mosi(c_cmac_b_lite_index),
+            o_CMAC_Lite_axi_miso        => mc_lite_miso(c_cmac_b_lite_index),
+            
+            i_Timeslave_Full_axi_mosi   => mc_full_mosi(c_timeslave_b_full_index),
+            o_Timeslave_Full_axi_miso   => mc_full_miso(c_timeslave_b_full_index)
+        );
+    END GENERATE;
+    
 
     CMAC_reset_proc : process(eth100G_clk)
     begin
@@ -1246,7 +1321,15 @@ END GENERATE;
         i_clk_100GE         => eth100G_clk,      -- in std_logic;
         i_eth100G_locked    => eth100G_locked,
         -----------------------------------------------------------------------
-
+        i_clk_100GE_b       => eth100G_clk_b,
+        i_eth100G_locked_b  => eth100G_locked_b,
+         
+        o_tx_axis_tdata_b   => tx_axis_tdata_b,
+        o_tx_axis_tkeep_b   => tx_axis_tkeep_b,
+        o_tx_axis_tvalid_b  => tx_axis_tvalid_b,
+        o_tx_axis_tlast_b   => tx_axis_tlast_b,
+        o_tx_axis_tuser_b   => tx_axis_tuser_b,
+        i_tx_axis_tready_b  => tx_axis_tready_b,
         -----------------------------------------------------------------------
         -- reset of the valid memory is in progress.
         o_validMemRstActive => o_validMemRstActive,
@@ -1259,9 +1342,6 @@ END GENERATE;
         i_HBM_Pktcontroller_Lite_axi_mosi  => mc_lite_mosi(c_hbm_pktcontroller_lite_index),
         o_HBM_Pktcontroller_Lite_axi_miso  => mc_lite_miso(c_hbm_pktcontroller_lite_index),
         
-        -- traffic stats
-        o_time_between_packets_largest  => time_between_packets_largest,
-        o_bytes_transmitted_last_hsec   => bytes_transmitted_last_hsec,
         
         -----------------------------------------------------------------------
         i_schedule_action       => schedule_action,

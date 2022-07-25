@@ -27,6 +27,8 @@ USE axi4_lib.axi4_full_pkg.ALL;
 use PSR_Packetiser_lib.ethernet_pkg.ALL;
 use PSR_Packetiser_lib.CbfPsrHeader_pkg.ALL;
 
+USE HBM_PktController_lib.HBM_PktController_hbm_pktcontroller_reg_pkg.ALL;
+
 library technology_lib;
 USE technology_lib.tech_mac_100g_pkg.ALL;
 
@@ -53,13 +55,15 @@ entity cnic_top is
         i_data_tx_siso      : in t_lbus_siso;
         
         -- streaming AXI to CMAC
+        i_clk_100GE         : in std_logic;
+        i_eth100G_locked    : in std_logic;
         o_tx_axis_tdata     : OUT STD_LOGIC_VECTOR(511 downto 0);
         o_tx_axis_tkeep     : OUT STD_LOGIC_VECTOR(63 downto 0);
         o_tx_axis_tvalid    : OUT STD_LOGIC;
         o_tx_axis_tlast     : OUT STD_LOGIC;
         o_tx_axis_tuser     : OUT STD_LOGIC;
         i_tx_axis_tready    : in STD_LOGIC;
-        
+                
         -------
         -- 100G RX
         -- RX
@@ -70,9 +74,17 @@ entity cnic_top is
         i_rx_axis_tuser     : in STD_LOGIC_VECTOR ( 79 downto 0 );
         i_rx_axis_tvalid    : in STD_LOGIC;
         
-        i_clk_100GE         : in std_logic;
-        i_eth100G_locked    : in std_logic;
         -----------------------------------------------------------------------
+        -- streaming AXI to CMAC 2nd interface.
+        
+        i_clk_100GE_b       : in std_logic;
+        i_eth100G_locked_b  : in std_logic;
+        o_tx_axis_tdata_b   : OUT STD_LOGIC_VECTOR(511 downto 0);
+        o_tx_axis_tkeep_b   : OUT STD_LOGIC_VECTOR(63 downto 0);
+        o_tx_axis_tvalid_b  : OUT STD_LOGIC;
+        o_tx_axis_tlast_b   : OUT STD_LOGIC;
+        o_tx_axis_tuser_b   : OUT STD_LOGIC;
+        i_tx_axis_tready_b  : in STD_LOGIC;
 
         -----------------------------------------------------------------------
         -- Debug signal used in the testbench.
@@ -86,9 +98,6 @@ entity cnic_top is
         i_HBM_Pktcontroller_Lite_axi_mosi : in t_axi4_lite_mosi; 
         o_HBM_Pktcontroller_Lite_axi_miso : out t_axi4_lite_miso;
         
-        -- traffic stats
-        o_time_between_packets_largest  : OUT STD_LOGIC_VECTOR(15 downto 0);
-        o_bytes_transmitted_last_hsec   : OUT STD_LOGIC_VECTOR(31 downto 0);
         
         -----------------------------------------------------------------------
         i_schedule_action   : in std_logic_vector(7 downto 0);
@@ -224,11 +233,15 @@ ARCHITECTURE structure OF cnic_top IS
     --------------------------------------------------------------------------- 
     signal start_stop_tx : std_logic;
 
-    signal packetiser_data_in_wr : std_logic;
-    signal packetiser_data : std_logic_vector(511 downto 0);
-    signal swapped_packetiser_data : std_logic_vector(511 downto 0);
-    signal packetiser_data_to_player_rdy : std_logic;
-    signal packetiser_bytes_to_transmit : std_logic_vector(13 downto 0);
+    signal packetiser_data_in_wr                : std_logic;
+    signal packetiser_data                      : std_logic_vector(511 downto 0);
+    signal swapped_packetiser_data              : std_logic_vector(511 downto 0);
+    signal packetiser_data_to_player_rdy        : std_logic;
+    signal packetiser_bytes_to_transmit         : std_logic_vector(13 downto 0);
+    
+    signal packetiser_data_to_player_rdy_b      : std_logic;
+    signal packetiser_data_to_player_rdy_combo  : std_logic;
+    
     
     signal header_modifier_data_in_wr           : std_logic;
     signal header_modifier_data                 : std_logic_vector(511 downto 0);
@@ -244,12 +257,20 @@ ARCHITECTURE structure OF cnic_top IS
 
     
     signal eth100G_reset : std_logic;
+    signal eth100G_reset_b : std_logic;
 
     signal dbg_ILA_trigger, bdbg_ILA_triggerDel1, bdbg_ILA_trigger, bdbg_ILA_triggerDel2 : std_logic;
     
     signal rx_packet_size       : std_logic_vector(13 downto 0);     -- Max size is 9000.
     signal rx_reset_capture     : std_logic;
     signal rx_reset_counter     : std_logic;
+    
+    -- register interface
+    signal config_rw            : t_config_rw;
+    signal config_ro            : t_config_ro;
+    
+    signal data_to_hbm          : std_logic_vector(511 downto 0);
+    signal data_to_hbm_wr       : std_logic;
     
 begin
     
@@ -264,9 +285,9 @@ begin
         i_clk_300_rst           => i_MACE_rst,
         
         
-        i_rx_packet_size        => rx_packet_size,
-        i_rx_reset_capture      => rx_reset_capture,
-        i_reset_counter         => rx_reset_counter,
+        i_rx_packet_size        => config_rw.rx_packet_size(13 downto 0),
+        i_rx_reset_capture      => config_rw.rx_reset_capture,
+        i_reset_counter         => config_rw.rx_reset_counter,
         o_target_count          => open,
         o_nontarget_count       => open,
 
@@ -279,31 +300,81 @@ begin
         i_rx_axis_tvalid        => i_rx_axis_tvalid,
         
         -- Data to HBM writer - 300 MHz
-        o_data_to_hbm           => open,
-        o_data_to_hbm_wr        => open
+        o_data_to_hbm           => data_to_hbm,
+        o_data_to_hbm_wr        => data_to_hbm_wr
     
     );
     
 -------------------------------------------------------------------------------------------------------------    
-    i_HBM_PktController : entity HBM_PktController_lib.HBM_PktController
+    ARGS_register_HBM_PktController : entity HBM_PktController_lib.HBM_PktController_hbm_pktcontroller_reg
     port map (
-        clk_freerun => clk_freerun, 
+        MM_CLK              => i_MACE_clk, 
+        MM_RST              => i_MACE_rst, 
+        SLA_IN              => i_HBM_Pktcontroller_Lite_axi_mosi,  -- IN    t_axi4_lite_mosi;
+        SLA_OUT             => o_HBM_Pktcontroller_Lite_axi_miso,  -- OUT   t_axi4_lite_miso;
+
+        CONFIG_FIELDS_RW    => config_rw, -- OUT t_config_rw;
+        CONFIG_FIELDS_RO    => config_ro  
+    );
+
+
+-------------------------------------------------------------------------------------------------------------
+
+config_ro.running   <= config_rw.start_stop_tx;
+
+
+
+i_HBM_PktController : entity HBM_PktController_lib.HBM_PktController
+    port map (
+        clk_freerun                     => clk_freerun, 
         -- shared memory interface clock (300 MHz)
-        i_shared_clk => i_MACE_clk, -- in std_logic;
-        i_shared_rst => i_MACE_rst, -- in std_logic;
+        i_shared_clk                    => i_MACE_clk, -- in std_logic;
+        i_shared_rst                    => i_MACE_rst, -- in std_logic;
 
-        o_reset_packet_player => i_reset_packet_player, 
+        o_reset_packet_player           => i_reset_packet_player, 
 
-        --AXI Lite Interface for registers
-        i_saxi_mosi => i_HBM_Pktcontroller_Lite_axi_mosi , -- in t_axi4_lite_mosi;
-        o_saxi_miso => o_HBM_Pktcontroller_Lite_axi_miso , -- out t_axi4_lite_miso;
+        ------------------------------------------------------------------------------------
+        -- Data from CMAC module after CDC in shared memory clock domain
+        i_data_from_cmac                => data_to_hbm,
+        i_data_valid_from_cmac          => data_to_hbm_wr,
 
-        --Register outputs
-        o_start_stop_tx => start_stop_tx, -- reset output from a register in the corner turn; used to reset downstream modules.
-    
-        o_packetiser_data_in_wr => packetiser_data_in_wr, 
-        o_packetiser_data => packetiser_data, 
-        o_packetiser_bytes_to_transmit => packetiser_bytes_to_transmit, 
+        ------------------------------------------------------------------------------------
+        -- config and status registers interface
+        -- rx
+    	i_rx_packet_size                    => config_rw.packet_size(13 downto 0),
+        i_rx_soft_reset                     => config_rw.rx_reset_capture,
+        i_enable_capture                    => config_rw.rx_enable_capture,
+
+        o_1st_4GB_rx_addr                   => config_ro.rx_1st_4gb_rx_addr,
+        o_2nd_4GB_rx_addr                   => config_ro.rx_2nd_4gb_rx_addr,
+        o_3rd_4GB_rx_addr                   => config_ro.rx_3rd_4gb_rx_addr,
+        o_4th_4GB_rx_addr                   => config_ro.rx_4th_4gb_rx_addr,
+
+        o_capture_done                      => config_ro.rx_capture_done,
+        o_num_packets_received              => config_ro.rx_number_of_packets_received,
+
+        -- tx
+        i_tx_packet_size                    => config_rw.packet_size(13 downto 0),
+        i_start_tx                          => config_rw.start_stop_tx,
+      
+        i_loop_tx                           => config_rw.loop_tx,
+        i_expected_total_number_of_4k_axi   => config_rw.expected_total_number_of_4k_axi, 
+        i_expected_number_beats_per_burst   => config_rw.expected_number_beats_per_burst(12 downto 0),
+        i_expected_beats_per_packet         => config_rw.expected_beats_per_packet,
+        i_expected_packets_per_burst        => config_rw.expected_packets_per_burst,
+	    i_expected_total_number_of_bursts   => config_rw.expected_total_number_of_bursts,
+        i_expected_number_of_loops          => config_rw.expected_number_of_loops,
+        i_time_between_bursts_ns            => config_rw.time_between_bursts_ns,
+
+        o_tx_addr                         => open,
+        o_tx_boundary_across_num          => open,
+	    o_axi_rvalid_but_fifo_full        => open,
+	------------------------------------------------------------------------------------
+        -- Data output, to the packetizer
+            
+        o_packetiser_data_in_wr         => packetiser_data_in_wr, 
+        o_packetiser_data               => packetiser_data, 
+        o_packetiser_bytes_to_transmit  => packetiser_bytes_to_transmit, 
         i_packetiser_data_to_player_rdy => packetiser_data_to_player_rdy, 
         
         -------------------------------------------------------------
@@ -318,9 +389,12 @@ begin
         m01_axi_awready => m01_axi_awready, -- in std_logic;
         m01_axi_awaddr  => m01_axi_awaddr,  
         m01_axi_awlen   => m01_axi_awlen,   -- out std_logic_vector(7 downto 0);
-        -- b bus - write response
-        m01_axi_bvalid  => m01_axi_bvalid, -- in std_logic;
-        m01_axi_bresp   => m01_axi_bresp,  -- in std_logic_vector(1 downto 0);
+        --w bus
+        m01_axi_wvalid  => m01_axi_wvalid,
+        m01_axi_wdata   => m01_axi_wdata,
+        --m01_axi_wstrb   => m01_axi_wstrb,
+        m01_axi_wlast   => m01_axi_wlast,
+        m01_axi_wready  => m01_axi_wready,
         -- ar bus - read address
         m01_axi_arvalid => m01_axi_arvalid, -- out std_logic;
         m01_axi_arready => m01_axi_arready, -- in std_logic;
@@ -339,9 +413,12 @@ begin
         m02_axi_awready => m02_axi_awready, -- in std_logic;
         m02_axi_awaddr  => m02_axi_awaddr,  
         m02_axi_awlen   => m02_axi_awlen,   -- out std_logic_vector(7 downto 0);
-        -- b bus - write response
-        m02_axi_bvalid  => m02_axi_bvalid, -- in std_logic;
-        m02_axi_bresp   => m02_axi_bresp,  -- in std_logic_vector(1 downto 0);
+        --w bus
+        m02_axi_wvalid  => m02_axi_wvalid,
+        m02_axi_wdata   => m02_axi_wdata,
+        --m02_axi_wstrb   => m02_axi_wstrb,
+        m02_axi_wlast   => m02_axi_wlast,
+        m02_axi_wready  => m02_axi_wready,
         -- ar bus - read address
         m02_axi_arvalid => m02_axi_arvalid, -- out std_logic;
         m02_axi_arready => m02_axi_arready, -- in std_logic;
@@ -360,9 +437,12 @@ begin
         m03_axi_awready => m03_axi_awready, -- in std_logic;
         m03_axi_awaddr  => m03_axi_awaddr,  
         m03_axi_awlen   => m03_axi_awlen,   -- out std_logic_vector(7 downto 0);
-        -- b bus - write response
-        m03_axi_bvalid  => m03_axi_bvalid, -- in std_logic;
-        m03_axi_bresp   => m03_axi_bresp,  -- in std_logic_vector(1 downto 0);
+        --w bus
+        m03_axi_wvalid  => m03_axi_wvalid,
+        m03_axi_wdata   => m03_axi_wdata,
+        --m03_axi_wstrb   => m03_axi_wstrb,
+        m03_axi_wlast   => m03_axi_wlast,
+        m03_axi_wready  => m03_axi_wready,
         -- ar bus - read address
         m03_axi_arvalid => m03_axi_arvalid, -- out std_logic;
         m03_axi_arready => m03_axi_arready, -- in std_logic;
@@ -381,9 +461,12 @@ begin
         m04_axi_awready => m04_axi_awready, -- in std_logic;
         m04_axi_awaddr  => m04_axi_awaddr,  
         m04_axi_awlen   => m04_axi_awlen,   -- out std_logic_vector(7 downto 0);
-        -- b bus - write response
-        m04_axi_bvalid  => m04_axi_bvalid, -- in std_logic;
-        m04_axi_bresp   => m04_axi_bresp,  -- in std_logic_vector(1 downto 0);
+        --w bus
+        m04_axi_wvalid  => m04_axi_wvalid,
+        m04_axi_wdata   => m04_axi_wdata,
+        --m04_axi_wstrb   => m04_axi_wstrb,
+        m04_axi_wlast   => m04_axi_wlast,
+        m04_axi_wready  => m04_axi_wready,
         -- ar bus - read address
         m04_axi_arvalid => m04_axi_arvalid, -- out std_logic;
         m04_axi_arready => m04_axi_arready, -- in std_logic;
@@ -470,11 +553,7 @@ END GENERATE;
             o_data_to_player_rdy    => packetiser_data_to_player_rdy,
             
             o_cmac_ready            => cmac_ready,
-            
-            -- traffic stats
-            o_time_between_packets_largest  => o_time_between_packets_largest,
-            o_bytes_transmitted_last_hsec   => o_bytes_transmitted_last_hsec,
-        
+                   
             -- streaming AXI to CMAC
             o_tx_axis_tdata         => o_tx_axis_tdata,
             o_tx_axis_tkeep         => o_tx_axis_tkeep,
@@ -488,10 +567,52 @@ END GENERATE;
             i_data_to_transmit_ctl  => i_data_tx_siso
         );
   
+--        i_clk_100GE_b       : in std_logic;
+--        i_eth100G_locked_b  : in std_logic;
+--        o_tx_axis_tdata_b   : OUT STD_LOGIC_VECTOR(511 downto 0);
+--        o_tx_axis_tkeep_b   : OUT STD_LOGIC_VECTOR(63 downto 0);
+--        o_tx_axis_tvalid_b  : OUT STD_LOGIC;
+--        o_tx_axis_tlast_b   : OUT STD_LOGIC;
+--        o_tx_axis_tuser_b   : OUT STD_LOGIC;
+--        i_tx_axis_tready_b  : in STD_LOGIC;
 
-   
+    eth100G_reset_b <= not(i_eth100G_locked_b);
+        
+    packet_player_100G_B : entity PSR_Packetiser_lib.packet_player 
+        Generic Map(
+            LBUS_TO_CMAC_INUSE      => g_LBUS_CMAC,      -- FUTURE WORK to IMPLEMENT AXI
+            PLAYER_CDC_FIFO_DEPTH   => 512        
+            -- FIFO is 512 Wide, 9KB packets = 73728 bits, 512 * 256 = 131072, 256 depth allows ~1.88 9K packets, we are target packets sizes smaller than this.
+        )
+        Port map ( 
+            i_clk400                => i_MACE_clk, 
+            i_reset_400             => i_reset_packet_player,
+        
+            i_cmac_clk              => i_clk_100GE_b,
+            i_cmac_clk_rst          => eth100G_reset_b,
+            
+            i_bytes_to_transmit     => header_modifier_bytes_to_transmit,   --packetiser_bytes_to_transmit,    -- 
+            i_data_to_player        => header_modifier_data,                --swapped_packetiser_data, 
+            i_data_to_player_wr     => header_modifier_data_in_wr,          --packetiser_data_in_wr,
+            o_data_to_player_rdy    => packetiser_data_to_player_rdy_b,
+            
+            o_cmac_ready            => open,
+                   
+            -- streaming AXI to CMAC
+            o_tx_axis_tdata         => o_tx_axis_tdata_b,
+            o_tx_axis_tkeep         => o_tx_axis_tkeep_b,
+            o_tx_axis_tvalid        => o_tx_axis_tvalid_b,
+            o_tx_axis_tlast         => o_tx_axis_tlast_b,
+            o_tx_axis_tuser         => o_tx_axis_tuser_b,
+            i_tx_axis_tready        => i_tx_axis_tready_b,
+        
+            -- LBUS to CMAC
+            o_data_to_transmit      => open,
+            i_data_to_transmit_ctl  => i_data_tx_siso
+        );
   
     
+    packetiser_data_to_player_rdy_combo     <= packetiser_data_to_player_rdy_b AND packetiser_data_to_player_rdy;
  ---------------------------------------------------------------------------------------------------------------------------------------
 -- ILA for debugging
 

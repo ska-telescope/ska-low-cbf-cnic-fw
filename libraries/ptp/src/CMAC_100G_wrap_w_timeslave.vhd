@@ -447,15 +447,15 @@ signal ARGs_rstn                : std_logic;
 
 signal clk250_resetn            : std_logic;
 
+signal sys_reset_internal       : std_logic;
+signal CMAC_ARGS_reset          : std_logic;
+
 begin
 
 -----------------------------------------
 -- mappings
 tx_clk_out              <= CMAC_Clk;
 rx_locked               <= CMAC_rx_locked;
-
-CMAC_ctl_rx_enable      <= '1';
-CMAC_ctl_tx_enable      <= '1';
 
 PTP_time_CMAC_clk       <= PTP_time_CMAC_clk_int;
 PTP_pps_CMAC_clk        <= PTP_pps_CMAC_clk_int;
@@ -497,11 +497,40 @@ ARGS_CMAC_lite : entity Timeslave_CMAC_lib.CMAC_cmac_reg
         );
         
 ------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Control Registers
+CMAC_locked_cdc : entity signal_processing_common.sync 
+    generic map (
+        DEST_SYNC_FF    => 2,
+        WIDTH           => 1
+    )
+    port map ( 
+        Clock_a     => CMAC_Clk,
+        Clock_b     => i_ARGs_clk,
+        data_in(0)  => CMAC_rx_locked,
+        
+        data_out(0) => cmac_stats_ro_registers.cmac_100g_locked
+    );
+
+CMAC_RESET_CDC : entity signal_processing_common.sync 
+    generic map (
+        DEST_SYNC_FF    => 2,
+        WIDTH           => 1
+    )
+    port map ( 
+        Clock_a     => i_ARGs_clk,
+        Clock_b     => i_dclk_100,
+        data_in(0)  => cmac_stats_rw_registers.cmac_reset,
+        
+        data_out(0) => CMAC_ARGS_reset
+    );
+    
+sys_reset_internal  <= sys_reset AND CMAC_ARGS_reset;    
+------------------------------------------------------------------------------------------------------------------------------------------------------
 
 TOP_100G : IF U55_TOP_QSFP GENERATE
     ptp_BD : ts_wrapper port map (
         clk_100MHz              => i_dclk_100,
-        clk_100_reset           => sys_reset,
+        clk_100_reset           => sys_reset_internal,
         
         CMAC_Clk                => CMAC_Clk,
         
@@ -574,7 +603,7 @@ TOP_100G : IF U55_TOP_QSFP GENERATE
         CMAC_rx_ptp_stamp       => CMAC_rx_ptp_stamp,
         CMAC_tx_ptp_stamp       => CMAC_tx_ptp_stamp,
         
-        CMAC_Master_reset       => sys_reset,
+        CMAC_Master_reset       => sys_reset_internal,
         
         gt_loopback_in          => x"000",
     
@@ -645,7 +674,7 @@ END GENERATE;
 BOTTOM_100G : IF U55_BOTTOM_QSFP GENERATE
     ptp_BD : ts_b_wrapper port map (
         clk_100MHz              => i_dclk_100,
-        clk_100_reset           => sys_reset,
+        clk_100_reset           => sys_reset_internal,
         
         CMAC_Clk                => CMAC_Clk,
         
@@ -718,7 +747,7 @@ BOTTOM_100G : IF U55_BOTTOM_QSFP GENERATE
         CMAC_rx_ptp_stamp       => CMAC_rx_ptp_stamp,
         CMAC_tx_ptp_stamp       => CMAC_tx_ptp_stamp,
         
-        CMAC_Master_reset       => sys_reset,
+        CMAC_Master_reset       => sys_reset_internal,
         
         gt_loopback_in          => x"000",
     

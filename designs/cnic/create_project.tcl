@@ -153,7 +153,7 @@ if { $env(VITIS_TARGET) == "u55" } {
   add_files -norecurse $workingDir/${PERSONALITY}.gen/sources_1/bd/ts/hdl/ts_wrapper.vhd
 }
 
-if { $env(VITIS_TARGET) == "u50" } {
+if { $env(VITIS_TARGET) == "u50" || $env(VITIS_TARGET) == "u55"} {
     # generate_ref design - Instance 2, timeslave_b has equivalent CMAC GTs for U50 and U55C BOTTOM PORT.
     source $RLIBRARIES_PATH/ptp/src/genBD_timeslave_b.tcl
 
@@ -175,12 +175,14 @@ set_property library Timeslave_CMAC_lib [get_files {\
 add_files -fileset sources_1 [glob \
  $ARGS_PATH/CMAC/cmac/CMAC_cmac_reg_pkg.vhd \
  $ARGS_PATH/CMAC/cmac/CMAC_cmac_reg.vhd \
+ $ARGS_PATH/CMAC_B/cmac_b/CMAC_B_cmac_b_reg_pkg.vhd \
  $ARGS_PATH/Timeslave/timeslave/Timeslave_timeslave_reg_pkg.vhd \
  $ARGS_PATH/Timeslave/timeslave/Timeslave_timeslave_reg.vhd \
 ]
 set_property library Timeslave_CMAC_lib [get_files {\
  *CMAC/cmac/CMAC_cmac_reg_pkg.vhd \
  *CMAC/cmac/CMAC_cmac_reg.vhd \
+ *CMAC_B/cmac_b/CMAC_B_cmac_b_reg_pkg.vhd \
  */Timeslave/timeslave/Timeslave_timeslave_reg_pkg.vhd \
  */Timeslave/timeslave/Timeslave_timeslave_reg.vhd \ 
 }]
