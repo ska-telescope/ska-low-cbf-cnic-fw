@@ -17,13 +17,15 @@ set_max_delay 10.0 -datapath_only -from [get_clocks enet_refclk_p[0]] -to [get_c
 set_max_delay 3.0 -datapath_only -from [get_clocks enet_refclk_p[0]] -to [get_clocks txoutclk_out[0]] 
  
 set_max_delay 3.0 -datapath_only -from [get_clocks rxoutclk_out[0]] -to [get_clocks enet_refclk_p[0]] 
-set_max_delay 3.0 -datapath_only -from [get_clocks rxoutclk_out[0]] -to [get_clocks txoutclk_out[0]] 
+
 set_max_delay 3.0 -datapath_only -from [get_clocks sysclk100] -to [get_clocks enet_refclk_p[0]] 
 set_max_delay 3.0 -datapath_only -from [get_clocks sysclk100] -to [get_clocks txoutclk_out[0]] 
  
 set_max_delay 3.0 -datapath_only -from [get_clocks txoutclk_out[0]] -to [get_clocks rxoutclk_out[0]]
-
 set_max_delay 3.0 -datapath_only -from [get_clocks txoutclk_out[0]_1] -to [get_clocks rxoutclk_out[0]_1]
+
+set_max_delay 3.0 -datapath_only -from [get_clocks rxoutclk_out[0]] -to [get_clocks txoutclk_out[0]] 
+set_max_delay 3.0 -datapath_only -from [get_clocks rxoutclk_out[0]_1] -to [get_clocks txoutclk_out[0]_1] 
 
 # ts - 1st instantiation of 100G and Timeslave.
 set_max_delay 3.0 -datapath_only -from [get_clocks clk_300_ts_clk_wiz_0_0] -to [get_clocks rxoutclk_out[0]_1] 
@@ -39,7 +41,11 @@ set_max_delay 3.0 -datapath_only -from [get_clocks clk_300_ts_b_clk_wiz_0_0] -to
 set_max_delay 3.0 -datapath_only -from [get_clocks rxoutclk_out[0]] -to [get_clocks clk_300_ts_b_clk_wiz_0_0]
 set_max_delay 3.0 -datapath_only -from [get_clocks txoutclk_out[0]] -to [get_clocks clk_300_ts_b_clk_wiz_0_0]
 
+set_max_delay 3.0 -datapath_only -from [get_clocks clk_300_ts_b_clk_wiz_0_0] -to [get_clocks rxoutclk_out[0]_1] 
+set_max_delay 3.0 -datapath_only -from [get_clocks clk_300_ts_b_clk_wiz_0_0] -to [get_clocks txoutclk_out[0]_1]
 
+set_max_delay 3.0 -datapath_only -from [get_clocks rxoutclk_out[0]_1] -to [get_clocks clk_300_ts_b_clk_wiz_0_0]
+set_max_delay 3.0 -datapath_only -from [get_clocks txoutclk_out[0]_1] -to [get_clocks clk_300_ts_b_clk_wiz_0_0]
 
 
 ########################################################################################################################

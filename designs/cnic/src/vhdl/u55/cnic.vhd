@@ -658,12 +658,12 @@ i_cnic_core : entity cnic_lib.cnic_core
         gt_refclk_p    => gt_refclk_p,    
         gt_refclk_n    => gt_refclk_n,
         
-        gt_b_rxp_in    => (others => '0'),
-        gt_b_rxn_in    => (others => '0'),
-        gt_b_txp_out   => open,
-        gt_b_txn_out   => open,
-        gt_refclk_b_p  => '0',
-        gt_refclk_b_n  => '0' 
+        gt_b_rxp_in    => gt_b_rxp_in,
+        gt_b_rxn_in    => gt_b_rxn_in,
+        gt_b_txp_out   => gt_b_txp_out,
+        gt_b_txn_out   => gt_b_txn_out,
+        gt_refclk_b_p  => gt_refclk_b_p,
+        gt_refclk_b_n  => gt_refclk_b_n 
     );
     
 END RTL;

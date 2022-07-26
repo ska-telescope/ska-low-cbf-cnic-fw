@@ -90,7 +90,7 @@ signal rx_axis_tvalid_int_d1    : std_logic;
 
 signal rx_axis_tready_int       : std_logic;
 
-signal inc_packet_byte_count    : std_logic_vector (13 downto 0); 
+signal inc_packet_byte_count    : std_logic_vector (13 downto 0) := "00" & x"040"; 
 signal packet_byte_count        : std_logic_vector (13 downto 0);
 
 signal final_byte_vector        : std_logic_vector (63 downto 0);   
@@ -188,12 +188,13 @@ begin
         if cmac_rx_reset_capture = '1' then
             --wr_page(0)                  <= '0';
             rx_packet_size              <= cmac_rx_packet_size;
+            inc_packet_byte_count       <= "00" & x"040"; 
         else
             -- count whole 64 bytes
-            if rx_axis_tvalid_int = '1' then
-                inc_packet_byte_count   <= std_logic_vector(unsigned(inc_packet_byte_count) + 64);
-            else
+            if rx_axis_tlast_int = '1' then
                 inc_packet_byte_count   <= "00" & x"040"; 
+            elsif rx_axis_tvalid_int = '1' then
+                inc_packet_byte_count   <= std_logic_vector(unsigned(inc_packet_byte_count) + 64);
             end if;
         
             if rx_packet_size(13 downto 7) = inc_packet_byte_count(13 downto 7) then
@@ -222,8 +223,8 @@ begin
             wr_addr <= (others => '0');
         elsif rx_axis_tvalid_int_d1 = '1' then
             wr_addr <= std_logic_vector(unsigned(wr_addr) + 1);
-        else
-            wr_addr <= (others => '0');
+--        else
+--            wr_addr <= (others => '0');
         end if;
     end if;
 end process;
@@ -365,8 +366,8 @@ debug_packet_capture_in : IF g_DEBUG_ILA GENERATE
         
         probe0(138)             => rx_axis_tlast_int_d1,
         probe0(139)             => rx_axis_tvalid_int_d1,
-        
-        probe0(191 downto 140)  => (others => '0')
+        probe0(153 downto 140)  => inc_packet_byte_count,
+        probe0(191 downto 154)  => (others => '0')
     );
     
 
