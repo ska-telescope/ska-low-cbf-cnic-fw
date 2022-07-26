@@ -1552,50 +1552,56 @@ begin
 			 m02_axi_arready when boundary_across_num = 1 else
 			 m03_axi_arready when boundary_across_num = 2 else
                          m04_axi_arready;
+     
+    i_axi_rdata       <= m01_axi_rdata   when boundary_across_num = 0 else
+			 m02_axi_rdata   when boundary_across_num = 1 else
+                         m03_axi_rdata   when boundary_across_num = 2 else
+                         m04_axi_rdata;
+
+    i_axi_rlast       <= m01_axi_rlast   when boundary_across_num = 0 else
+                         m02_axi_rlast   when boundary_across_num = 1 else
+                         m03_axi_rlast   when boundary_across_num = 2 else
+                         m04_axi_rlast;
+  
+
+    i_axi_rresp       <= m01_axi_rresp   when boundary_across_num = 0 else
+                         m02_axi_rresp   when boundary_across_num = 1 else
+                         m03_axi_rresp   when boundary_across_num = 2 else
+                         m04_axi_rresp;
+
+    i_axi_rvalid      <= m01_axi_rvalid  when boundary_across_num = 0 else
+                         m02_axi_rvalid  when boundary_across_num = 1 else
+                         m03_axi_rvalid  when boundary_across_num = 2 else
+                         m04_axi_rvalid;
+
 
     -- ar bus - read address
     m01_axi_arvalid   <= o_axi_arvalid   when boundary_across_num = 0 else '0';
     m01_axi_araddr    <= o_axi_araddr    when boundary_across_num = 0 else (others => '0');
     m01_axi_arlen     <= o_axi_arlen     when boundary_across_num = 0 else (others => '0');
     -- r bus - read data
-    i_axi_rvalid      <= m01_axi_rvalid  when boundary_across_num = 0 else '0';
     m01_axi_rready    <= o_axi_rready    when boundary_across_num = 0 else '0';
-    i_axi_rdata       <= m01_axi_rdata   when boundary_across_num = 0 else (others => '0');
-    i_axi_rlast       <= m01_axi_rlast   when boundary_across_num = 0 else '0';
-    i_axi_rresp       <= m01_axi_rresp   when boundary_across_num = 0 else (others => '0');
 
     -- ar bus - read address
     m02_axi_arvalid   <= o_axi_arvalid   when boundary_across_num = 1 else '0';
     m02_axi_araddr    <= o_axi_araddr    when boundary_across_num = 1 else (others => '0');
     m02_axi_arlen     <= o_axi_arlen     when boundary_across_num = 1 else (others => '0');
     -- r bus - read data
-    i_axi_rvalid      <= m02_axi_rvalid  when boundary_across_num = 1 else '0';
     m02_axi_rready    <= o_axi_rready    when boundary_across_num = 1 else '0';
-    i_axi_rdata       <= m02_axi_rdata   when boundary_across_num = 1 else (others => '0');
-    i_axi_rlast       <= m02_axi_rlast   when boundary_across_num = 1 else '0';
-    i_axi_rresp       <= m02_axi_rresp   when boundary_across_num = 1 else (others => '0');
 
     -- ar bus - read address
     m03_axi_arvalid   <= o_axi_arvalid   when boundary_across_num = 2 else '0';
     m03_axi_araddr    <= o_axi_araddr    when boundary_across_num = 2 else (others => '0');
     m03_axi_arlen     <= o_axi_arlen     when boundary_across_num = 2 else (others => '0');
     -- r bus - read data
-    i_axi_rvalid      <= m03_axi_rvalid  when boundary_across_num = 2 else '0';
     m03_axi_rready    <= o_axi_rready    when boundary_across_num = 2 else '0';
-    i_axi_rdata       <= m03_axi_rdata   when boundary_across_num = 2 else (others => '0');
-    i_axi_rlast       <= m03_axi_rlast   when boundary_across_num = 2 else '0';
-    i_axi_rresp       <= m03_axi_rresp   when boundary_across_num = 2 else (others => '0');
 
     -- ar bus - read address
     m04_axi_arvalid   <= o_axi_arvalid   when boundary_across_num = 3 else '0';
     m04_axi_araddr    <= o_axi_araddr    when boundary_across_num = 3 else (others => '0');
     m04_axi_arlen     <= o_axi_arlen     when boundary_across_num = 3 else (others => '0');
     -- r bus - read data
-    i_axi_rvalid      <= m04_axi_rvalid  when boundary_across_num = 3 else '0';
     m04_axi_rready    <= o_axi_rready    when boundary_across_num = 3 else '0';
-    i_axi_rdata       <= m04_axi_rdata   when boundary_across_num = 3 else (others => '0');
-    i_axi_rlast       <= m04_axi_rlast   when boundary_across_num = 3 else '0';
-    i_axi_rresp       <= m04_axi_rresp   when boundary_across_num = 3 else (others => '0');
 
     o_axi_rready <= '1';
     -- Read in 512 bit aligned 4k words
@@ -2096,7 +2102,29 @@ begin
         src_in          => i_time_between_bursts_ns
     );
     
+    ----------------------------------------------------------------------------------------------------------
 
+    hbm_capture_ila : ila_0
+    port map (
+        clk                     => i_shared_clk, 
+        probe0(127 downto 0)    => m01_axi_wdata(127 downto 0),
+        probe0(159 downto 128)  => m01_axi_awaddr,
+        probe0(160)             => m01_axi_wvalid, 
+        
+        probe0(161)             => m01_axi_awvalid,
+        probe0(162)             => m01_axi_awready,
+        probe0(163)             => m01_axi_wlast,
+        probe0(164)             => m01_axi_wready,
+        probe0(172 downto 165)  => m01_axi_awlen,
+        probe0(179 downto 173)  => std_logic_vector(fifo_rd_counter),
+        probe0(180)             => axi_wdata_fifo_full,
+        probe0(181)             => axi_wdata_fifo_empty,
+        probe0(182)             => m01_fifo_rd_en,
+        probe0(183)             => m02_fifo_rd_en,
+        probe0(184)             => m03_fifo_rd_en,
+        probe0(185)             => m04_fifo_rd_en,
+        probe0(191 downto 186)  => (others => '0')
+    );
 
 
 end RTL;
