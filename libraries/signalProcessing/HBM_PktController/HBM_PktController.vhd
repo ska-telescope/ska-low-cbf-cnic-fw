@@ -253,7 +253,7 @@ architecture RTL of HBM_PktController is
     signal awfifo_dout              : std_logic_vector(41 downto 0);
     signal awfifo_dout_reg          : std_logic_vector(41 downto 0); 
 
-    signal awlenfifo_rden                                   : std_logic := '0';
+    signal awlenfifo_rden, awlenfifo_rden_del               : std_logic := '0';
     signal awlenfifo_valid, awlenfifo_full, awlenfifo_empty : std_logic;
     signal awlenfifo_din                                    : std_logic_vector(7 downto 0) := (others => '0');
     signal awlenfifo_dout                                   : std_logic_vector(7 downto 0);
@@ -507,7 +507,7 @@ begin
              end if;		
              num_rx_4k_axi_trans_fsm <= num_rx_4k_axi_trans;
 	     awfifo_wren <= '0';
-             if i_valid_rising = '1' and i_enable_capture = '1' and m03_axi_4G_full = '1' then
+             if i_valid_rising = '1'    and i_enable_capture = '1' and m03_axi_4G_full = '1' then
 		input_fsm     <= generate_aw4_shadow_addr;	     
              elsif i_valid_rising = '1' and i_enable_capture = '1' and m02_axi_4G_full = '1' then
  	        input_fsm     <= generate_aw3_shadow_addr;
@@ -1025,7 +1025,7 @@ begin
     process(i_shared_clk) 
     begin
       if rising_edge(i_shared_clk) then
-	 if awfifo_cnt = 7 then   
+	 if awfifo_cnt = 5 then   
             awfifo_cnt_en  <= '0';
             awfifo_cnt     <= (others => '0');	    
 	 elsif awfifo_wren = '1' and awfifo_empty = '1' then 	
@@ -1057,8 +1057,8 @@ begin
             awfifo_rden <= '0';
 	 elsif awfifo_empty = '0' and awfifo_wren_cond = '1' then
             awfifo_rden <= '1';
-         elsif awfifo_cnt /= 0 and m01_axi_awvalid = '0' and m02_axi_awvalid = '0' and m03_axi_awvalid = '0' and m04_axi_awvalid = '0' then
-            awfifo_rden <= awfifo_wren_del7; 
+         elsif awfifo_cnt = 5 and m01_axi_awvalid = '0' and m02_axi_awvalid = '0' and m03_axi_awvalid = '0' and m04_axi_awvalid = '0' then
+            awfifo_rden <= awfifo_wren_del5; 
          end if; 
       end if;
     end process;      
@@ -1351,12 +1351,19 @@ begin
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
-         if (awfifo_valid_rising_edge_del2 = '1' and awfifo_valid_rising_edge_del2_asserted = '0') or 
-	    (axi_wlast = '1' and axi_wdata_fifo_empty = '0' and axi_wdata_fifo_empty_falling_edge = '0') then 
+         if ((awfifo_valid_rising_edge_del2 = '1' and awfifo_valid_rising_edge_del2_asserted = '0') or 
+	     (axi_wlast = '1' and axi_wdata_fifo_empty = '0' and axi_wdata_fifo_empty_falling_edge = '0')) and awlenfifo_empty = '0' then 
             awlenfifo_rden <= '1';
          else
             awlenfifo_rden <= '0';
          end if;
+      end if;
+    end process;      
+
+    process(i_shared_clk)
+    begin
+      if rising_edge(i_shared_clk) then
+         awlenfifo_rden_del <= awlenfifo_rden;
       end if;
     end process;      
 
@@ -1378,7 +1385,7 @@ begin
          else
 	    if (((axi_wlast_del2 = '1' and axi_wlast_del = '0' and axi_wlast = '0' and m01_wr = '1') or m01_wr_p = '1') and m01_wr_cnt /= 0 and axi_wdata_fifo_empty = '0') or (axi_wdata_fifo_empty_falling_edge = '1' and m01_wr = '1') then
                m01_fifo_rd_en  <= '1';
-            elsif axi_wlast = '1' or fifo_rd_counter = (unsigned(aw_len)) then
+            elsif axi_wlast = '1' then
 	       m01_fifo_rd_en  <= '0';  	 
 	    end if;
          end if;
@@ -1421,8 +1428,7 @@ begin
 	 if i_rx_soft_reset = '1' then
             m04_fifo_rd_en  <= '0';
 	 else
-            if (((axi_wlast_del2 = '1' and axi_wlast_del = '0' and axi_wlast = '0' and m04_wr = '1') or m04_wr_p = '1') and m04_wr_cnt /= 0 and m03_fifo_rd_en = '0' and axi_wdata_fifo_empty = '0') or 
-	         (axi_wdata_fifo_empty_falling_edge = '1' and m04_wr = '1') then
+            if (((axi_wlast_del2 = '1' and axi_wlast_del = '0' and axi_wlast = '0' and m04_wr = '1') or m04_wr_p = '1') and m04_wr_cnt /= 0 and m03_fifo_rd_en = '0' and axi_wdata_fifo_empty = '0') or (axi_wdata_fifo_empty_falling_edge = '1' and m04_wr = '1') then
                m04_fifo_rd_en  <= '1';
             elsif axi_wlast = '1' then --when one packet reading from fifo is finished
                m04_fifo_rd_en  <= '0';
@@ -1469,8 +1475,11 @@ begin
 	    axi_wlast_del2   <= '0';
 	    axi_wlast_del3   <= '0';
 	 else
-            if (fifo_rd_counter = (unsigned(aw_len)-1)) then
-	       axi_wlast        <= '1';
+            if (aw_len = X"00"  and axi_wlast_del2 = '1' and axi_wlast_del = '0' and axi_wlast = '0' and awlenfifo_rden_del = '1') or
+	       --(aw_len = X"00"  and m01_wr_p = '1') or 
+	       (aw_len = X"01"  and fifo_rd_counter = 0 and fifo_rd_en = '1') or 
+	       (aw_len /= X"00" and aw_len /= X"01"     and fifo_rd_counter = (unsigned(aw_len)-1) and fifo_rd_en = '1') then
+               axi_wlast     <= '1';     
             elsif fifo_rd_wready = '1' and axi_wdata_fifo_empty = '0' and axi_wdata_fifo_empty_falling_edge = '0' then
                axi_wlast        <= '0';
             end if;
@@ -1487,18 +1496,18 @@ begin
         ECC_MODE            => "no_ecc",
         FIFO_MEMORY_TYPE    => "auto", 
         FIFO_READ_LATENCY   => 0,
-        FIFO_WRITE_DEPTH    => 4096,     
+        FIFO_WRITE_DEPTH    => 8192,     
         FULL_RESET_VALUE    => 0,      
         PROG_EMPTY_THRESH   => 10,    
 	PROG_FULL_THRESH    => 10,     
-        RD_DATA_COUNT_WIDTH => 12,  
+        RD_DATA_COUNT_WIDTH => 13,  
         READ_DATA_WIDTH     => 512,      
         READ_MODE           => "fwft",  
         SIM_ASSERT_CHK      => 0,      
         USE_ADV_FEATURES    => "1404", 
         WAKEUP_TIME         => 0,      
         WRITE_DATA_WIDTH    => 512,     
-        WR_DATA_COUNT_WIDTH => 12   
+        WR_DATA_COUNT_WIDTH => 13   
     )
     port map (
         almost_empty  => open,  

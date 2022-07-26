@@ -308,6 +308,8 @@ begin
 	   wait until rising_edge(clock_300);
 	   wait until rising_edge(clock_300);
 	   wait until rising_edge(clock_300);
+           wait until rising_edge(clock_300);
+	   wait until rising_edge(clock_300);
            wait until rising_edge(clock_300); 
         elsif LFAAvalid = "1111" then
 	   s_axi_data       <= LFAAData;
@@ -346,7 +348,7 @@ begin
            ------------------------------------------------------------------------------------
            -- config and status registers interface
            -- rx
-           i_rx_packet_size                  => "01100011000000", --9024bytes 
+           i_rx_packet_size                  => "10000001000000", --9024bytes 
            i_rx_soft_reset                   => '0', 
            i_enable_capture                  => '1',
 
@@ -365,7 +367,7 @@ begin
            o_num_packets_received            => open,
 
            -- tx
-           i_tx_packet_size                  => "00100010000000", --2176bytes 
+           i_tx_packet_size                  => "10000001000000", --2176bytes 
            i_start_tx                        => '0',
            i_loop_tx                         => '0',
            i_expected_total_number_of_4k_axi => X"00000007", 
@@ -542,8 +544,8 @@ begin
         MIN_LAG => 60,    
         INCLUDE_PROTOCOL_CHECKER => TRUE,
         RANDSEED => 43526,             -- natural := 12345;
-        LATENCY_LOW_PROBABILITY => 95, -- natural := 95;  -- probability, as a percentage, that non-zero gaps between read beats will be small (i.e. < 3 clocks)
-        LATENCY_ZERO_PROBABILITY => 80 -- natural := 80   -- probability, as a percentage, that the gap between read beats will be zero.
+        LATENCY_LOW_PROBABILITY => 60, -- natural := 95;  -- probability, as a percentage, that non-zero gaps between read beats will be small (i.e. < 3 clocks)
+        LATENCY_ZERO_PROBABILITY => 60 -- natural := 80   -- probability, as a percentage, that the gap between read beats will be zero.
     ) Port map (
         i_clk          => clock_300,
         i_rst_n        => not clock_300_rst, 
