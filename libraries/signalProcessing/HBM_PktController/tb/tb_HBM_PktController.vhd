@@ -316,6 +316,11 @@ begin
         end if;
 	report "i=" & integer'image(i);
       end loop;
+      if i=2 then
+         for j in 1 to 300 loop
+      	     wait until rising_edge(clock_300);
+         end loop;	
+      end if;	 
       file_close(datafile);
       file_open(datafile, data_file_name, read_mode);
     end loop;
@@ -341,7 +346,7 @@ begin
            ------------------------------------------------------------------------------------
            -- config and status registers interface
            -- rx
-           i_rx_packet_size                  => "10001101000000", --9024bytes 
+           i_rx_packet_size                  => "01100011000000", --9024bytes 
            i_rx_soft_reset                   => '0', 
            i_enable_capture                  => '1',
 
@@ -360,7 +365,7 @@ begin
            o_num_packets_received            => open,
 
            -- tx
-           i_tx_packet_size                  => "10001101000000", --9024bytes 
+           i_tx_packet_size                  => "00100010000000", --2176bytes 
            i_start_tx                        => '0',
            i_loop_tx                         => '0',
            i_expected_total_number_of_4k_axi => X"00000007", 

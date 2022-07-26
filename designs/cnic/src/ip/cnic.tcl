@@ -23,3 +23,7 @@ create_ip -name axi_register_slice -vendor xilinx.com -library ip -version 2.1 -
 set_property -dict [list CONFIG.ADDR_WIDTH {64} CONFIG.DATA_WIDTH {512} CONFIG.REG_W {1} CONFIG.Component_Name {axi_reg_slice512_LLFFL}] [get_ips axi_reg_slice512_LLFFL]
 set_property -dict [list CONFIG.HAS_LOCK {0} CONFIG.HAS_CACHE {0} CONFIG.HAS_REGION {0} CONFIG.HAS_QOS {0} CONFIG.HAS_PROT {0} CONFIG.REG_AW {1} CONFIG.REG_AR {1}] [get_ips axi_reg_slice512_LLFFL]
 create_ip_run [get_ips axi_reg_slice512_LLFFL]
+
+create_ip -name axi_protocol_checker -vendor xilinx.com -library ip -version 2.0 -module_name axi_protocol_checker_512
+set_property -dict [list CONFIG.DATA_WIDTH {512} CONFIG.MAX_RD_BURSTS {64} CONFIG.MAX_WR_BURSTS {32} CONFIG.MAX_CONTINUOUS_WTRANSFERS_WAITS {500} CONFIG.MAX_CONTINUOUS_RTRANSFERS_WAITS {500} CONFIG.Component_Name {axi_protocol_checker_512}] [get_ips axi_protocol_checker_512]
+create_ip_run [get_ips axi_protocol_checker_512]
