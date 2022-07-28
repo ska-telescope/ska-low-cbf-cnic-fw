@@ -1942,7 +1942,7 @@ begin
              -- Fifo is configured as FirstWordFallThrough, so data is immediatly available
              -- check empty
              tx_FIFO_rd_en                   <= '1';                                                       
-             if (beat_count = unsigned(i_expected_beats_per_packet)) then
+             if (beat_count = (unsigned(i_expected_beats_per_packet) - 1)) then
                 end_of_packet                <= '1';
                 current_pkt_count            <= current_pkt_count + 1;
 		fpga_pkt_count_in_this_burst <= fpga_pkt_count_in_this_burst + 1;
