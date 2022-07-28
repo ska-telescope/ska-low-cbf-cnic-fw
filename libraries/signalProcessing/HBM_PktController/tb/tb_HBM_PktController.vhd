@@ -217,6 +217,10 @@ signal i_lfaa_bank2_start_addr       : std_logic_vector(31 downto 0) := (others=
 signal i_lfaa_bank3_start_addr       : std_logic_vector(31 downto 0) := (others=>'0');
 signal i_lfaa_bank4_start_addr       : std_logic_vector(31 downto 0) := (others=>'0');
 signal update_rx_start_addr          : std_logic := '0';
+signal update_readaddr               : std_logic := '0';
+signal i_readaddr                    : std_logic_vector(31 downto 0) := (others=>'0');
+
+signal start_tx                      : std_logic := '0';
 
 begin
 
@@ -280,7 +284,9 @@ begin
     wait for 1 us;
 
     update_rx_start_addr <= '1';
-    i_lfaa_bank1_start_addr <= X"FCCCCC00";
+    update_readaddr <= '1';
+    i_lfaa_bank1_start_addr <= X"FFEF6000";
+    i_readaddr              <= X"FFEF6000";
 
     FILE_OPEN(datafile,data_file_name,READ_MODE);
 
@@ -316,8 +322,11 @@ begin
 	   s_axi_data_valid <= '1';
            wait until rising_edge(clock_300);
         end if;
-	report "i=" & integer'image(i);
       end loop;
+      report "i=" & integer'image(i);
+      if i=1 then
+	 start_tx <= '1';
+      end if;	 
       if i=2 then
          for j in 1 to 300 loop
       	     wait until rising_edge(clock_300);
@@ -331,6 +340,17 @@ begin
     report "simulation successfully finished";
     finish;
   end process;
+
+  --process
+  --begin
+  --  start_tx <= '0';
+
+  --  wait until clock_100_rst = '0';
+  --  wait for 20 us;
+  --  wait until rising_edge(clock_300);
+
+  --  start_tx <= '1';
+  --end process;    
 
   DUT : entity HBM_PktController_lib.HBM_PktController
   port map(
@@ -368,15 +388,18 @@ begin
 
            -- tx
            i_tx_packet_size                  => "10000001000000", --2176bytes 
-           i_start_tx                        => '0',
+           i_start_tx                        => start_tx,
            i_loop_tx                         => '0',
-           i_expected_total_number_of_4k_axi => X"00000007", 
-           i_expected_number_beats_per_burst => "0000110100110",
-           i_expected_beats_per_packet       => X"0000008D",
-           i_expected_packets_per_burst      => X"00000003",
-           i_expected_total_number_of_bursts => X"00000001",
+           i_expected_total_number_of_4k_axi => X"0001F7E8",     --129000 axi 4k trans
+           i_expected_number_beats_per_burst => "0000010000001",
+           i_expected_beats_per_packet       => X"00000081",
+           i_expected_packets_per_burst      => X"00000001",
+           i_expected_total_number_of_bursts => X"0000FA00",     --64000 packets
            i_expected_number_of_loops        => (others=>'0'),
            i_time_between_bursts_ns          => X"000000C8", 
+
+           i_readaddr                        => i_readaddr,
+           update_readaddr                   => update_readaddr,
 
            o_tx_addr                         => open,
            o_tx_boundary_across_num          => open,
@@ -495,7 +518,16 @@ begin
            m04_axi_rlast                     => m04_rlast,
            m04_axi_rresp                     => m04_rresp
        );
-	
+
+      
+      --i_packet_receive : entity packtiser_receive 
+	  -- port map (
+      --      clk                     => clock_300, 
+      --      i_din                   => packetiser_data, 
+      --      i_valid                 => packetiser_data_in_wr
+      -- );
+
+
       i_packet_player : entity PSR_Packetiser_lib.packet_player
         Generic Map(
             LBUS_TO_CMAC_INUSE      => false,      -- FUTURE WORK to IMPLEMENT AXI
