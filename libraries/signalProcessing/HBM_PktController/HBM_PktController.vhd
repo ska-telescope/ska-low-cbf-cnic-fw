@@ -1677,10 +1677,10 @@ begin
          if (clear_axi_r_num = '1') then
             axi_r_num <= (others => '0');
          else	    
-            if (m01_axi_rvalid = '1' and m01_axi_rlast = '1') or 
-	       (m02_axi_rvalid = '1' and m02_axi_rlast = '1') or
-	       (m03_axi_rvalid = '1' and m03_axi_rlast = '1') or 
-	       (m04_axi_rvalid = '1' and m04_axi_rlast = '1') then
+            if (m01_axi_rvalid = '1' and m01_axi_rlast = '1' and m01_axi_rready = '1') or 
+	       (m02_axi_rvalid = '1' and m02_axi_rlast = '1' and m02_axi_rready = '1') or
+	       (m03_axi_rvalid = '1' and m03_axi_rlast = '1' and m03_axi_rready = '1') or 
+	       (m04_axi_rvalid = '1' and m04_axi_rlast = '1' and m04_axi_rready = '1') then
                axi_r_num <= axi_r_num + 1;
             end if;
          end if;

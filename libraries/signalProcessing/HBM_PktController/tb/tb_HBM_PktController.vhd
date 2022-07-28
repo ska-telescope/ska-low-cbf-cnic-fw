@@ -44,15 +44,15 @@ signal    power_up_rst_clock_100   : std_logic_vector(31 downto 0) := X"FFFFFFFF
 signal m01_awvalid  : std_logic;
 signal m01_awready  : std_logic;
 signal m01_awaddr   : std_logic_vector(31 downto 0);
-signal m01_awid     : std_logic_vector(0 downto 0);
+signal m01_awid     : std_logic_vector(0 downto 0) := "0";
 signal m01_awlen    : std_logic_vector(7 downto 0);
-signal m01_awsize   : std_logic_vector(2 downto 0);
-signal m01_awburst  : std_logic_vector(1 downto 0);
-signal m01_awlock   : std_logic_vector(1 downto 0);
-signal m01_awcache  : std_logic_vector(3 downto 0);
-signal m01_awprot   : std_logic_vector(2 downto 0);
-signal m01_awqos    : std_logic_vector(3 downto 0);
-signal m01_awregion : std_logic_vector(3 downto 0);
+signal m01_awsize   : std_logic_vector(2 downto 0) := "110";
+signal m01_awburst  : std_logic_vector(1 downto 0) := "01";
+signal m01_awlock   : std_logic_vector(1 downto 0) := "00";
+signal m01_awcache  : std_logic_vector(3 downto 0) := "0011";
+signal m01_awprot   : std_logic_vector(2 downto 0) := "000";
+signal m01_awqos    : std_logic_vector(3 downto 0) := "0000";
+signal m01_awregion : std_logic_vector(3 downto 0) := "0000";
 signal m01_wvalid   : std_logic;
 signal m01_wready   : std_logic;
 signal m01_wdata    : std_logic_vector(511 downto 0);
@@ -65,34 +65,34 @@ signal m01_bid      : std_logic_vector(0 downto 0);
 signal m01_arvalid  : std_logic;
 signal m01_arready  : std_logic;
 signal m01_araddr   : std_logic_vector(31 downto 0);
-signal m01_arid     : std_logic_vector(0 downto 0);
+signal m01_arid     : std_logic_vector(0 downto 0) := "0";
 signal m01_arlen    : std_logic_vector(7 downto 0);
-signal m01_arsize   : std_logic_vector(2 downto 0);
-signal m01_arburst  : std_logic_vector(1 downto 0);
-signal m01_arlock   : std_logic_vector(1 downto 0);
-signal m01_arcache  : std_logic_vector(3 downto 0);
-signal m01_arprot   : std_logic_Vector(2 downto 0);
-signal m01_arqos    : std_logic_vector(3 downto 0);
-signal m01_arregion : std_logic_vector(3 downto 0);
+signal m01_arsize   : std_logic_vector(2 downto 0) := "110";
+signal m01_arburst  : std_logic_vector(1 downto 0) := "01";
+signal m01_arlock   : std_logic_vector(1 downto 0) := "00";
+signal m01_arcache  : std_logic_vector(3 downto 0) := "0011";
+signal m01_arprot   : std_logic_Vector(2 downto 0) := "000";
+signal m01_arqos    : std_logic_vector(3 downto 0) := "0000";
+signal m01_arregion : std_logic_vector(3 downto 0) := "0000";
 signal m01_rvalid   : std_logic;
 signal m01_rready   : std_logic;
 signal m01_rdata    : std_logic_vector(511 downto 0);
 signal m01_rlast    : std_logic;
-signal m01_rid      : std_logic_vector(0 downto 0);
+signal m01_rid      : std_logic_vector(0 downto 0) := "0";
 signal m01_rresp    : std_logic_vector(1 downto 0);
 
 signal m02_awvalid  : std_logic;
 signal m02_awready  : std_logic;
 signal m02_awaddr   : std_logic_vector(31 downto 0);
-signal m02_awid     : std_logic_vector(0 downto 0);
+signal m02_awid     : std_logic_vector(0 downto 0) := "0";
 signal m02_awlen    : std_logic_vector(7 downto 0);
-signal m02_awsize   : std_logic_vector(2 downto 0);
-signal m02_awburst  : std_logic_vector(1 downto 0);
-signal m02_awlock   : std_logic_vector(1 downto 0);
-signal m02_awcache  : std_logic_vector(3 downto 0);
-signal m02_awprot   : std_logic_vector(2 downto 0);
-signal m02_awqos    : std_logic_vector(3 downto 0);
-signal m02_awregion : std_logic_vector(3 downto 0);
+signal m02_awsize   : std_logic_vector(2 downto 0) := "110";
+signal m02_awburst  : std_logic_vector(1 downto 0) := "01";
+signal m02_awlock   : std_logic_vector(1 downto 0) := "00";
+signal m02_awcache  : std_logic_vector(3 downto 0) := "0011";
+signal m02_awprot   : std_logic_vector(2 downto 0) := "000";
+signal m02_awqos    : std_logic_vector(3 downto 0) := "0000";
+signal m02_awregion : std_logic_vector(3 downto 0) := "0000";
 signal m02_wvalid   : std_logic;
 signal m02_wready   : std_logic;
 signal m02_wdata    : std_logic_vector(511 downto 0);
@@ -105,34 +105,34 @@ signal m02_bid      : std_logic_vector(0 downto 0);
 signal m02_arvalid  : std_logic;
 signal m02_arready  : std_logic;
 signal m02_araddr   : std_logic_vector(31 downto 0);
-signal m02_arid     : std_logic_vector(0 downto 0);
+signal m02_arid     : std_logic_vector(0 downto 0) := "0";
 signal m02_arlen    : std_logic_vector(7 downto 0);
-signal m02_arsize   : std_logic_vector(2 downto 0);
-signal m02_arburst  : std_logic_vector(1 downto 0);
-signal m02_arlock   : std_logic_vector(1 downto 0);
-signal m02_arcache  : std_logic_vector(3 downto 0);
-signal m02_arprot   : std_logic_Vector(2 downto 0);
-signal m02_arqos    : std_logic_vector(3 downto 0);
-signal m02_arregion : std_logic_vector(3 downto 0);
+signal m02_arsize   : std_logic_vector(2 downto 0) := "110";
+signal m02_arburst  : std_logic_vector(1 downto 0) := "01";
+signal m02_arlock   : std_logic_vector(1 downto 0) := "00";
+signal m02_arcache  : std_logic_vector(3 downto 0) := "0011";
+signal m02_arprot   : std_logic_Vector(2 downto 0) := "000";
+signal m02_arqos    : std_logic_vector(3 downto 0) := "0000";
+signal m02_arregion : std_logic_vector(3 downto 0) := "0000";
 signal m02_rvalid   : std_logic;
 signal m02_rready   : std_logic;
 signal m02_rdata    : std_logic_vector(511 downto 0);
 signal m02_rlast    : std_logic;
-signal m02_rid      : std_logic_vector(0 downto 0);
+signal m02_rid      : std_logic_vector(0 downto 0) := "0";
 signal m02_rresp    : std_logic_vector(1 downto 0);
 
 signal m03_awvalid  : std_logic;
 signal m03_awready  : std_logic;
 signal m03_awaddr   : std_logic_vector(31 downto 0);
-signal m03_awid     : std_logic_vector(0 downto 0);
+signal m03_awid     : std_logic_vector(0 downto 0) := "0";
 signal m03_awlen    : std_logic_vector(7 downto 0);
-signal m03_awsize   : std_logic_vector(2 downto 0);
-signal m03_awburst  : std_logic_vector(1 downto 0);
-signal m03_awlock   : std_logic_vector(1 downto 0);
-signal m03_awcache  : std_logic_vector(3 downto 0);
-signal m03_awprot   : std_logic_vector(2 downto 0);
-signal m03_awqos    : std_logic_vector(3 downto 0);
-signal m03_awregion : std_logic_vector(3 downto 0);
+signal m03_awsize   : std_logic_vector(2 downto 0) := "110";
+signal m03_awburst  : std_logic_vector(1 downto 0) := "01";
+signal m03_awlock   : std_logic_vector(1 downto 0) := "00";
+signal m03_awcache  : std_logic_vector(3 downto 0) := "0011";
+signal m03_awprot   : std_logic_vector(2 downto 0) := "000";
+signal m03_awqos    : std_logic_vector(3 downto 0) := "0000";
+signal m03_awregion : std_logic_vector(3 downto 0) := "0000";
 signal m03_wvalid   : std_logic;
 signal m03_wready   : std_logic;
 signal m03_wdata    : std_logic_vector(511 downto 0);
@@ -145,34 +145,34 @@ signal m03_bid      : std_logic_vector(0 downto 0);
 signal m03_arvalid  : std_logic;
 signal m03_arready  : std_logic;
 signal m03_araddr   : std_logic_vector(31 downto 0);
-signal m03_arid     : std_logic_vector(0 downto 0);
+signal m03_arid     : std_logic_vector(0 downto 0) := "0";
 signal m03_arlen    : std_logic_vector(7 downto 0);
-signal m03_arsize   : std_logic_vector(2 downto 0);
-signal m03_arburst  : std_logic_vector(1 downto 0);
-signal m03_arlock   : std_logic_vector(1 downto 0);
-signal m03_arcache  : std_logic_vector(3 downto 0);
-signal m03_arprot   : std_logic_Vector(2 downto 0);
-signal m03_arqos    : std_logic_vector(3 downto 0);
-signal m03_arregion : std_logic_vector(3 downto 0);
+signal m03_arsize   : std_logic_vector(2 downto 0) := "110";
+signal m03_arburst  : std_logic_vector(1 downto 0) := "01";
+signal m03_arlock   : std_logic_vector(1 downto 0) := "00";
+signal m03_arcache  : std_logic_vector(3 downto 0) := "0011";
+signal m03_arprot   : std_logic_Vector(2 downto 0) := "000";
+signal m03_arqos    : std_logic_vector(3 downto 0) := "0000";
+signal m03_arregion : std_logic_vector(3 downto 0) := "0000";
 signal m03_rvalid   : std_logic;
 signal m03_rready   : std_logic;
 signal m03_rdata    : std_logic_vector(511 downto 0);
 signal m03_rlast    : std_logic;
-signal m03_rid      : std_logic_vector(0 downto 0);
+signal m03_rid      : std_logic_vector(0 downto 0) := "0";
 signal m03_rresp    : std_logic_vector(1 downto 0);
 
 signal m04_awvalid  : std_logic;
 signal m04_awready  : std_logic;
 signal m04_awaddr   : std_logic_vector(31 downto 0);
-signal m04_awid     : std_logic_vector(0 downto 0);
+signal m04_awid     : std_logic_vector(0 downto 0) := "0";
 signal m04_awlen    : std_logic_vector(7 downto 0);
-signal m04_awsize   : std_logic_vector(2 downto 0);
-signal m04_awburst  : std_logic_vector(1 downto 0);
-signal m04_awlock   : std_logic_vector(1 downto 0);
-signal m04_awcache  : std_logic_vector(3 downto 0);
-signal m04_awprot   : std_logic_vector(2 downto 0);
-signal m04_awqos    : std_logic_vector(3 downto 0);
-signal m04_awregion : std_logic_vector(3 downto 0);
+signal m04_awsize   : std_logic_vector(2 downto 0) := "110";
+signal m04_awburst  : std_logic_vector(1 downto 0) := "01";
+signal m04_awlock   : std_logic_vector(1 downto 0) := "00";
+signal m04_awcache  : std_logic_vector(3 downto 0) := "0011";
+signal m04_awprot   : std_logic_vector(2 downto 0) := "000";
+signal m04_awqos    : std_logic_vector(3 downto 0) := "0000";
+signal m04_awregion : std_logic_vector(3 downto 0) := "0000";
 signal m04_wvalid   : std_logic;
 signal m04_wready   : std_logic;
 signal m04_wdata    : std_logic_vector(511 downto 0);
@@ -181,24 +181,24 @@ signal m04_wlast    : std_logic;
 signal m04_bvalid   : std_logic;
 signal m04_bready   : std_logic;
 signal m04_bresp    : std_logic_vector(1 downto 0);
-signal m04_bid      : std_logic_vector(0 downto 0);
+signal m04_bid      : std_logic_vector(0 downto 0) := "0";
 signal m04_arvalid  : std_logic;
 signal m04_arready  : std_logic;
 signal m04_araddr   : std_logic_vector(31 downto 0);
 signal m04_arid     : std_logic_vector(0 downto 0);
 signal m04_arlen    : std_logic_vector(7 downto 0);
-signal m04_arsize   : std_logic_vector(2 downto 0);
-signal m04_arburst  : std_logic_vector(1 downto 0);
-signal m04_arlock   : std_logic_vector(1 downto 0);
-signal m04_arcache  : std_logic_vector(3 downto 0);
-signal m04_arprot   : std_logic_Vector(2 downto 0);
-signal m04_arqos    : std_logic_vector(3 downto 0);
-signal m04_arregion : std_logic_vector(3 downto 0);
+signal m04_arsize   : std_logic_vector(2 downto 0) := "110";
+signal m04_arburst  : std_logic_vector(1 downto 0) := "01";
+signal m04_arlock   : std_logic_vector(1 downto 0) := "00";
+signal m04_arcache  : std_logic_vector(3 downto 0) := "0011";
+signal m04_arprot   : std_logic_Vector(2 downto 0) := "000";
+signal m04_arqos    : std_logic_vector(3 downto 0) := "0000";
+signal m04_arregion : std_logic_vector(3 downto 0) := "0000";
 signal m04_rvalid   : std_logic;
 signal m04_rready   : std_logic;
 signal m04_rdata    : std_logic_vector(511 downto 0);
 signal m04_rlast    : std_logic;
-signal m04_rid      : std_logic_vector(0 downto 0);
+signal m04_rid      : std_logic_vector(0 downto 0) := "0";
 signal m04_rresp    : std_logic_vector(1 downto 0);
 
 signal packetiser_data_in_wr : std_logic;
@@ -328,7 +328,7 @@ begin
 	 start_tx <= '1';
       end if;	 
       if i=2 then
-         for j in 1 to 300 loop
+         for j in 1 to 400 loop
       	     wait until rising_edge(clock_300);
          end loop;	
       end if;	 
@@ -390,11 +390,11 @@ begin
            i_tx_packet_size                  => "10000001000000", --2176bytes 
            i_start_tx                        => start_tx,
            i_loop_tx                         => '0',
-           i_expected_total_number_of_4k_axi => X"0001F7E8",     --129000 axi 4k trans
+           i_expected_total_number_of_4k_axi => X"0013AF10",     --129000 axi 4k trans
            i_expected_number_beats_per_burst => "0000010000001",
            i_expected_beats_per_packet       => X"00000081",
            i_expected_packets_per_burst      => X"00000001",
-           i_expected_total_number_of_bursts => X"0000FA00",     --64000 packets
+           i_expected_total_number_of_bursts => X"0009C400",     --640000 packets
            i_expected_number_of_loops        => (others=>'0'),
            i_time_between_bursts_ns          => X"000000C8", 
 
