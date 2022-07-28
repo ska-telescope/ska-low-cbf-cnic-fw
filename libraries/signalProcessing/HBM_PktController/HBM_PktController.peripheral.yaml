@@ -270,6 +270,12 @@ peripherals:
               reset_value       : 0x0
               field_description : "byte count of packet we want to capture"
          #################################
+          - - field_name        : rx_packet_size_mod64
+              width             : 32
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "byte count of packet we want to capture mod 64"
+         #################################
           - - field_name        : rx_reset_capture
               width             : 1
               access_mode       : RW

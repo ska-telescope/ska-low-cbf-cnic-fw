@@ -37,7 +37,7 @@ USE Timeslave_CMAC_lib.CMAC_cmac_reg_pkg.ALL;
 
 entity CMAC_100G_wrap_w_timeslave is
     generic (
-        DEBUG_ILA               : BOOLEAN := TRUE;
+        DEBUG_ILA               : BOOLEAN := FALSE;
         U55_TOP_QSFP            : BOOLEAN := FALSE;         --
         U55_BOTTOM_QSFP         : BOOLEAN := FALSE          -- THIS CONFIG IS VALID FOR U50 as well.
     

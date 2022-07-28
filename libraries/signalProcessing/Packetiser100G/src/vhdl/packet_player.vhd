@@ -51,7 +51,7 @@ use UNISIM.VComponents.all;
 
 entity packet_player is
     Generic (
-        g_DEBUG_ILA             : BOOLEAN := TRUE;
+        g_DEBUG_ILA             : BOOLEAN := FALSE;
         LBUS_TO_CMAC_INUSE      : BOOLEAN := TRUE;      -- FUTURE WORK to IMPLEMENT AXI
         PLAYER_CDC_FIFO_DEPTH   : INTEGER := 1024        -- FIFO is 512 Wide, 9KB packets = 73728 bits, 512 * 256 = 131072, 256 depth allows ~1.88 9K packets, we are target packets sizes smaller than this.
     );

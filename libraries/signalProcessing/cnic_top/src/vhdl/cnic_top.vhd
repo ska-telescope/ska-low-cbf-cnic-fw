@@ -38,7 +38,7 @@ use xpm.vcomponents.all;
 -------------------------------------------------------------------------------
 entity cnic_top is
     generic (
-        g_DEBUG_ILA                     : BOOLEAN := FALSE;
+        g_DEBUG_ILA                     : BOOLEAN := TRUE;
         g_CODIF_MODIFIER_HEADER_BLOCK   : BOOLEAN := FALSE;
         g_LBUS_CMAC                     : BOOLEAN := FALSE
 
@@ -261,16 +261,20 @@ ARCHITECTURE structure OF cnic_top IS
 
     signal dbg_ILA_trigger, bdbg_ILA_triggerDel1, bdbg_ILA_trigger, bdbg_ILA_triggerDel2 : std_logic;
     
-    signal rx_packet_size       : std_logic_vector(13 downto 0);     -- Max size is 9000.
-    signal rx_reset_capture     : std_logic;
-    signal rx_reset_counter     : std_logic;
+    signal rx_packet_size           : std_logic_vector(13 downto 0);     -- Max size is 9000.
+    signal rx_reset_capture         : std_logic;
+    signal rx_reset_counter         : std_logic;
     
     -- register interface
-    signal config_rw            : t_config_rw;
-    signal config_ro            : t_config_ro;
+    signal config_rw                : t_config_rw;
+    signal config_ro                : t_config_ro;
     
-    signal data_to_hbm          : std_logic_vector(511 downto 0);
-    signal data_to_hbm_wr       : std_logic;
+    signal data_to_hbm              : std_logic_vector(511 downto 0);
+    signal data_to_hbm_wr           : std_logic;
+    
+    signal rx_packet_size_mod64b    : std_logic_vector(13 downto 0);
+    signal packet_size_calc         : std_logic_vector(13 downto 0);
+    signal packet_size_ceil         : std_logic_vector(5 downto 0) := "000000";
     
 begin
     
@@ -322,7 +326,18 @@ begin
 
 config_ro.running   <= config_rw.start_stop_tx;
 
-
+HBM_controller_proc : process(i_MACE_clk)
+begin
+    if rising_edge(i_MACE_clk) then
+        if config_rw.rx_reset_capture = '1' then
+            packet_size_ceil(0)             <= config_rw.rx_packet_size(5) OR config_rw.rx_packet_size(4) OR config_rw.rx_packet_size(3) OR config_rw.rx_packet_size(2) OR config_rw.rx_packet_size(1) OR config_rw.rx_packet_size(0); 
+            packet_size_calc(13 downto 6)   <= std_logic_vector(unsigned(config_rw.rx_packet_size(13 downto 6)) + unsigned(packet_size_ceil));
+            packet_size_calc(5 downto 0)    <= "000000";
+             
+            rx_packet_size_mod64b           <= packet_size_calc;
+        end if;
+    end if;
+end process;
 
 i_HBM_PktController : entity HBM_PktController_lib.HBM_PktController
     port map (
@@ -341,9 +356,15 @@ i_HBM_PktController : entity HBM_PktController_lib.HBM_PktController
         ------------------------------------------------------------------------------------
         -- config and status registers interface
         -- rx
-    	i_rx_packet_size                    => config_rw.packet_size(13 downto 0),
+    	i_rx_packet_size                    => rx_packet_size_mod64b,--config_rw.packet_size(13 downto 0),
         i_rx_soft_reset                     => config_rw.rx_reset_capture,
         i_enable_capture                    => config_rw.rx_enable_capture,
+        
+        i_lfaa_bank1_addr                   => x"00000000",
+        i_lfaa_bank2_addr                   => x"00000000",
+        i_lfaa_bank3_addr                   => x"00000000",
+        i_lfaa_bank4_addr                   => x"00000000",
+        update_start_addr                   => '0',
 
         o_1st_4GB_rx_addr                   => config_ro.rx_1st_4gb_rx_addr,
         o_2nd_4GB_rx_addr                   => config_ro.rx_2nd_4gb_rx_addr,
@@ -620,15 +641,16 @@ debug_gen : IF g_DEBUG_ILA GENERATE
     cnic_ila : ila_0
     port map (
         clk                     => i_MACE_clk, 
-        probe0(127 downto 0)    => packetiser_data(127 downto 0),
-        probe0(128)             => packetiser_data_in_wr,
-        probe0(129)             => packetiser_data_to_player_rdy, 
-        probe0(143 downto 130)  => packetiser_bytes_to_transmit,
-        probe0(144)             => cmac_ready, 
-        probe0(191 downto 145)  => (others => '0')
+        probe0(13 downto 0)     => config_rw.rx_packet_size(13 downto 0),
+        probe0(14)              => packet_size_ceil(0),
+        probe0(28 downto 15)    => packet_size_calc,
+        probe0(29)              => '0', 
+        probe0(43 downto 30)    => rx_packet_size_mod64b,
+        probe0(44)              => config_rw.rx_reset_capture,
+        probe0(191 downto 45)   => (others => '0')
     );
     
-
+  
     
 END GENERATE;    
 

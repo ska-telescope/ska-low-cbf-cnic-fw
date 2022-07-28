@@ -37,7 +37,7 @@ ENTITY cnic_core IS
         g_ALVEO_U50                     : BOOLEAN := FALSE;
         g_ALVEO_U55                     : BOOLEAN := FALSE;
 
-        g_DEBUG_ILA                     : BOOLEAN := FALSE;
+        g_DEBUG_ILA                     : BOOLEAN := TRUE;
         
         g_PTP_ENABLE                    : BOOLEAN := TRUE;
         
