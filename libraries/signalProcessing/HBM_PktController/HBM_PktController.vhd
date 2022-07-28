@@ -360,6 +360,7 @@ architecture RTL of HBM_PktController is
     signal wait_fifo_reset_cnt: unsigned(31 downto 0) := (others=>'0');
     signal rd_rst_busy ,wr_rst_busy : std_logic := '0';
     signal axi_r_num : unsigned(31 downto 0) := (others => '0');
+    signal clear_axi_r_num : std_logic := '0';
 
     signal rd_fsm_debug : std_logic_vector(3 downto 0);
     signal output_fsm_debug : std_logic_vector(3 downto 0);
@@ -1667,6 +1668,22 @@ begin
     o_axi_araddr <= std_logic_vector(readaddr);
 
     process(i_shared_clk)
+    begin	    
+      if rising_edge(i_shared_clk) then
+         if (clear_axi_r_num = '1') then
+            axi_r_num <= (others => '0');
+         else	    
+            if (boundary_across_num = 0 and m01_axi_rvalid = '1' and m01_axi_rlast = '1') or 
+	       (boundary_across_num = 1 and m02_axi_rvalid = '1' and m02_axi_rlast = '1') or
+	       (boundary_across_num = 2 and m03_axi_rvalid = '1' and m03_axi_rlast = '1') or 
+	       (boundary_across_num = 3 and m04_axi_rvalid = '1' and m04_axi_rlast = '1') then
+               axi_r_num <= axi_r_num + 1;
+            end if;
+         end if;
+      end if;
+    end process;
+
+    process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
          o_axi_arvalid <= '0';  
@@ -1691,9 +1708,9 @@ begin
              end if;
 
            when wait_arready =>  -- arvalid is high in this state, wait until arready is high so the transaction is complete.--o_axi_arvalid <= '0';
-             rd_fsm_debug <= x"2";
-             o_axi_arvalid <= '1';
-	     axi_r_num     <= (others => '0');
+             rd_fsm_debug        <= x"2";
+             o_axi_arvalid       <= '1';
+	     clear_axi_r_num     <= '0';
              if i_axi_arready = '1' then
                 o_axi_arvalid        <= '0';
                 readaddr             <= readaddr + 4096;
@@ -1720,24 +1737,8 @@ begin
 
            when wait_current_bank_finish =>
 	     rd_fsm_debug <= x"6";	   
-	     if boundary_across_num = 0 then
-		if m01_axi_rvalid = '1' and m01_axi_rlast = '1' then     
-	           axi_r_num <= axi_r_num + 1;
-	        end if;
-             elsif boundary_across_num = 1 then
-                if m02_axi_rvalid = '1' and m02_axi_rlast = '1' then
-                   axi_r_num <= axi_r_num + 1;
-	        end if;
-             elsif boundary_across_num = 2 then
-                if m03_axi_rvalid = '1' and m03_axi_rlast = '1' then
-                   axi_r_num <= axi_r_num + 1;
-	        end if;
-             elsif boundary_across_num = 3 then
-                if m04_axi_rvalid = '1' and m04_axi_rlast = '1' then
-                   axi_r_num <= axi_r_num + 1;
-	        end if;		     
-	     end if;
              if (axi_r_num = current_axi_4k_count) then
+		clear_axi_r_num <= '1';     
 	        rd_fsm <= wait_arready;
              end if;		
              from_current_bank_finish <= '1';
