@@ -206,8 +206,12 @@ end HBM_PktController;
 
 architecture RTL of HBM_PktController is
    
-    constant max_space        : unsigned(31 downto 0) := X"FFFFFFFF";
-    constant max_space_4095MB : unsigned(31 downto 0) := X"FFF00000";
+    constant max_space                 : unsigned(31 downto 0) := X"FFFFFFFF";
+    constant max_space_4095MB          : unsigned(31 downto 0) := X"FFF00000";
+    constant max_space_4095MB_4k_num   : unsigned(21 downto 0) := "00"&X"FFF00";
+    constant max_space_4095MB_4kx2_num : unsigned(21 downto 0) := "01"&X"FFE00";
+    constant max_space_4095MB_4kx3_num : unsigned(21 downto 0) := "10"&X"FFD00";
+    constant max_space_4095MB_4kx4_num : unsigned(21 downto 0) := "11"&X"FFC00";
 
     COMPONENT ila_0
     PORT (
@@ -309,7 +313,7 @@ architecture RTL of HBM_PktController is
     signal readaddr, readaddr_reg   : unsigned(31 downto 0);    -- 30 bits = 1GB, 33 bits = 8GB
     
     signal total_beat_count   :  unsigned(31 downto 0) := (others => '0');
-    signal current_axi_4k_count   :  unsigned(19 downto 0);
+    signal current_axi_4k_count   :  unsigned(21 downto 0);
     signal wait_counter     :  unsigned(7 downto 0);
     signal current_pkt_count : unsigned(63 downto 0) := (others=>'0');
     signal fpga_beat_in_burst_counter : unsigned(31 downto 0) := (others=>'0');
@@ -359,7 +363,7 @@ architecture RTL of HBM_PktController is
     signal start_next_loop : std_logic := '0';
     signal wait_fifo_reset_cnt: unsigned(31 downto 0) := (others=>'0');
     signal rd_rst_busy ,wr_rst_busy : std_logic := '0';
-    signal axi_r_num : unsigned(31 downto 0) := (others => '0');
+    signal axi_r_num : unsigned(21 downto 0) := (others => '0');
     signal clear_axi_r_num : std_logic := '0';
 
     signal rd_fsm_debug : std_logic_vector(3 downto 0);
@@ -1673,10 +1677,10 @@ begin
          if (clear_axi_r_num = '1') then
             axi_r_num <= (others => '0');
          else	    
-            if (boundary_across_num = 0 and m01_axi_rvalid = '1' and m01_axi_rlast = '1') or 
-	       (boundary_across_num = 1 and m02_axi_rvalid = '1' and m02_axi_rlast = '1') or
-	       (boundary_across_num = 2 and m03_axi_rvalid = '1' and m03_axi_rlast = '1') or 
-	       (boundary_across_num = 3 and m04_axi_rvalid = '1' and m04_axi_rlast = '1') then
+            if (m01_axi_rvalid = '1' and m01_axi_rlast = '1') or 
+	       (m02_axi_rvalid = '1' and m02_axi_rlast = '1') or
+	       (m03_axi_rvalid = '1' and m03_axi_rlast = '1') or 
+	       (m04_axi_rvalid = '1' and m04_axi_rlast = '1') then
                axi_r_num <= axi_r_num + 1;
             end if;
          end if;
@@ -1710,15 +1714,17 @@ begin
            when wait_arready =>  -- arvalid is high in this state, wait until arready is high so the transaction is complete.--o_axi_arvalid <= '0';
              rd_fsm_debug        <= x"2";
              o_axi_arvalid       <= '1';
-	     clear_axi_r_num     <= '0';
              if i_axi_arready = '1' then
                 o_axi_arvalid        <= '0';
                 readaddr             <= readaddr + 4096;
                 current_axi_4k_count <= current_axi_4k_count + 1;
-		--when all the AXI AR 4k transactions for current 4GB has been transfered, then wait for all the pending AXi R transactions finish 
-		if (current_axi_4k_count = (max_space_4095MB(31 downto 12) - readaddr_reg(31 downto 12) - 1))                         and 
-		   (current_axi_4k_count < resize((unsigned(i_expected_total_number_of_4k_axi) - 1),20))                              and 
-		   (unsigned(i_expected_total_number_of_4k_axi) > (max_space_4095MB(31 downto 12) - readaddr_reg(31 downto 12) - 1)) then
+		--when all the AXI AR 4k transactions for current 4GB has been transfered, then wait for all the pending AXi R transactions finish
+		if ((current_axi_4k_count = (max_space_4095MB_4k_num   - resize(readaddr_reg(31 downto 12),22) - 1) and boundary_across_num = 0) or
+		    (current_axi_4k_count = (max_space_4095MB_4kx2_num - resize(readaddr_reg(31 downto 12),22) - 1) and boundary_across_num = 1) or 
+		    (current_axi_4k_count = (max_space_4095MB_4kx3_num - resize(readaddr_reg(31 downto 12),22) - 1) and boundary_across_num = 2) or 
+		    (current_axi_4k_count = (max_space_4095MB_4kx4_num - resize(readaddr_reg(31 downto 12),22) - 1) and boundary_across_num = 3)) and 
+		   (current_axi_4k_count < resize((unsigned(i_expected_total_number_of_4k_axi) - 1),22))                                          and 
+		   (resize(unsigned(i_expected_total_number_of_4k_axi),22) > (max_space_4095MB(31 downto 12) - readaddr_reg(31 downto 12) - 1))   then
 	           rd_fsm <= wait_current_bank_finish; 		
                 elsif (current_axi_4k_count = (unsigned(i_expected_total_number_of_4k_axi) - 1)) then 
                    rd_fsm <= finished; 
@@ -1734,11 +1740,9 @@ begin
 		from_current_bank_finish <= '0';
              end if;		
 	     
-
            when wait_current_bank_finish =>
 	     rd_fsm_debug <= x"6";	   
-             if (axi_r_num = current_axi_4k_count) then
-		clear_axi_r_num <= '1';     
+	     if (axi_r_num = current_axi_4k_count) then
 	        rd_fsm <= wait_arready;
              end if;		
              from_current_bank_finish <= '1';
@@ -1756,8 +1760,10 @@ begin
            when finished =>
              rd_fsm_debug <= x"4";
              if (i_loop_tx = '1') then
+		clear_axi_r_num <= '0';     
                 rd_fsm <= loopit;
              else
+		clear_axi_r_num <= '1';    
                 rd_fsm <= finished;
              end if;
 
