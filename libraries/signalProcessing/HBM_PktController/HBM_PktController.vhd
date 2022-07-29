@@ -15,6 +15,39 @@
 --  Distributed under the terms of the CSIRO Open Source Software Licence Agreement
 --  See the file LICENSE for more info.
 ----------------------------------------------------------------------------------
+--
+--  ------------------------------------------------------------------------------
+--  Flow chart for packet rx:
+--  
+--  parameter in: i_rx_packet_size, i_enable_capture  
+--    |
+--  packet coming in--------------------------------------------------------------------------------------------------<<<----------
+--    |                                                                                                                           |
+--  calculate AXI transaction length, if >= 8192 bytes, then split to 2 4096 bytes transactions, and the rest                     |
+--                               else if >= 4096 bytes, then split to 1 4096 bytes transaction, and the rest                      |
+--                               else if <= 4096 bytes, then simply the whole packet                                              |
+--    |                                                                                                                           |
+--  check address range, if can    fit into current 4GB space, then issue AXI transactions to write to HBM memory                 |
+--                       if cannot fit into current 4GB space, then calculate number of bytes fit to current and next             |
+--                       4GB space, and issue corresponding AXI transactions for the residual of current 4GB and the              |
+--                       next 4GB space------------------------------------------------------------------------------->>>---------i
+--
+--  -------------------------------------------------------------------------------
+--  Flow chart for packet tx:
+--
+--  parameter in: i_tx_packet_size, i_expected_total_number_of_4k_axi, i_expected_number_beats_per_burst, i_expected_beats_per_packet     
+--                i_expected_packets_per_burst, i_expected_total_number_of_bursts   
+--    | 
+--  i_start_rx = 1
+--    |
+--  i_expected_total_number_of_4k_axi number of AXI reading transactions will be issued to HBM based on 4096 bytes length, the HBM read
+--  out data will be stored in a local fifo
+--    |
+--  state machine will then be triggered to reading from the local fifo and write data to packetiser
+--
+--  For AXI write part, it's an AW and W totally separated structure, AW might be finished earlier or later than the correspoding W depnding
+--  on the awready signal from HBM. Using this structure is to support the packet with large packet size with minimum 4 clock cycles gap 
+--  between packets continusly
 
 library IEEE, common_lib, xpm;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -230,13 +263,13 @@ architecture RTL of HBM_PktController is
     signal LFAAaddr1,        LFAAaddr2,        LFAAaddr3,        LFAAaddr4        : std_logic_vector(32 downto 0) := (others=>'0');
     signal LFAAaddr1_shadow, LFAAaddr2_shadow, LFAAaddr3_shadow, LFAAaddr4_shadow : std_logic_vector(32 downto 0) := (others=>'0');
 
+    --generate_aw1_* is similar to generate_aw2_* and generate_aw3_* and generate_aw4_* for different bank manipulation
     type   input_fsm_type is(idle, generate_aw1_shadow_addr, check_aw1_addr_range, generate_aw1,
                                    generate_aw2_shadow_addr, check_aw2_addr_range, generate_aw2,
 				   generate_aw3_shadow_addr, check_aw3_addr_range, generate_aw3,
 				   generate_aw4_shadow_addr, check_aw4_addr_range, generate_aw4);
     signal input_fsm : input_fsm_type;				   
     signal direct_aw2, direct_aw3, direct_aw4 : std_logic := '0';
-    signal four_kB_trans, beats_64B_trans : std_logic := '0';
     signal recv_pkt_counter : unsigned(31 downto 0) := (others=>'0');
 
     signal m01_fifo_rd_en, m02_fifo_rd_en, m03_fifo_rd_en, m04_fifo_rd_en  : std_logic := '0';
@@ -281,9 +314,10 @@ architecture RTL of HBM_PktController is
 
     signal update_start_addr_del, update_start_addr_p : std_logic := '0';
     signal update_readaddr_del,  update_readaddr_p  : std_logic := '0';
-    -----------------
-    --TX registers
-    -----------------
+
+    ---------------------------
+    --packet TX related signals
+    ---------------------------
 
     -- NEEDS TO BE AT LEAST 4K deep to handle the HBM requests when there is slow playout on the 100G.
     constant SYNC_FIFO_DEPTH : integer := 4096;
@@ -406,6 +440,10 @@ begin
     --i.e no residual AXI trans where less then 64B trans is needed, all the bits of imcoming data is 
     --    valid
     ---------------------------------------------------------------------------------------------------
+
+    --following is the AXI transaction parameter calculation
+    --num_rx_4k_axi_trans  is number of AXI 4k transactions for one packet
+    --num_rx_64B_axi_beats is number of beats of AXI transaction after number of 4k minused out for one packet
     num_rx_64B_axi_beats                   <= num_residual_bytes_after_4k(13 downto 6); -- 64 bytes multiple beat transaction
     num_rx_4k_axi_trans                    <= "10" when (unsigned(i_rx_packet_size(13 downto 0)) >= 8192) else
 	   			              "01" when (unsigned(i_rx_packet_size(13 downto 0)) >= 4096) else
@@ -465,8 +503,7 @@ begin
       end if;
     end process;      
 
-    i_valid_rising <= i_data_valid_from_cmac and (not i_data_valid_del); --when (unsigned(i_rx_packet_size(13 downto 0)) > 64) else
-		      --i_data_valid_del;
+    i_valid_rising <= i_data_valid_from_cmac and (not i_data_valid_del);
 
     process(i_shared_clk)
     begin	    
@@ -476,10 +513,10 @@ begin
       end if;
     end process;      
 
-    update_start_addr_p <= update_start_addr and (not update_start_addr_del);
+    update_start_addr_p   <= update_start_addr and (not update_start_addr_del);
     update_readaddr_p     <= update_readaddr and (not update_readaddr_del);
 
-    --//AXI AW part for m01, m02, m03, m04
+    --//AXI AW FSM for m01, m02, m03, m04
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
@@ -497,8 +534,6 @@ begin
             direct_aw2       <= '0';
             direct_aw3       <= '0';
             direct_aw4       <= '0';
-            four_kB_trans    <= '0';
-            beats_64B_trans  <= '0';
             LFAAaddr1(31 downto 0)  <= i_lfaa_bank1_addr;
             LFAAaddr2(31 downto 0)  <= i_lfaa_bank2_addr;
             LFAAaddr3(31 downto 0)  <= i_lfaa_bank3_addr;
@@ -519,6 +554,7 @@ begin
              end if;		
              num_rx_4k_axi_trans_fsm <= num_rx_4k_axi_trans;
 	     awfifo_wren <= '0';
+	     --if one 4GB bank is full, then move to next bank
              if i_valid_rising = '1'    and i_enable_capture = '1' and m03_axi_4G_full = '1' then
 		input_fsm     <= generate_aw4_shadow_addr;	     
              elsif i_valid_rising = '1' and i_enable_capture = '1' and m02_axi_4G_full = '1' then
@@ -529,7 +565,7 @@ begin
                 input_fsm     <= generate_aw1_shadow_addr;
              end if;
            when generate_aw1_shadow_addr  => --shadow addr used to detect if a 4GB AXI HBM section is filled
-             if (wr_bank1_boundary_corss = '1') then -- if state is coming back from generate_aw1_ready 
+             if (wr_bank1_boundary_corss = '1') then -- if state is coming back from generate_aw1 
                 if (num_rx_4k_axi_trans_fsm_curr_4G > 0) then --4KB transfer has higher priority
                    LFAAaddr1_shadow(32 downto 12) <= std_logic_vector(unsigned(LFAAaddr1(32 downto 12)) + 1);
 		   LFAAaddr1_shadow(11 downto 0)  <= LFAAaddr1(11 downto 0);
@@ -561,16 +597,21 @@ begin
 	     input_fsm                       <= generate_aw1;
            when generate_aw1 =>
              if (wr_bank1_boundary_corss = '0') then
-		if (num_rx_4k_axi_trans_fsm > 0) then --start 4K transaction first, if packet size is more than 4K
-		   awfifo_din(31 downto 0)    <= LFAAaddr1(31 downto 0);
-		   awfifo_din(39 downto 32)   <= "00111111";
-		   awfifo_din(41 downto 40)   <= "00";
-		   awlenfifo_din              <= "00111111";
-		   awfifo_wren                <= '1';
+		if (num_rx_4k_axi_trans_fsm > 0) then 
+		   --start 4K transaction first, if packet size is more than 4K, write 4k AXI transaction into AW fifo, and decrease the 4k transaction number
+		   --also update the address for next transaction, state go back to generate_aw1_shadow_addr to check through the 4GB buffer limit again  		
+		   awfifo_din(31 downto 0)    <= LFAAaddr1(31 downto 0); --awaddr 
+		   awfifo_din(39 downto 32)   <= "00111111";             --awlen
+		   awfifo_din(41 downto 40)   <= "00";                   --identification for bank1~4
+		   awlenfifo_din              <= "00111111";             --write to awlen fifo at same time, the idea is to let AXI W part to know how long the W  
+		                                                         --should be because AW is totoally separated from W
+		   awfifo_wren                <= '1';                    
 		   num_rx_4k_axi_trans_fsm    <= num_rx_4k_axi_trans_fsm - 1;
                    LFAAaddr1(32 downto 12)    <= std_logic_vector(unsigned(LFAAaddr1(32 downto 12)) + 1);
                    input_fsm                  <= generate_aw1_shadow_addr;
-                elsif (num_rx_4k_axi_trans_fsm = 0 and num_rx_64B_axi_beats /= 0) then  
+                elsif (num_rx_4k_axi_trans_fsm = 0 and num_rx_64B_axi_beats /= 0) then 
+		   --if no 4k transaction for current received packet is needed or if 4k transaction has been sent out and no more 4k transactions left, but still
+		   --less than 4k transaction left, then write the left less than 4k transaction to AW fifo. state go back to idle and update address	
 	           awfifo_din(31 downto 0)    <= LFAAaddr1(31 downto 0);
                    awfifo_din(39 downto 32)   <= std_logic_vector(num_rx_64B_axi_beats-1);
                    awfifo_din(41 downto 40)   <= "00";
@@ -581,9 +622,11 @@ begin
                    input_fsm                  <= idle;
                 elsif (num_rx_4k_axi_trans_fsm = 0 and num_rx_64B_axi_beats = 0) then
 		   recv_pkt_counter           <= recv_pkt_counter + 1;	   
-                   input_fsm                  <= idle; --one transaction finished
+                   input_fsm                  <= idle; --one packet transaction finished
                 end if;
              else
+	       --situation where cross 4GB happens, and issue AXI transactions to fill current 4GB to full, the tx size has been calculated before already
+	       --move state to next 4GB buffer	     
 	       if (num_rx_4k_axi_trans_fsm_curr_4G > 0) then
                   awfifo_din(31 downto 0)     <= LFAAaddr1(31 downto 0);
                   awfifo_din(39 downto 32)    <= "00111111";
@@ -607,7 +650,7 @@ begin
 	       input_fsm                      <= generate_aw2;
              end if;
            when generate_aw2_shadow_addr  => --shadow addr used to detect if a 4GB AXI HBM section is filled
-             if (wr_bank2_boundary_corss = '1') then -- if state is coming back from generate_aw1_ready 
+             if (wr_bank2_boundary_corss = '1') then -- if state is coming back from generate_aw2 
                 if (num_rx_4k_axi_trans_fsm_curr_4G > 0) then --4KB transfer has higher priority
                    LFAAaddr2_shadow(32 downto 12) <= std_logic_vector(unsigned(LFAAaddr2(32 downto 12)) + 1);
 		   LFAAaddr2_shadow(11 downto 0)  <= LFAAaddr2(11 downto 0);
@@ -628,8 +671,8 @@ begin
              input_fsm <= check_aw2_addr_range;
            when check_aw2_addr_range =>
              if (wr_bank2_boundary_corss = '1') then --first 4GB AXI section is filled to full, need to split the next AXI transaction to two part, 
-                num_rx_bytes_curr_4G         <= wr_bank2_boundary_corss_curr_4G_size; 
-                num_rx_bytes_next_4G         <= unsigned(LFAAaddr2_shadow(13 downto 0));
+                num_rx_bytes_curr_4G         <= wr_bank2_boundary_corss_curr_4G_size;    --number of bytes left to fill bank2 to full 
+                num_rx_bytes_next_4G         <= unsigned(LFAAaddr2_shadow(13 downto 0)); --number of bytes left to fill bank3 at start
              else
                 num_rx_bytes_curr_4G         <= (others=>'0');
                 num_rx_bytes_next_4G         <= (others=>'0');		
@@ -639,6 +682,8 @@ begin
              input_fsm                       <= generate_aw2;
            when generate_aw2 =>
              if (direct_aw2 = '1') then
+                --this is the state which comes directly from generate_aw1 that AXI transfers for the residual of last 4GB has been filled and last 4GB was full
+		--and now it's turn is to handle the start of the next 4GB     
                 if (num_rx_4k_axi_trans_fsm_next_4G > 0) then --start 4K transaction first, if packet size is more than 4K
                    awfifo_din(31 downto 0)    <= LFAAaddr2(31 downto 0);
                    awfifo_din(39 downto 32)   <= "00111111";
@@ -1066,6 +1111,9 @@ begin
       end if;
     end process;
 
+    --aw fifo read enable signal, due to fifo takes 2 clock cycles to make the write to take effect
+    --so give a short period wait until fifo write to take effect OR when the fifo is not empty and 
+    --an AW is finished
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
@@ -1098,7 +1146,10 @@ begin
 	 end if;
       end if;
     end process;
-
+   
+    --AW logics for m01 to m04, taking the item from AW fifo and must taking care of the special condition that 
+    --AW finish and awfifo reading are at the same time, in this case, delay the AW fifo readout by one clock cycle
+    --and then assign to AW
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
@@ -1199,6 +1250,9 @@ begin
       end if;
     end process;
 
+    --m01 to m04 write inidication signal, used to indicate currently whether it's m01 or m02 or m03 or m04 write 
+    --situation so a certain bank AXI write transaction only happen within itself and will not across to another bank
+    --if all the fifos are empty and data incoming, then deassert all the indication signals  
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
@@ -1252,8 +1306,10 @@ begin
     m02_wr_p <= m02_wr and (not m02_wr_del);
     m03_wr_p <= m03_wr and (not m03_wr_del);
     m04_wr_p <= m04_wr and (not m04_wr_del);
-
-    --MUX to select between m01 m02 m03 m04 AXI buses    
+   
+    --MUX to select among m01 m02 m03 m04 AXI W buses,
+    --data is coming from wdata fifo, using ready signal 
+    --to hold the W bus.
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
@@ -1366,6 +1422,10 @@ begin
       end if;
     end process;
 
+    --write trasaction counter, used to control whether a AXI transaction should be issued or not
+    --only when the counter is not zero, means there is AW transaction already in queue, then a
+    --W transaction can start
+    --when an AW is issued, then counter plus 1, when an W is finished, the counter minus 1
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
@@ -1402,6 +1462,10 @@ begin
       end if;
     end process;      
 
+    --awlen fifo reading, two conditions:
+    --1. current W transaction finished, start to read next item from fifo for next W transaction
+    --2. for very first W transaction, as no W transaction happens before, so read the AW fifo when
+    --   it's not empty 
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
@@ -1431,6 +1495,14 @@ begin
 
     axi_wdata_fifo_empty_falling_edge <= axi_wdata_fifo_empty_reg and (not axi_wdata_fifo_empty);
 
+    --W data fifo read enable signal for m01 to m04 generated at 3 conditions, these fifo read enable signals will be ORed 
+    --together to generate final W data fifo read enable signal, when one W transaction is finished, then stop the read enable 
+    --signal
+    --1. when one transaction finised
+    --2. If AW ready signal respond too slowly which when all W transactions finished for all queued AW transactions, then 
+    --   wait until the AW ready comes up for the current pending AW transaction, then issue a m0x fifo read en
+    --3. If gap between packets is too long which caused the W data fifo all read out which is empty, then wait until W data
+    --   fifo is not empty and an AW has been issued 
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
@@ -1500,11 +1572,14 @@ begin
       end if;
     end process;    
 
+    --W data fifo control signals, as long as there is data coming in from cmac
+    --the write data to w data fifo
  fifo_wr_en <= i_data_valid_from_cmac and i_enable_capture; 
  fifo_rd_en <= (m01_fifo_rd_en and m01_axi_wready) or (m02_fifo_rd_en and m02_axi_wready) or (m03_fifo_rd_en and m03_axi_wready) or (m04_fifo_rd_en and m04_axi_wready);
  fifo_rd_wready <= m01_axi_wready or m02_axi_wready or m03_axi_wready or m04_axi_wready; 
  rx_fifo_rst    <= i_rx_soft_reset or i_shared_rst; 
 
+    --W data fifo read counter, used to be compared with AW length to finish the counter running and W data fifo reading
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
@@ -1520,6 +1595,12 @@ begin
       end if;
     end process;
 
+    --wlast signal processing, 3 conditions
+    --1. when transaction length is 1
+    --2. when transaction length is 2
+    --3. when transaction length is not 1 and not 2
+    --condition 1 and 2 are special conditions, because length start from 0, and wlast is one cycle before actual m01/02/03/04_axi_wlast
+    --so need to take care of length 1 and 2 as special condition 
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then

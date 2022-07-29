@@ -291,7 +291,7 @@ begin
     FILE_OPEN(datafile,data_file_name,READ_MODE);
 
     wait until rising_edge(clock_300);
-    for i in 1 to 300 loop
+    for i in 1 to 1 loop
       while(not endfile(datafile)) loop
         readline(datafile, line_in);
         hread(line_in,LFAArepeats,good);
@@ -336,9 +336,9 @@ begin
       file_open(datafile, data_file_name, read_mode);
     end loop;
     LFAADone <= '1';
-    wait for 50 us;
-    report "simulation successfully finished";
-    finish;
+    --wait for 50 us;
+    --report "simulation successfully finished";
+    --finish;
   end process;
 
   --process
@@ -520,12 +520,12 @@ begin
        );
 
       
-      --i_packet_receive : entity packtiser_receive 
-	  -- port map (
-      --      clk                     => clock_300, 
-      --      i_din                   => packetiser_data, 
-      --      i_valid                 => packetiser_data_in_wr
-      -- );
+      i_packet_receive : entity HBM_PktController_lib.packetiser_receive
+      port map (
+          clk                       => clock_300, 
+          i_din                     => packetiser_data, 
+          i_valid                   => packetiser_data_in_wr
+      );
 
 
       i_packet_player : entity PSR_Packetiser_lib.packet_player

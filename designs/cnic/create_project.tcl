@@ -262,6 +262,7 @@ add_files -fileset sources_1 [glob \
   $ARGS_PATH/HBM_PktController/hbm_pktcontroller/HBM_PktController_hbm_pktcontroller_reg_pkg.vhd \
   $ARGS_PATH/HBM_PktController/hbm_pktcontroller/HBM_PktController_hbm_pktcontroller_reg.vhd \
   $RLIBRARIES_PATH/signalProcessing/HBM_PktController/HBM_PktController.vhd \
+  $RLIBRARIES_PATH/signalProcessing/HBM_PktController/tb/packetiser_receive.vhd \
   $DESIGN_PATH/src/vhdl/HBM_axi_tbModel.vhd \
 ]
 
@@ -269,6 +270,7 @@ set_property library HBM_PktController_lib [get_files {\
  */HBM_PktController/hbm_pktcontroller/HBM_PktController_hbm_pktcontroller_reg_pkg.vhd \
  */HBM_PktController/hbm_pktcontroller/HBM_PktController_hbm_pktcontroller_reg.vhd \
  *libraries/signalProcessing/HBM_PktController/HBM_PktController.vhd \
+ *libraries/signalProcessing/HBM_PktController/tb/packetiser_receive.vhd \
  */src/vhdl/HBM_axi_tbModel.vhd \
  }]
 source $RLIBRARIES_PATH/signalProcessing/HBM_PktController/HBM_PktController.tcl
