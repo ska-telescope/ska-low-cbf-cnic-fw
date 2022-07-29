@@ -630,7 +630,7 @@ begin
 	       if (num_rx_4k_axi_trans_fsm_curr_4G > 0) then
                   awfifo_din(31 downto 0)     <= LFAAaddr1(31 downto 0);
                   awfifo_din(39 downto 32)    <= "00111111";
-                  awfifo_din(41 downto 40)    <= "01";
+                  awfifo_din(41 downto 40)    <= "00";
                   awlenfifo_din               <= "00111111";
                   awfifo_wren                 <= '1';
                   num_rx_4k_axi_trans_fsm_curr_4G  <= num_rx_4k_axi_trans_fsm_curr_4G - 1;
@@ -747,7 +747,7 @@ begin
                elsif (num_rx_64B_axi_beats_curr_4G /= 0) then
                   awfifo_din(31 downto 0)     <= LFAAaddr2(31 downto 0);
                   awfifo_din(39 downto 32)    <= std_logic_vector(num_rx_64B_axi_beats_curr_4G-1);
-                  awfifo_din(41 downto 40)    <= "00";
+                  awfifo_din(41 downto 40)    <= "01";
                   awlenfifo_din               <= std_logic_vector(num_rx_64B_axi_beats_curr_4G-1);
                   awfifo_wren                 <= '1';
                   m02_axi_4G_full             <= '1';
@@ -794,7 +794,7 @@ begin
 		if (num_rx_4k_axi_trans_fsm_next_4G > 0) then --start 4K transaction first, if packet size is more than 4K
                    awfifo_din(31 downto 0)    <= LFAAaddr3(31 downto 0);
                    awfifo_din(39 downto 32)   <= "00111111";
-                   awfifo_din(41 downto 40)   <= "01";
+                   awfifo_din(41 downto 40)   <= "10";
                    awlenfifo_din              <= "00111111";
                    awfifo_wren                <= '1';
                    num_rx_4k_axi_trans_fsm_next_4G <= num_rx_4k_axi_trans_fsm_next_4G - 1;
@@ -802,7 +802,7 @@ begin
                 elsif (num_rx_4k_axi_trans_fsm_next_4G = 0 and num_rx_64B_axi_beats_next_4G /= 0) then
                    awfifo_din(31 downto 0)    <= LFAAaddr3(31 downto 0);
                    awfifo_din(39 downto 32)   <= std_logic_vector(num_rx_64B_axi_beats_next_4G-1);
-                   awfifo_din(41 downto 40)   <= "01";
+                   awfifo_din(41 downto 40)   <= "10";
                    awlenfifo_din              <= std_logic_vector(num_rx_64B_axi_beats_next_4G-1);
                    awfifo_wren                <= '1';
                    LFAAaddr3(32 downto 6)     <= std_logic_vector(unsigned(LFAAaddr3(32 downto 6)) + resize(num_rx_64B_axi_beats_next_4G,27));
@@ -846,7 +846,7 @@ begin
 		if (num_rx_4k_axi_trans_fsm_curr_4G > 0) then
                   awfifo_din(31 downto 0)     <= LFAAaddr3(31 downto 0);
                   awfifo_din(39 downto 32)    <= "00111111";
-                  awfifo_din(41 downto 40)    <= "01";
+                  awfifo_din(41 downto 40)    <= "10";
                   awlenfifo_din               <= "00111111";
                   awfifo_wren                 <= '1';
                   num_rx_4k_axi_trans_fsm_curr_4G  <= num_rx_4k_axi_trans_fsm_curr_4G - 1;
@@ -854,7 +854,7 @@ begin
                elsif (num_rx_64B_axi_beats_curr_4G /= 0) then
                   awfifo_din(31 downto 0)     <= LFAAaddr3(31 downto 0);
                   awfifo_din(39 downto 32)    <= std_logic_vector(num_rx_64B_axi_beats_curr_4G-1);
-                  awfifo_din(41 downto 40)    <= "00";
+                  awfifo_din(41 downto 40)    <= "10";
                   awlenfifo_din               <= std_logic_vector(num_rx_64B_axi_beats_curr_4G-1);
                   awfifo_wren                 <= '1';
                   m03_axi_4G_full             <= '1';
@@ -901,7 +901,7 @@ begin
 		if (num_rx_4k_axi_trans_fsm_next_4G > 0) then --start 4K transaction first, if packet size is more than 4K
                    awfifo_din(31 downto 0)    <= LFAAaddr4(31 downto 0);
                    awfifo_din(39 downto 32)   <= "00111111";
-                   awfifo_din(41 downto 40)   <= "01";
+                   awfifo_din(41 downto 40)   <= "11";
                    awlenfifo_din              <= "00111111";
                    awfifo_wren                <= '1';
                    num_rx_4k_axi_trans_fsm_next_4G <= num_rx_4k_axi_trans_fsm_next_4G - 1;
@@ -909,7 +909,7 @@ begin
                 elsif (num_rx_4k_axi_trans_fsm_next_4G = 0 and num_rx_64B_axi_beats_next_4G /= 0) then
                    awfifo_din(31 downto 0)    <= LFAAaddr4(31 downto 0);
                    awfifo_din(39 downto 32)   <= std_logic_vector(num_rx_64B_axi_beats_next_4G-1);
-                   awfifo_din(41 downto 40)   <= "01";
+                   awfifo_din(41 downto 40)   <= "11";
                    awlenfifo_din              <= std_logic_vector(num_rx_64B_axi_beats_next_4G-1);
                    awfifo_wren                <= '1';
                    LFAAaddr4(32 downto 6)     <= std_logic_vector(unsigned(LFAAaddr4(32 downto 6)) + resize(num_rx_64B_axi_beats_next_4G,27));
@@ -930,7 +930,7 @@ begin
                 if (num_rx_4k_axi_trans_fsm > 0) then --start 4K transaction first, if packet size is more than 4K
                    awfifo_din(31 downto 0)    <= LFAAaddr4(31 downto 0);
                    awfifo_din(39 downto 32)   <= "00111111";
-                   awfifo_din(41 downto 40)   <= "10";
+                   awfifo_din(41 downto 40)   <= "11";
                    awlenfifo_din              <= "00111111";
                    awfifo_wren                <= '1';
                    num_rx_4k_axi_trans_fsm    <= num_rx_4k_axi_trans_fsm - 1;
@@ -939,7 +939,7 @@ begin
                 elsif (num_rx_4k_axi_trans_fsm = 0 and num_rx_64B_axi_beats /= 0) then
                    awfifo_din(31 downto 0)    <= LFAAaddr4(31 downto 0);
                    awfifo_din(39 downto 32)   <= std_logic_vector(num_rx_64B_axi_beats-1);
-                   awfifo_din(41 downto 40)   <= "10";
+                   awfifo_din(41 downto 40)   <= "11";
                    awlenfifo_din              <= std_logic_vector(num_rx_64B_axi_beats-1);
                    awfifo_wren                <= '1';
                    recv_pkt_counter           <= recv_pkt_counter + 1;
@@ -1149,7 +1149,7 @@ begin
    
     --AW logics for m01 to m04, taking the item from AW fifo and must taking care of the special condition that 
     --AW finish and awfifo reading are at the same time, in this case, delay the AW fifo readout by one clock cycle
-    --and then assign to AW
+    --and then assign to AW, which is controlled by awfifo_rden_reg
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
