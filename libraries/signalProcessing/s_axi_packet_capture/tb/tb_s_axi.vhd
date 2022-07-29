@@ -220,7 +220,7 @@ begin
                 i_rx_axis_tvalid                <= '1';  
                 i_rx_axis_tlast                 <= '1';
                 
-            elsif testCount_322 = 200 then
+            elsif testCount_322 = 300 then
                 streaming_data(127 downto 0)   <=  ethernet_info.dst_mac & 
                                                 ethernet_info.src_mac & 
                                                 ethernet_info.eth_type & 
@@ -250,7 +250,7 @@ begin
                 i_rx_axis_tkeep                 <= x"FFFFFFFFFFFFFFFF";
                 i_rx_axis_tvalid                <= '1';
                 
-            elsif testCount_322 = 201 then
+            elsif testCount_322 = 301 then
                 streaming_data(127 downto 0)    <= x"11111111" & x"22222222" & x"33333333" & x"44444444";
                 streaming_data(255 downto 128)  <= x"11111111" & x"22222222" & x"33333333" & x"44444444";
                 streaming_data(383 downto 256)  <= x"11111111" & x"22222222" & x"33333333" & x"44444444";
@@ -258,7 +258,7 @@ begin
                 i_rx_axis_tkeep                 <= x"FFFFFFFFFFFFFFFF";
                 i_rx_axis_tvalid                <= '1';
             
-            elsif testCount_322 = 202 then
+            elsif testCount_322 = 302 then
                 streaming_data(127 downto 0)    <= x"55555555" & x"66666666" & x"77777777" & x"88888888";
                 streaming_data(255 downto 128)  <= x"55555555" & x"66666666" & x"77777777" & x"88888888";
                 streaming_data(383 downto 256)  <= x"55555555" & x"66666666" & x"77777777" & x"88888888";
@@ -266,7 +266,7 @@ begin
                 i_rx_axis_tkeep                 <= x"FFFFFFFFFFFFFFFF";
                 i_rx_axis_tvalid                <= '1';
                
-            elsif testCount_322 = 203 then
+            elsif testCount_322 = 303 then
                 streaming_data(127 downto 0)    <= x"99999999" & x"AAAAAAAA" & x"BBBBBBBB" & x"CCCCCCCC";
                 streaming_data(255 downto 128)  <= x"99999999" & x"AAAAAAAA" & x"BBBBBBBB" & x"CCCCCCCC";
                 streaming_data(383 downto 256)  <= x"99999999" & x"AAAAAAAA" & x"BBBBBBBB" & x"CCCCCCCC";
@@ -275,7 +275,7 @@ begin
                 i_rx_axis_tvalid                <= '1';
                 i_rx_axis_tlast                 <= '1';
                 
-            elsif testCount_322 = 204 then
+            elsif testCount_322 = 304 then
                 streaming_data(127 downto 0)    <= x"DDDDDDDD" & x"EEEEEEEE" & x"FFFFFFFF" & x"00000000";
                 streaming_data(255 downto 128)  <= x"DDDDDDDD" & x"EEEEEEEE" & x"FFFFFFFF" & x"00000000";
                 streaming_data(383 downto 256)  <= x"DDDDDDDD" & x"EEEEEEEE" & x"FFFFFFFF" & x"00000000";

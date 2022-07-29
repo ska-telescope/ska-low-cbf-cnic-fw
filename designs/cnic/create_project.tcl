@@ -305,7 +305,7 @@ add_files -fileset sources_1 [glob \
 set_property library cmac_s_axi_lib [get_files {\
  *libraries/signalProcessing/s_axi_packet_capture/vhdl/s_axi_packet_capture.vhd
 }]
-
+set_property file_type {VHDL 2008} [get_files  $RLIBRARIES_PATH/signalProcessing/s_axi_packet_capture/vhdl/s_axi_packet_capture.vhd]
 
 #############################################################
 # Signal_processing_common

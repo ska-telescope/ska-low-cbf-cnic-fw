@@ -250,6 +250,8 @@ constant t_default_IPv4_header : t_IPv4_header(2 downto 0) := ( default_ipv4_hea
 
 Function byte_en_to_vector_count(byte_en: std_logic_vector(15 downto 0)) return std_logic_vector;
 
+Function byte_en_to_integer_count(byte_en: std_logic_vector(15 downto 0)) return integer;
+
 end ethernet_pkg;
 
 PACKAGE BODY ethernet_pkg IS
@@ -282,7 +284,33 @@ FUNCTION byte_en_to_vector_count(byte_en: std_logic_vector(15 downto 0)) RETURN 
    RETURN count;
 END byte_en_to_vector_count;
 
-
+FUNCTION byte_en_to_integer_count(byte_en: std_logic_vector(15 downto 0)) RETURN integer IS
+    VARIABLE value : integer;
+    BEGIN
+        CASE byte_en IS
+            WHEN x"0000" => value :=  0 ;
+            WHEN x"0001" => value :=  1 ;
+            WHEN x"0003" => value :=  2 ;
+            WHEN x"0007" => value :=  3 ;
+            WHEN x"000F" => value :=  4 ;
+            WHEN x"001F" => value :=  5 ;
+            WHEN x"003F" => value :=  6 ;
+            WHEN x"007F" => value :=  7 ;
+            WHEN x"00FF" => value :=  8 ;
+            WHEN x"01FF" => value :=  9 ;
+            WHEN x"03FF" => value :=  10 ;
+            WHEN x"07FF" => value :=  11 ;
+            WHEN x"0FFF" => value :=  12 ;
+            WHEN x"1FFF" => value :=  13 ;
+            WHEN x"3FFF" => value :=  14 ;
+            WHEN x"7FFF" => value :=  15 ;
+            WHEN x"FFFF" => value :=  16 ;
+            
+            WHEN OTHERS  => value := 0;
+        END CASE;
+        
+   RETURN value;
+END byte_en_to_integer_count;
 
 
 end ethernet_pkg;

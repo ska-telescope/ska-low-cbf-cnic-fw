@@ -28,6 +28,7 @@ library IEEE, PSR_Packetiser_lib, common_lib, signal_processing_common;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 use PSR_Packetiser_lib.ethernet_pkg.ALL;
+USE common_lib.common_pkg.ALL;
 
 library UNISIM;
 use UNISIM.VComponents.all;
@@ -49,8 +50,11 @@ entity s_axi_packet_capture is
         i_rx_packet_size        : in std_logic_vector(13 downto 0);     -- Max size is 9000.
         i_rx_reset_capture      : in std_logic;
         i_reset_counter         : in std_logic;
-        o_target_count          : out std_logic_vector(63 downto 0);
-        o_nontarget_count       : out std_logic_vector(63 downto 0);
+        o_target_count          : out std_logic_vector(31 downto 0);
+        o_nontarget_count       : out std_logic_vector(31 downto 0);
+        o_LFAA_spead_count      : out std_logic_vector(31 downto 0);
+        o_PSR_PST_count         : out std_logic_vector(31 downto 0);
+        o_CODIF_2154_count      : out std_logic_vector(31 downto 0);
 
         -- 100G RX S_AXI interface ~322 MHz
         i_rx_axis_tdata         : in std_logic_vector ( 511 downto 0 );
@@ -75,6 +79,10 @@ COMPONENT ila_0
         probe0  : IN STD_LOGIC_VECTOR(191 DOWNTO 0)
     );       
 END COMPONENT;
+
+constant CODIF_2154_length      : std_logic_vector (13 downto 0) := 14D"2154";
+constant PST_PSR_length         : std_logic_vector (13 downto 0) := 14D"6330";
+constant SPEAD_LFAA_length      : std_logic_vector (13 downto 0) := 14D"8292";
 
 signal rx_axis_tdata_int        : std_logic_vector ( 511 downto 0 );
 signal rx_axis_tkeep_int        : std_logic_vector ( 63 downto 0 );
@@ -130,11 +138,49 @@ signal hbm_streaming_sm : hbm_streaming_statemachine;
 type packet_check_statemachine is (IDLE, PREP, DATA, FINISH);
 signal packet_check_sm : packet_check_statemachine;
 
+signal cmac_reset                   : std_logic;
+signal cmac_reset_combined          : std_logic;
+
+------------------------------------------------------------------------------
+-- packet stats
+
+type detected_stats_statemachine is (IDLE, START, CALC, FINISH);
+signal detected_check_sm : detected_stats_statemachine;
+
+signal b0, b1, b2, b3                                   : integer range 0 to 9000 := 0 ;
+signal b0_cached, b1_cached, b2_cached, b3_cached       : integer range 0 to 9000 := 0 ;        
+
+signal stat_byte_count                                  : integer range 0 to 9000 := 0 ;
+signal stat_byte_count_cache                            : integer range 0 to 9000 := 0 ;
+signal stat_byte_count_working                          : integer range 0 to 9000 := 0 ;
+
+signal b_quad                                           : std_logic_vector(3 downto 0);
+signal stat_packet_length_final                         : std_logic_vector(13 downto 0);
+
+signal stat_done                                        : std_logic;
+signal expected_length_detect                           : std_logic;
+signal unexpected_length_detect                         : std_logic;
+signal CODIF_2154_length_detect                         : std_logic;
+signal PST_PSR_length_detect                            : std_logic;
+signal SPEAD_LFAA_length_detect                         : std_logic;
+
+constant STAT_REGISTERS                                 : integer := 5;
+
+signal stats_count                                      : t_slv_32_arr(0 to (STAT_REGISTERS-1));
+signal stats_increment                                  : t_slv_1_arr(0 to (STAT_REGISTERS-1));
+signal stats_to_host_data_out                           : t_slv_32_arr(0 to (STAT_REGISTERS-1));
+
+------------------------------------------------------------------------------
+
+
 begin
 
 ------------------------------------------------------------------------------
 -- assume always ready if CMAC is locked.
-o_rx_axis_tready <= rx_axis_tready_int;
+o_rx_axis_tready        <= rx_axis_tready_int;
+
+o_data_to_hbm           <= rx_buffer_ram_dout;
+o_data_to_hbm_wr        <= data_to_hbm_wr_int;
 
 -- register AXI bus
 s_axi_proc : process(i_clk_100GE)
@@ -223,8 +269,6 @@ begin
             wr_addr <= (others => '0');
         elsif rx_axis_tvalid_int_d1 = '1' then
             wr_addr <= std_logic_vector(unsigned(wr_addr) + 1);
---        else
---            wr_addr <= (others => '0');
         end if;
     end if;
 end process;
@@ -289,8 +333,11 @@ packet_config_cdc : entity signal_processing_common.sync_vector
         data_out(14 downto 1)   => cmac_rx_packet_size
     );  
 
+cmac_reset          <= NOT i_eth100G_locked;
 
---cmac_rx_reset_capture
+cmac_reset_combined <= cmac_rx_reset_capture OR cmac_reset;
+
+
 ------------------------------------------------------------------------------
 
 config_proc : process(i_clk_300)
@@ -349,9 +396,146 @@ end process;
 
 ------------------------------------------------------------------------------
 
-o_data_to_hbm           <= rx_buffer_ram_dout;
-o_data_to_hbm_wr        <= data_to_hbm_wr_int;
+b0 <= byte_en_to_integer_count(rx_axis_tkeep_int_d1(15 downto 0));
+b1 <= byte_en_to_integer_count(rx_axis_tkeep_int_d1(31 downto 16));
+b2 <= byte_en_to_integer_count(rx_axis_tkeep_int_d1(47 downto 32));
+b3 <= byte_en_to_integer_count(rx_axis_tkeep_int_d1(63 downto 48));
+        
+inc_packet_calc : process (i_clk_100GE)
+begin
+    if rising_edge(i_clk_100GE) then
+        if cmac_reset_combined = '1' then
+            stat_byte_count     <= 0;
+            detected_check_sm   <= IDLE;
+            stat_done           <= '0';
+        else
+        
+            if rx_axis_tlast_int_d1 = '1' then
+                stat_byte_count     <= 0;
+            elsif rx_axis_tvalid_int_d1 = '1' then
+                stat_byte_count     <= stat_byte_count + 64;
+            
+            end if;
+    
+            case detected_check_sm is
+                when IDLE =>
+                    if rx_axis_tlast_int_d1 = '1' then
+                        b0_cached               <= b0;
+                        b1_cached               <= b1;
+                        b2_cached               <= b2;
+                        b3_cached               <= b3;
+                        b_quad                  <= rx_axis_tkeep_int_d1(63) & rx_axis_tkeep_int_d1(47) & rx_axis_tkeep_int_d1(31) & rx_axis_tkeep_int_d1(15);
+                        
+                        stat_byte_count_cache   <= stat_byte_count;
+                        
+                        detected_check_sm       <= START;
+                        
+                        stat_byte_count_working <= 0;
+                    end if;
+                    stat_done                   <= '0';
+                
+                when START =>
+                    if b_quad = "1111" then
+                        stat_byte_count_working <= 64;
+                    elsif b_quad = "0111" then
+                        stat_byte_count_working <= b3_cached + 48;
+                    elsif b_quad = "0011" then
+                        stat_byte_count_working <= b2_cached + 32;
+                    elsif b_quad = "0001" then
+                        stat_byte_count_working <= b1_cached + 16;
+                    elsif b_quad = "0000" then
+                        stat_byte_count_working <= b0_cached;
+                    end if;
+                    
+                    detected_check_sm       <= CALC;
+                    
+                when CALC =>
+                    stat_byte_count_working <= stat_byte_count_cache + stat_byte_count_working;
+                
+                    detected_check_sm       <= FINISH;
+                
+                when FINISH =>
+                    stat_packet_length_final    <= std_logic_vector(to_unsigned(stat_byte_count_working,14));
+                    stat_done                   <= '1';
+                    detected_check_sm           <= IDLE;
+                
+                when OTHERS =>
+                    detected_check_sm   <= IDLE;
+            end case;    
+            
+            if stat_done = '1' then
+                if stat_packet_length_final = cmac_rx_packet_size then
+                    expected_length_detect      <= '1';
+                else
+                    unexpected_length_detect    <= '1';
+                end if;
+            
+                if stat_packet_length_final = CODIF_2154_length then
+                    CODIF_2154_length_detect    <= '1';
+                end if;
+                
+                if stat_packet_length_final = PST_PSR_length then
+                    PST_PSR_length_detect       <= '1';
+                end if;
+                
+                if stat_packet_length_final = SPEAD_LFAA_length then
+                    SPEAD_LFAA_length_detect    <= '1';
+                end if;
+            else
+                expected_length_detect          <= '0';
+                unexpected_length_detect        <= '0';
+                CODIF_2154_length_detect        <= '0';
+                PST_PSR_length_detect           <= '0';
+                SPEAD_LFAA_length_detect        <= '0';
+            end if;
+        end if;
+    end if;
+end process;
 
+stats_increment(0)(0) <= expected_length_detect;
+stats_increment(1)(0) <= unexpected_length_detect;
+stats_increment(2)(0) <= CODIF_2154_length_detect;
+stats_increment(3)(0) <= PST_PSR_length_detect;
+stats_increment(4)(0) <= SPEAD_LFAA_length_detect;
+
+
+stats_accumulators: FOR i IN 0 TO (STAT_REGISTERS-1) GENERATE
+    u_cnt_acc: ENTITY common_lib.common_accumulate
+        GENERIC MAP (
+            g_representation  => "UNSIGNED")
+        PORT MAP (
+            rst      => cmac_reset_combined,
+            clk      => i_clk_100GE,
+            clken    => '1',
+            sload    => '0',
+            in_val   => '1',
+            in_dat   => stats_increment(i),
+            out_dat  => stats_count(i)
+        );
+END GENERATE;
+
+sync_stats_to_Host: FOR i IN 0 TO (STAT_REGISTERS-1) GENERATE
+
+    STATS_DATA : entity signal_processing_common.sync_vector
+        generic map (
+            WIDTH => 32
+        )
+        Port Map ( 
+            clock_a_rst => cmac_reset_combined,
+            Clock_a     => i_clk_100GE,
+            data_in     => stats_count(i),
+            
+            Clock_b     => i_clk_300,
+            data_out    => stats_to_host_data_out(i)
+        );  
+
+END GENERATE;
+
+o_target_count          <= stats_to_host_data_out(0);
+o_nontarget_count       <= stats_to_host_data_out(1);
+o_CODIF_2154_count      <= stats_to_host_data_out(2);
+o_PSR_PST_count         <= stats_to_host_data_out(3);
+o_LFAA_spead_count      <= stats_to_host_data_out(4);
 
 ------------------------------------------------------------------------------
 
