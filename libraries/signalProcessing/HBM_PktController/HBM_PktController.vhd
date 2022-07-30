@@ -85,7 +85,7 @@ entity HBM_PktController is
         ------------------------------------------------------------------------------------
         -- config and status registers interface
         -- rx
-    	i_rx_packet_size                : in  std_logic_vector(13 downto 0);
+    	i_rx_packet_size                : in  std_logic_vector(13 downto 0);   -- MODULO 64!!
         i_rx_soft_reset                 : in  std_logic;
         i_enable_capture                : in  std_logic;
 
@@ -263,6 +263,7 @@ architecture RTL of HBM_PktController is
     signal LFAAaddr1,        LFAAaddr2,        LFAAaddr3,        LFAAaddr4        : std_logic_vector(32 downto 0) := (others=>'0');
     signal LFAAaddr1_shadow, LFAAaddr2_shadow, LFAAaddr3_shadow, LFAAaddr4_shadow : std_logic_vector(32 downto 0) := (others=>'0');
 
+    signal input_fsm_state_count : std_logic_vector(3 downto 0);
     --generate_aw1_* is similar to generate_aw2_* and generate_aw3_* and generate_aw4_* for different bank manipulation
     type   input_fsm_type is(idle, generate_aw1_shadow_addr, check_aw1_addr_range, generate_aw1,
                                    generate_aw2_shadow_addr, check_aw2_addr_range, generate_aw2,
@@ -2292,11 +2293,46 @@ begin
     );
     
     ----------------------------------------------------------------------------------------------------------
+--    signal input_fsm_state_count : std_logic_vector;
+--    type   input_fsm_type is(idle, generate_aw1_shadow_addr, check_aw1_addr_range, generate_aw1,
+--                                   generate_aw2_shadow_addr, check_aw2_addr_range, generate_aw2,
+--				                    generate_aw3_shadow_addr, check_aw3_addr_range, generate_aw3,
+--				                    generate_aw4_shadow_addr, check_aw4_addr_range, generate_aw4);
+--    signal input_fsm : input_fsm_type;	
+    
+input_fsm_state_count <=    x"0" when input_fsm = idle else 
+                            x"1" when input_fsm = generate_aw1_shadow_addr else
+                            x"2" when input_fsm = check_aw1_addr_range else
+                            x"3" when input_fsm = generate_aw1 else
+                            x"4" when input_fsm = generate_aw2_shadow_addr else
+                            x"5" when input_fsm = check_aw2_addr_range else
+                            x"6" when input_fsm = generate_aw2 else
+                            x"7" when input_fsm = generate_aw3_shadow_addr else
+                            x"8" when input_fsm = check_aw3_addr_range else
+                            x"9" when input_fsm = generate_aw3 else
+                            x"A" when input_fsm = generate_aw4_shadow_addr else
+                            x"B" when input_fsm = check_aw4_addr_range else
+                            x"C" when input_fsm = generate_aw4 else
+                            x"F";
 
     hbm_capture_ila : ila_0
     port map (
         clk                     => i_shared_clk, 
-        probe0(127 downto 0)    => m01_axi_wdata(127 downto 0),
+        probe0(31 downto 0)     => m01_axi_wdata(31 downto 0),
+        probe0(63 downto 32)    => axi_wdata(31 downto 0),
+        probe0(95 downto 64)    => m02_axi_awaddr,
+        probe0(96)              => m02_axi_wvalid, 
+        
+        probe0(97)              => m02_axi_awvalid,
+        probe0(98)              => m02_axi_awready,
+        probe0(99)              => m02_axi_wlast,
+        probe0(100)             => m02_axi_wready,
+        probe0(108 downto 101)  => m02_axi_awlen,
+        probe0(109)             => m02_fifo_rd_en,
+        probe0(125 downto 110)  => m02_axi_wdata(15 downto 0),
+        probe0(126)             => '0',
+        --probe0(126 downto 64)   => i_data_from_cmac(62 downto 0),
+        probe0(127)             => m01_axi_4G_full,
         probe0(159 downto 128)  => m01_axi_awaddr,
         probe0(160)             => m01_axi_wvalid, 
         
