@@ -1691,32 +1691,43 @@ begin
       end if;
     end process;
 
-    i_axi_arready     <= m01_axi_arready when boundary_across_num = 0 else
-			 m02_axi_arready when boundary_across_num = 1 else
-			 m03_axi_arready when boundary_across_num = 2 else
-                         m04_axi_arready;
-     
-    i_axi_rdata       <= m01_axi_rdata   when boundary_across_num = 0 else
-			 m02_axi_rdata   when boundary_across_num = 1 else
-                         m03_axi_rdata   when boundary_across_num = 2 else
-                         m04_axi_rdata;
+cache_sel_inc_axi_data : process(i_shared_clk)
+begin
+    if rising_edge(i_shared_clk) then
+        i_axi_rdata <=      m01_axi_rdata   when boundary_across_num = 0 else
+                            m02_axi_rdata   when boundary_across_num = 1 else
+                            m03_axi_rdata   when boundary_across_num = 2 else
+                            m04_axi_rdata;
+                            
+        i_axi_rvalid <=     (m01_axi_rvalid and o_axi_rready) when boundary_across_num = 0 else
+                            (m02_axi_rvalid and o_axi_rready) when boundary_across_num = 1 else
+                            (m03_axi_rvalid and o_axi_rready) when boundary_across_num = 2 else
+                            (m04_axi_rvalid and o_axi_rready);
+                        
+    end if;
+end process;
 
-    i_axi_rlast       <= m01_axi_rlast   when boundary_across_num = 0 else
-                         m02_axi_rlast   when boundary_across_num = 1 else
-                         m03_axi_rlast   when boundary_across_num = 2 else
-                         m04_axi_rlast;
-  
+------------------------------------------------------------------------------------------------------
 
-    i_axi_rresp       <= m01_axi_rresp   when boundary_across_num = 0 else
-                         m02_axi_rresp   when boundary_across_num = 1 else
-                         m03_axi_rresp   when boundary_across_num = 2 else
-                         m04_axi_rresp;
+    i_axi_arready <=    m01_axi_arready when boundary_across_num = 0 else
+                        m02_axi_arready when boundary_across_num = 1 else
+                        m03_axi_arready when boundary_across_num = 2 else
+                        m04_axi_arready;
+-- NOT USED ----        
+--        i_axi_rlast <=      m01_axi_rlast   when boundary_across_num = 0 else
+--                            m02_axi_rlast   when boundary_across_num = 1 else
+--                            m03_axi_rlast   when boundary_across_num = 2 else
+--                            m04_axi_rlast;
+        
+--        i_axi_rresp <=      m01_axi_rresp   when boundary_across_num = 0 else
+--                            m02_axi_rresp   when boundary_across_num = 1 else
+--                            m03_axi_rresp   when boundary_across_num = 2 else
+--                            m04_axi_rresp;
+-- NOT USED ----
+        
+    
 
-    i_axi_rvalid      <= (m01_axi_rvalid and o_axi_rready) when boundary_across_num = 0 else
-			 (m02_axi_rvalid and o_axi_rready) when boundary_across_num = 1 else
-			 (m03_axi_rvalid and o_axi_rready) when boundary_across_num = 2 else
-			 (m04_axi_rvalid and o_axi_rready);
-
+------------------------------------------------------------------------------------------------------
 
     -- ar bus - read address
     m01_axi_arvalid   <= o_axi_arvalid   when boundary_across_num = 0 else '0';
@@ -1746,7 +1757,7 @@ begin
     -- r bus - read data
     m04_axi_rready    <= o_axi_rready    when boundary_across_num = 3 else '0';
 
-    o_axi_rready <= i_packetiser_data_to_player_rdy;
+    o_axi_rready      <= '1';
     -- Read in 512 bit aligned 4k words
     o_axi_arlen(7 downto 0) <= x"3F"; -- Read 64 beats x 512 bits = 4096B 
     o_axi_araddr <= std_logic_vector(readaddr);
@@ -2345,11 +2356,14 @@ input_fsm_state_count <=    x"0" when input_fsm = idle else
         probe0(180)             => axi_wdata_fifo_full,
         probe0(181)             => axi_wdata_fifo_empty,
         probe0(182)             => m01_fifo_rd_en,
-        probe0(183)             => m02_fifo_rd_en,
-        probe0(184)             => m03_fifo_rd_en,
-        probe0(185)             => m04_fifo_rd_en,
-        probe0(191 downto 186)  => (others => '0')
+        probe0(183)             => awfifo_wren,
+        probe0(184)             => awfifo_rden,
+        probe0(185)             => awlenfifo_rden,
+        probe0(186)             => fifo_rd_en,
+        probe0(187)             => fifo_wr_en,
+        probe0(191 downto 188)  => input_fsm_state_count
     );
+
 
 
 end RTL;
