@@ -386,6 +386,9 @@ i_HBM_PktController : entity HBM_PktController_lib.HBM_PktController
 	    i_expected_total_number_of_bursts   => config_rw.expected_total_number_of_bursts,
         i_expected_number_of_loops          => config_rw.expected_number_of_loops,
         i_time_between_bursts_ns            => config_rw.time_between_bursts_ns,
+        
+        i_readaddr                          => x"00000000", 
+        update_readaddr                     => '0',
 
         o_tx_addr                         => open,
         o_tx_boundary_across_num          => open,
@@ -599,38 +602,38 @@ END GENERATE;
 
     eth100G_reset_b <= not(i_eth100G_locked_b);
         
-    packet_player_100G_B : entity PSR_Packetiser_lib.packet_player 
-        Generic Map(
-            LBUS_TO_CMAC_INUSE      => g_LBUS_CMAC,      -- FUTURE WORK to IMPLEMENT AXI
-            PLAYER_CDC_FIFO_DEPTH   => 512        
-            -- FIFO is 512 Wide, 9KB packets = 73728 bits, 512 * 256 = 131072, 256 depth allows ~1.88 9K packets, we are target packets sizes smaller than this.
-        )
-        Port map ( 
-            i_clk400                => i_MACE_clk, 
-            i_reset_400             => i_reset_packet_player,
+--    packet_player_100G_B : entity PSR_Packetiser_lib.packet_player 
+--        Generic Map(
+--            LBUS_TO_CMAC_INUSE      => g_LBUS_CMAC,      -- FUTURE WORK to IMPLEMENT AXI
+--            PLAYER_CDC_FIFO_DEPTH   => 512        
+--            -- FIFO is 512 Wide, 9KB packets = 73728 bits, 512 * 256 = 131072, 256 depth allows ~1.88 9K packets, we are target packets sizes smaller than this.
+--        )
+--        Port map ( 
+--            i_clk400                => i_MACE_clk, 
+--            i_reset_400             => i_reset_packet_player,
         
-            i_cmac_clk              => i_clk_100GE_b,
-            i_cmac_clk_rst          => eth100G_reset_b,
+--            i_cmac_clk              => i_clk_100GE_b,
+--            i_cmac_clk_rst          => eth100G_reset_b,
             
-            i_bytes_to_transmit     => header_modifier_bytes_to_transmit,   --packetiser_bytes_to_transmit,    -- 
-            i_data_to_player        => header_modifier_data,                --swapped_packetiser_data, 
-            i_data_to_player_wr     => header_modifier_data_in_wr,          --packetiser_data_in_wr,
-            o_data_to_player_rdy    => packetiser_data_to_player_rdy_b,
+--            i_bytes_to_transmit     => header_modifier_bytes_to_transmit,   --packetiser_bytes_to_transmit,    -- 
+--            i_data_to_player        => header_modifier_data,                --swapped_packetiser_data, 
+--            i_data_to_player_wr     => header_modifier_data_in_wr,          --packetiser_data_in_wr,
+--            o_data_to_player_rdy    => packetiser_data_to_player_rdy_b,
             
-            o_cmac_ready            => open,
+--            o_cmac_ready            => open,
                    
-            -- streaming AXI to CMAC
-            o_tx_axis_tdata         => o_tx_axis_tdata_b,
-            o_tx_axis_tkeep         => o_tx_axis_tkeep_b,
-            o_tx_axis_tvalid        => o_tx_axis_tvalid_b,
-            o_tx_axis_tlast         => o_tx_axis_tlast_b,
-            o_tx_axis_tuser         => o_tx_axis_tuser_b,
-            i_tx_axis_tready        => i_tx_axis_tready_b,
+--            -- streaming AXI to CMAC
+--            o_tx_axis_tdata         => o_tx_axis_tdata_b,
+--            o_tx_axis_tkeep         => o_tx_axis_tkeep_b,
+--            o_tx_axis_tvalid        => o_tx_axis_tvalid_b,
+--            o_tx_axis_tlast         => o_tx_axis_tlast_b,
+--            o_tx_axis_tuser         => o_tx_axis_tuser_b,
+--            i_tx_axis_tready        => i_tx_axis_tready_b,
         
-            -- LBUS to CMAC
-            o_data_to_transmit      => open,
-            i_data_to_transmit_ctl  => i_data_tx_siso
-        );
+--            -- LBUS to CMAC
+--            o_data_to_transmit      => open,
+--            i_data_to_transmit_ctl  => i_data_tx_siso
+--        );
   
     
     packetiser_data_to_player_rdy_combo     <= packetiser_data_to_player_rdy_b AND packetiser_data_to_player_rdy;

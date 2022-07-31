@@ -9,18 +9,29 @@
 -- Description: 
 --      The intent of this block is to capture Streaming packets from the CMAC on 322 MHz clock domain. 
 --      Check if the received packet is the desired length.
---      Capture to a dual page ram, flip page at the end of a packet, if the packet just received is within 64 bytes of target.
+--      Capture to a dual page ram, flip page at the end of a packet, if the packet just received matches the expected byte length.
 --
 --      CDC from 322 to 300
 --
 --      Write to HBM as a single block.
 --      WR signal will be continuously high and fall at end of packet.
---      Byte enables will indicate length.
+--      It is expected the HBM manager logic will write in block of 64 bytes. 
+--      i_rx_packet_size provides the specific length of the expected packet and this comes from the configuration software.
+--      The HBM manager will implement a ceil modulo64 of the i_rx_packet_size.
 -- 
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
 -- 
+-- Behaviour of S_AXI from CMAC.
+--      Due to the gearboxing in the CMAC, a packet sent at line speed will present on the S_AXI interface with tvalid toggling.
+--      tlast indicates the packet has finished and you can reset logic around this if needed.
+--      CMAC interface clocks in at ~322 MHz and with a width of 64 bytes has a data rate of ~164.8 Gbps, which explains the toggling.
+-- 
+--      Data on the bus is in the following form for an Ethernet Frame ...
+--      dst_mac  <= CMAC_rx_axis_tdata(7 downto 0) & CMAC_rx_axis_tdata(15 downto 8) & CMAC_rx_axis_tdata(23 downto 16) & CMAC_rx_axis_tdata(31 downto 24) & CMAC_rx_axis_tdata(39 downto 32) & CMAC_rx_axis_tdata(47 downto 40);
+--      src_mac  <= CMAC_rx_axis_tdata(55 downto 48) & CMAC_rx_axis_tdata(63 downto 56) & CMAC_rx_axis_tdata(71 downto 64) & CMAC_rx_axis_tdata(79 downto 72) & CMAC_rx_axis_tdata(87 downto 80) & CMAC_rx_axis_tdata(95 downto 88);
+--      eth_type <= CMAC_rx_axis_tdata(103 downto 96) & CMAC_rx_axis_tdata(111 downto 104);
+--
+--      
+--
 ----------------------------------------------------------------------------------
 
 
@@ -280,7 +291,7 @@ rx_buffer_ram_addr_in   <= wr_page & wr_addr;
 
 -- assuming dual pages, can expand to 4 with more memory if we go for smaller packets.
 -- while one page is available to write, the other is being drained to the HBM WR FIFO.
--- only page flip if the byte count is within 64 of the desired.
+-- only page flip if the byte count is equal to target.
 rx_buffer_ram : entity signal_processing_common.memory_dp_wrapper 
     GENERIC MAP (
         g_NO_OF_ADDR_BITS   => 9,
@@ -339,6 +350,7 @@ cmac_reset_combined <= cmac_rx_reset_capture OR cmac_reset;
 
 
 ------------------------------------------------------------------------------
+-- stream out data to HBM SM
 
 config_proc : process(i_clk_300)
 begin
