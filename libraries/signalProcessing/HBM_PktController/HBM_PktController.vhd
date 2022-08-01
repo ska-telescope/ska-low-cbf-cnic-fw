@@ -1127,7 +1127,7 @@ begin
       if rising_edge(i_shared_clk) then
 	 if awfifo_rden = '1' then
             awfifo_rden <= '0';
-	 elsif (awfifo_empty = '0' and awfifo_wren_cond = '1'        and last_trans = '0') or 
+	 elsif (awfifo_empty = '0' and awfifo_wren_cond = '1'        and last_trans = '0' and last_aw_trans = '0') or 
 	       (awfifo_empty = '0' and last_trans_falling_edge = '1' and last_aw_trans = '1') then
             awfifo_rden <= '1';
          elsif awfifo_cnt = 5 and m01_axi_awvalid = '0' and m02_axi_awvalid = '0' and m03_axi_awvalid = '0' and m04_axi_awvalid = '0' then
