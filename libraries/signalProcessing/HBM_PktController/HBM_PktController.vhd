@@ -2351,7 +2351,11 @@ input_fsm_state_count <=    x"0" when input_fsm = idle else
     hbm_capture_ila : ila_0
     port map (
         clk                     => i_shared_clk, 
-        probe0(31 downto 0)     => m01_axi_wdata(31 downto 0),
+        probe0(29 downto 0)     => m01_axi_wdata(29 downto 0),
+        probe0(30)              => m02_wr,
+        probe0(31)              => m01_wr,
+        
+
         probe0(63 downto 32)    => axi_wdata(31 downto 0),
         probe0(95 downto 64)    => m02_axi_awaddr,
         probe0(96)              => m02_axi_wvalid, 
@@ -2363,7 +2367,7 @@ input_fsm_state_count <=    x"0" when input_fsm = idle else
         probe0(108 downto 101)  => m02_axi_awlen,
         probe0(109)             => m02_fifo_rd_en,
         probe0(125 downto 110)  => m02_axi_wdata(15 downto 0),
-        probe0(126)             => '0',
+        probe0(126)             => last_trans,
         --probe0(126 downto 64)   => i_data_from_cmac(62 downto 0),
         probe0(127)             => m01_axi_4G_full,
         probe0(159 downto 128)  => m01_axi_awaddr,
