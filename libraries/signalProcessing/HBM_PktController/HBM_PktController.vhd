@@ -290,9 +290,9 @@ architecture RTL of HBM_PktController is
 
     signal awfifo_wren,  awfifo_rden, awfifo_rden_reg  : std_logic := '0';
     signal awfifo_valid, awfifo_full, awfifo_empty, awfifo_rst, awfifo_valid_reg : std_logic;
-    signal awfifo_din               : std_logic_vector(41 downto 0) := (others => '0');
-    signal awfifo_dout              : std_logic_vector(41 downto 0);
-    signal awfifo_dout_reg          : std_logic_vector(41 downto 0); 
+    signal awfifo_din               : std_logic_vector(42 downto 0) := (others => '0');
+    signal awfifo_dout              : std_logic_vector(42 downto 0);
+    signal awfifo_dout_reg          : std_logic_vector(42 downto 0); 
 
     signal awlenfifo_rden, awlenfifo_rden_del               : std_logic := '0';
     signal awlenfifo_valid, awlenfifo_full, awlenfifo_empty : std_logic;
@@ -315,7 +315,7 @@ architecture RTL of HBM_PktController is
 
     signal update_start_addr_del, update_start_addr_p     : std_logic := '0';
     signal update_readaddr_del,  update_readaddr_p        : std_logic := '0';
-    signal last_trans, last_trans_del                     : std_logic := '0';
+    signal last_trans, last_trans_del, last_aw_trans      : std_logic := '0';
     signal last_trans_falling_edge                        : std_logic;
 
     ---------------------------
@@ -596,6 +596,7 @@ begin
 		   awfifo_din(31 downto 0)    <= LFAAaddr1(31 downto 0); --awaddr 
 		   awfifo_din(39 downto 32)   <= "00111111";             --awlen
 		   awfifo_din(41 downto 40)   <= "00";                   --identification for bank1~4
+		   awfifo_din(42)             <= '0';
 		   awlenfifo_din(7 downto 0)  <= "00111111";             --write to awlen fifo at same time, the idea is to let AXI W part to know how long the W  
 		                                                         --should be because AW is totoally separated from W
 		   awlenfifo_din(8)           <= '0';
@@ -609,6 +610,7 @@ begin
 	           awfifo_din(31 downto 0)    <= LFAAaddr1(31 downto 0);
                    awfifo_din(39 downto 32)   <= std_logic_vector(num_rx_64B_axi_beats-1);
                    awfifo_din(41 downto 40)   <= "00";
+		   awfifo_din(42)             <= '0';
 		   awlenfifo_din(7 downto 0)  <= std_logic_vector(num_rx_64B_axi_beats-1);
 		   awlenfifo_din(8)           <= '0';
                    awfifo_wren                <= '1'; 
@@ -626,6 +628,7 @@ begin
                   awfifo_din(31 downto 0)     <= LFAAaddr1(31 downto 0);
                   awfifo_din(39 downto 32)    <= "00111111";
                   awfifo_din(41 downto 40)    <= "00";
+		  awfifo_din(42)              <= '1';
                   awlenfifo_din(7 downto 0)   <= "00111111";
 		  awlenfifo_din(8)            <= '1';
                   awfifo_wren                 <= '1';
@@ -635,6 +638,7 @@ begin
 		  awfifo_din(31 downto 0)     <= LFAAaddr1(31 downto 0);
                   awfifo_din(39 downto 32)    <= std_logic_vector(num_rx_64B_axi_beats_curr_4G-1);
                   awfifo_din(41 downto 40)    <= "00";
+		  awfifo_din(42)              <= '1';
 		  awlenfifo_din(7 downto 0)   <= std_logic_vector(num_rx_64B_axi_beats_curr_4G-1);
 		  awlenfifo_din(8)            <= '1';
 		  awfifo_wren                 <= '1';
@@ -675,6 +679,7 @@ begin
                    awfifo_din(31 downto 0)    <= LFAAaddr2(31 downto 0);
                    awfifo_din(39 downto 32)   <= "00111111";
                    awfifo_din(41 downto 40)   <= "01";
+		   awfifo_din(42)             <= '0';
 		   awlenfifo_din(7 downto 0)  <= "00111111";
 		   awlenfifo_din(8)           <= '0';
                    awfifo_wren                <= '1';
@@ -684,6 +689,7 @@ begin
                    awfifo_din(31 downto 0)    <= LFAAaddr2(31 downto 0);
                    awfifo_din(39 downto 32)   <= std_logic_vector(num_rx_64B_axi_beats_next_4G-1);
                    awfifo_din(41 downto 40)   <= "01";
+		   awfifo_din(42)             <= '0';
 		   awlenfifo_din(7 downto 0)  <= std_logic_vector(num_rx_64B_axi_beats_next_4G-1);
 		   awlenfifo_din(8)           <= '0';
                    awfifo_wren                <= '1';
@@ -706,6 +712,7 @@ begin
                    awfifo_din(31 downto 0)    <= LFAAaddr2(31 downto 0);
                    awfifo_din(39 downto 32)   <= "00111111";
                    awfifo_din(41 downto 40)   <= "01";
+		   awfifo_din(42)             <= '0';
 		   awlenfifo_din(7 downto 0)  <= "00111111";
 		   awlenfifo_din(8)           <= '0';
                    awfifo_wren                <= '1';
@@ -716,6 +723,7 @@ begin
                    awfifo_din(31 downto 0)    <= LFAAaddr2(31 downto 0);
                    awfifo_din(39 downto 32)   <= std_logic_vector(num_rx_64B_axi_beats-1);
                    awfifo_din(41 downto 40)   <= "01";
+		   awfifo_din(42)             <= '0';
 		   awlenfifo_din(7 downto 0)  <= std_logic_vector(num_rx_64B_axi_beats-1);
 		   awlenfifo_din(8)           <= '0';
                    awfifo_wren                <= '1';
@@ -731,6 +739,7 @@ begin
                   awfifo_din(31 downto 0)     <= LFAAaddr2(31 downto 0);
                   awfifo_din(39 downto 32)    <= "00111111";
                   awfifo_din(41 downto 40)    <= "01";
+		  awfifo_din(42)              <= '1';
                   awlenfifo_din(7 downto 0)   <= "00111111";
 		  awlenfifo_din(8)            <= '1';
                   awfifo_wren                 <= '1';
@@ -740,6 +749,7 @@ begin
                   awfifo_din(31 downto 0)     <= LFAAaddr2(31 downto 0);
                   awfifo_din(39 downto 32)    <= std_logic_vector(num_rx_64B_axi_beats_curr_4G-1);
                   awfifo_din(41 downto 40)    <= "01";
+		  awfifo_din(42)              <= '1';
                   awlenfifo_din(7 downto 0)   <= std_logic_vector(num_rx_64B_axi_beats_curr_4G-1);
 		  awlenfifo_din(8)            <= '1';
                   awfifo_wren                 <= '1';
@@ -778,6 +788,7 @@ begin
                    awfifo_din(31 downto 0)    <= LFAAaddr3(31 downto 0);
                    awfifo_din(39 downto 32)   <= "00111111";
                    awfifo_din(41 downto 40)   <= "10";
+		   awfifo_din(42)             <= '0';
                    awlenfifo_din(7 downto 0)  <= "00111111";
 		   awlenfifo_din(8)           <= '0'; 
                    awfifo_wren                <= '1';
@@ -787,6 +798,7 @@ begin
                    awfifo_din(31 downto 0)    <= LFAAaddr3(31 downto 0);
                    awfifo_din(39 downto 32)   <= std_logic_vector(num_rx_64B_axi_beats_next_4G-1);
                    awfifo_din(41 downto 40)   <= "10";
+		   awfifo_din(42)             <= '0';
                    awlenfifo_din(7 downto 0)  <= std_logic_vector(num_rx_64B_axi_beats_next_4G-1);
 		   awlenfifo_din(8)           <= '0';
                    awfifo_wren                <= '1';
@@ -809,6 +821,7 @@ begin
                    awfifo_din(31 downto 0)    <= LFAAaddr3(31 downto 0);
                    awfifo_din(39 downto 32)   <= "00111111";
                    awfifo_din(41 downto 40)   <= "10";
+		   awfifo_din(42)             <= '0';
 		   awlenfifo_din(7 downto 0)  <= "00111111";
 		   awlenfifo_din(8)           <= '0';
                    awfifo_wren                <= '1';
@@ -819,6 +832,7 @@ begin
                    awfifo_din(31 downto 0)    <= LFAAaddr3(31 downto 0);
                    awfifo_din(39 downto 32)   <= std_logic_vector(num_rx_64B_axi_beats-1);
                    awfifo_din(41 downto 40)   <= "10";
+		   awfifo_din(42)             <= '0';
 		   awlenfifo_din(7 downto 0)  <= std_logic_vector(num_rx_64B_axi_beats-1);
 		   awlenfifo_din(8)           <= '0';
                    awfifo_wren                <= '1';
@@ -834,6 +848,7 @@ begin
                   awfifo_din(31 downto 0)     <= LFAAaddr3(31 downto 0);
                   awfifo_din(39 downto 32)    <= "00111111";
                   awfifo_din(41 downto 40)    <= "10";
+		  awfifo_din(42)              <= '1';
                   awlenfifo_din(7 downto 0)   <= "00111111";
 		  awlenfifo_din(8)            <= '1';
                   awfifo_wren                 <= '1';
@@ -843,6 +858,7 @@ begin
                   awfifo_din(31 downto 0)     <= LFAAaddr3(31 downto 0);
                   awfifo_din(39 downto 32)    <= std_logic_vector(num_rx_64B_axi_beats_curr_4G-1);
                   awfifo_din(41 downto 40)    <= "10";
+		  awfifo_din(42)              <= '1';
                   awlenfifo_din(7 downto 0)   <= std_logic_vector(num_rx_64B_axi_beats_curr_4G-1);
 		  awlenfifo_din(8)            <= '1';
                   awfifo_wren                 <= '1';
@@ -881,6 +897,7 @@ begin
                    awfifo_din(31 downto 0)    <= LFAAaddr4(31 downto 0);
                    awfifo_din(39 downto 32)   <= "00111111";
                    awfifo_din(41 downto 40)   <= "11";
+		   awfifo_din(42)             <= '0';
                    awlenfifo_din(7 downto 0)  <= "00111111";
 		   awlenfifo_din(8)           <= '0';
                    awfifo_wren                <= '1';
@@ -890,6 +907,7 @@ begin
                    awfifo_din(31 downto 0)    <= LFAAaddr4(31 downto 0);
                    awfifo_din(39 downto 32)   <= std_logic_vector(num_rx_64B_axi_beats_next_4G-1);
                    awfifo_din(41 downto 40)   <= "11";
+		   awfifo_din(42)             <= '0';
                    awlenfifo_din(7 downto 0)  <= std_logic_vector(num_rx_64B_axi_beats_next_4G-1);
 		   awlenfifo_din(8)           <= '0';
                    awfifo_wren                <= '1';
@@ -912,6 +930,7 @@ begin
                    awfifo_din(31 downto 0)    <= LFAAaddr4(31 downto 0);
                    awfifo_din(39 downto 32)   <= "00111111";
                    awfifo_din(41 downto 40)   <= "11";
+		   awfifo_din(42)             <= '0';
                    awlenfifo_din(7 downto 0)  <= "00111111";
 		   awlenfifo_din(8)           <= '0';
                    awfifo_wren                <= '1';
@@ -922,6 +941,7 @@ begin
                    awfifo_din(31 downto 0)    <= LFAAaddr4(31 downto 0);
                    awfifo_din(39 downto 32)   <= std_logic_vector(num_rx_64B_axi_beats-1);
                    awfifo_din(41 downto 40)   <= "11";
+		   awfifo_din(42)             <= '0';
                    awlenfifo_din(7 downto 0)  <= std_logic_vector(num_rx_64B_axi_beats-1);
 		   awlenfifo_din(8)           <= '0';
                    awfifo_wren                <= '1';
@@ -1009,12 +1029,12 @@ begin
         PROG_EMPTY_THRESH => 10,    
 	PROG_FULL_THRESH  => 10,     
         RD_DATA_COUNT_WIDTH => 8,  
-        READ_DATA_WIDTH   => 42,      
+        READ_DATA_WIDTH   => 43,      
         READ_MODE         => "fwft",        
         SIM_ASSERT_CHK    => 0,        
         USE_ADV_FEATURES  => "1404", 
         WAKEUP_TIME       => 0,           
-        WRITE_DATA_WIDTH  => 42,     
+        WRITE_DATA_WIDTH  => 43,     
         WR_DATA_COUNT_WIDTH => 8
     )
     port map (
@@ -1107,7 +1127,8 @@ begin
       if rising_edge(i_shared_clk) then
 	 if awfifo_rden = '1' then
             awfifo_rden <= '0';
-	 elsif (awfifo_empty = '0' and awfifo_wren_cond = '1' and last_trans = '0') or (awfifo_empty = '0' and last_trans_falling_edge = '1') then
+	 elsif (awfifo_empty = '0' and awfifo_wren_cond = '1'        and last_trans = '0') or 
+	       (awfifo_empty = '0' and last_trans_falling_edge = '1' and last_aw_trans = '1') then
             awfifo_rden <= '1';
          elsif awfifo_cnt = 5 and m01_axi_awvalid = '0' and m02_axi_awvalid = '0' and m03_axi_awvalid = '0' and m04_axi_awvalid = '0' then
             awfifo_rden <= awfifo_wren_del5; 
@@ -1119,6 +1140,15 @@ begin
                         (m02_axi_awready and m02_axi_awvalid) or
 		        (m03_axi_awready and m03_axi_awvalid) or
 		        (m04_axi_awready and m04_axi_awvalid);
+
+    process(i_shared_clk)
+    begin
+      if rising_edge(i_shared_clk) then
+	 if (awfifo_rden = '1' and awfifo_valid = '1') then
+            last_aw_trans <= awfifo_dout(42);
+         end if;	 
+      end if;	 
+    end process;
 
     process(i_shared_clk)
     begin
