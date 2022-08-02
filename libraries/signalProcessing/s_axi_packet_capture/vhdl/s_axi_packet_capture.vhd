@@ -178,7 +178,7 @@ signal SPEAD_LFAA_length_detect                         : std_logic;
 constant STAT_REGISTERS                                 : integer := 5;
 
 signal stats_count                                      : t_slv_32_arr(0 to (STAT_REGISTERS-1));
-signal stats_increment                                  : t_slv_1_arr(0 to (STAT_REGISTERS-1));
+signal stats_increment                                  : t_slv_3_arr(0 to (STAT_REGISTERS-1));
 signal stats_to_host_data_out                           : t_slv_32_arr(0 to (STAT_REGISTERS-1));
 
 ------------------------------------------------------------------------------
@@ -504,11 +504,11 @@ begin
     end if;
 end process;
 
-stats_increment(0)(0) <= expected_length_detect;
-stats_increment(1)(0) <= unexpected_length_detect;
-stats_increment(2)(0) <= CODIF_2154_length_detect;
-stats_increment(3)(0) <= PST_PSR_length_detect;
-stats_increment(4)(0) <= SPEAD_LFAA_length_detect;
+stats_increment(0) <= "00" & expected_length_detect;
+stats_increment(1) <= "00" & unexpected_length_detect;
+stats_increment(2) <= "00" & CODIF_2154_length_detect;
+stats_increment(3) <= "00" & PST_PSR_length_detect;
+stats_increment(4) <= "00" & SPEAD_LFAA_length_detect;
 
 
 stats_accumulators: FOR i IN 0 TO (STAT_REGISTERS-1) GENERATE
