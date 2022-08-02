@@ -317,6 +317,7 @@ architecture RTL of HBM_PktController is
     signal update_readaddr_del,  update_readaddr_p        : std_logic := '0';
     signal last_trans, last_trans_del, last_aw_trans      : std_logic := '0';
     signal last_trans_falling_edge                        : std_logic;
+    signal m04_4095MB_packet_across                       : std_logic;
 
     ---------------------------
     --packet TX related signals
@@ -473,6 +474,7 @@ begin
                                               (num_rx_bytes_next_4G - 4096) when num_rx_bytes_next_4G >= 4096 else
                                                num_rx_bytes_next_4G;
 
+    m04_4095MB_packet_across  <= '1' when (unsigned(LFAAaddr4_shadow(31 downto 0)) + resize(unsigned(i_rx_packet_size(13 downto 0)), 32)) > max_space_4095MB else 					  '0';    
 
     --HBM bank boundary cross condition logic, due to the fact that XRT cannot allocate 4GB size of HBM buffer, so
     --need to support the size of HBM bank to be any size, currently 4095MB is by default, and still 4096MB is second
@@ -556,13 +558,14 @@ begin
              num_rx_4k_axi_trans_fsm <= num_rx_4k_axi_trans;
 	     awfifo_wren <= '0';
 	     --if one 4GB bank is full, then move to next bank
-             if i_valid_rising = '1'    and i_enable_capture = '1' and m03_axi_4G_full = '1' then
+	     --for m04 4GB bank, if when a whole packet is tried to be filled in, it will across the 16GB, then abort this packet
+             if i_valid_rising = '1'    and i_enable_capture = '1' and m03_axi_4G_full = '1' and m04_axi_4G_full = '0' and m04_4095MB_packet_across = '0' then     
 		input_fsm     <= generate_aw4_shadow_addr;	     
-             elsif i_valid_rising = '1' and i_enable_capture = '1' and m02_axi_4G_full = '1' then
+             elsif i_valid_rising = '1' and i_enable_capture = '1' and m02_axi_4G_full = '1' and m04_axi_4G_full = '0' then
  	        input_fsm     <= generate_aw3_shadow_addr;
-             elsif i_valid_rising = '1' and i_enable_capture = '1' and m01_axi_4G_full = '1' then
+             elsif i_valid_rising = '1' and i_enable_capture = '1' and m01_axi_4G_full = '1' and m04_axi_4G_full = '0' then
 	        input_fsm     <= generate_aw2_shadow_addr;
-	     elsif i_valid_rising = '1' and i_enable_capture = '1' then
+	     elsif i_valid_rising = '1' and i_enable_capture = '1' and m04_axi_4G_full = '0' then
                 input_fsm     <= generate_aw1_shadow_addr;
              end if;
            when generate_aw1_shadow_addr  => --shadow addr used to detect if a 4GB AXI HBM section is filled
@@ -910,6 +913,9 @@ begin
                    num_rx_4k_axi_trans_fsm    <= num_rx_4k_axi_trans_fsm - 1;
                 end if;     
              elsif (wr_bank4_boundary_corss = '0') then
+		if m04_4095MB_packet_across = '1' then
+	           m04_axi_4G_full            <= '1';	
+	        end if;	   
                 if (num_rx_4k_axi_trans_fsm > 0) then --start 4K transaction first, if packet size is more than 4K
                    awfifo_din(31 downto 0)    <= LFAAaddr4(31 downto 0);
                    awfifo_din(39 downto 32)   <= "00111111";
@@ -936,7 +942,7 @@ begin
                    recv_pkt_counter           <= recv_pkt_counter + 1;
                    input_fsm                  <= idle; --one transaction finished
                 end if;
-             else
+             else     
 		num_rx_bytes_curr_4G          <= (others=>'0');
                 num_rx_bytes_next_4G          <= (others=>'0');     
                 m04_axi_4G_full               <= '1';
@@ -951,7 +957,9 @@ begin
 
     awfifo_rst <= i_rx_soft_reset or i_shared_rst;
 
-    --awlen fifo, 9 bits width
+    --awlen fifo, 9 bits width, split from awfifo because AXI AW is totoally separated from AXI W part, AW can lead or behind W, so the length info should be stored
+    --and read out when the AXI W start.
+    --The function of this fifo is to provide AXI write length info for the AXI W read counter to know when the reading should stop for the end of AXI W transaction
     --bit 8   last AXI transaction for a bank indication signal, its falling edge is used to switch the m0x_wr signal, and trigger the next bank AW transaction
     --bit 7:0 AW length, used to stop the W data fifo read counter when its value is equal to the AW length - 1 
     fifo_awlen_inst : xpm_fifo_sync
@@ -1001,7 +1009,11 @@ begin
         wr_en        => awfifo_wren
     );
 
-
+    --AW fifo, 43 bit width, stored AW parameters
+    --bit 31:0   AXI AW address
+    --bit 39:32  AXI AW length
+    --bit 41:40  m01/m02/m03/m04 4GB selection signal
+    --bit 42     last AXI AW transaction for a bank indication signal 
     fifo_aw_inst : xpm_fifo_sync
     generic map (
         DOUT_RESET_VALUE  => "0",    
@@ -1098,14 +1110,14 @@ begin
          awfifo_wren_del3 <= awfifo_wren_del2;
 	 awfifo_wren_del4 <= awfifo_wren_del3;
 	 awfifo_wren_del5 <= awfifo_wren_del4;
-	 awfifo_wren_del6 <= awfifo_wren_del5;
-	 awfifo_wren_del7 <= awfifo_wren_del6;
       end if;
     end process;
 
     --aw fifo read enable signal, due to fifo takes 2 clock cycles to make the write to take effect
     --so give a short period wait until fifo write to take effect OR when the fifo is not empty and 
-    --an AW is finished
+    --an AW is finished, when last AW transaction for current 4GB bank is not reached yet, read the 
+    --fifo ASAP, it must wait until the last AW and W transaction for current 4GB bank is totoally 
+    --finished, then it can read the fifo to start next bank's AXI transaction
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
@@ -1254,7 +1266,7 @@ begin
 
     --m01 to m04 write inidication signal, used to indicate currently whether it's m01 or m02 or m03 or m04 write 
     --situation so a certain bank AXI write transaction only happen within itself and will not across to another bank
-    --if all the fifos are empty and data incoming, then deassert all the indication signals  
+    --if all the fifos are empty and no packet is incoming, then deassert all the indication signals  
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
