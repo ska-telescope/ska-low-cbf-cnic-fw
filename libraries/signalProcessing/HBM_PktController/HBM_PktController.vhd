@@ -258,7 +258,8 @@ architecture RTL of HBM_PktController is
 
     signal num_rx_bytes_curr_4G, num_rx_bytes_next_4G : unsigned(13 downto 0) := (others=>'0');
 
-    signal i_data_valid_del, i_valid_rising : std_logic; 
+    signal i_data_valid_del                                                       : std_logic := '0'; 
+    signal i_valid_rising,   i_valid_falling                                      : std_logic; 
     signal m01_axi_4G_full,  m02_axi_4G_full,  m03_axi_4G_full,  m04_axi_4G_full  : std_logic := '0'; 
     signal LFAAaddr1,        LFAAaddr2,        LFAAaddr3,        LFAAaddr4        : std_logic_vector(32 downto 0) := (others=>'0');
     signal LFAAaddr1_shadow, LFAAaddr2_shadow, LFAAaddr3_shadow, LFAAaddr4_shadow : std_logic_vector(32 downto 0) := (others=>'0');
@@ -318,6 +319,7 @@ architecture RTL of HBM_PktController is
     signal last_trans, last_trans_del, last_aw_trans      : std_logic := '0';
     signal last_trans_falling_edge                        : std_logic;
     signal m04_4095MB_packet_across                       : std_logic;
+    signal stop_fifo_wr_en                                : std_logic := '0';
 
     ---------------------------
     --packet TX related signals
@@ -508,7 +510,8 @@ begin
       end if;
     end process;      
 
-    i_valid_rising <= i_data_valid_from_cmac and (not i_data_valid_del);
+    i_valid_rising  <= i_data_valid_from_cmac and (not i_data_valid_del);
+    i_valid_falling <= (not i_data_valid_from_cmac) and i_data_valid_del;
 
     process(i_shared_clk)
     begin	    
@@ -933,7 +936,13 @@ begin
                    awfifo_din(41 downto 40)   <= "11";
 		   awfifo_din(42)             <= '0';
                    awlenfifo_din(7 downto 0)  <= std_logic_vector(num_rx_64B_axi_beats-1);
-		   awlenfifo_din(8)           <= '0';
+		   if m04_4095MB_packet_across = '1' then
+	              awfifo_din(42)          <= '1';
+		      awlenfifo_din(8)        <= '1';
+	           else 
+	              awfifo_din(42)          <= '0';
+                      awlenfifo_din(8)        <= '0';		   
+		   end if;
                    awfifo_wren                <= '1';
                    recv_pkt_counter           <= recv_pkt_counter + 1;
                    LFAAaddr4(32 downto 6)     <= std_logic_vector(unsigned(LFAAaddr4(32 downto 6)) + resize(num_rx_64B_axi_beats,27));
@@ -1577,7 +1586,7 @@ begin
 	 if i_rx_soft_reset = '1' then
             m04_fifo_rd_en  <= '0';
 	 else
-            if (((axi_wlast_del2 = '1' and axi_wlast_del = '0' and axi_wlast = '0' and m04_wr = '1') or m04_wr_p = '1') and m04_wr_cnt /= 0 and m03_fifo_rd_en = '0' and axi_wdata_fifo_empty = '0') or (axi_wdata_fifo_empty_falling_edge = '1' and m04_wr = '1') then
+            if ((((axi_wlast_del2 = '1' and axi_wlast_del = '0' and axi_wlast = '0' and m04_wr = '1') or m04_wr_p = '1') and m04_wr_cnt /= 0 and m03_fifo_rd_en = '0' and axi_wdata_fifo_empty = '0') or (axi_wdata_fifo_empty_falling_edge = '1' and m04_wr = '1')) and last_trans = '0' then
                m04_fifo_rd_en  <= '1';
             elsif axi_wlast = '1' then --when one packet reading from fifo is finished
                m04_fifo_rd_en  <= '0';
@@ -1605,9 +1614,25 @@ begin
 
     last_trans_falling_edge <= last_trans_del and (not last_trans);
 
+    --when 16GB is writtern to full, then stop write to axi wdata fifo anymore
+    process(i_shared_clk)
+    begin
+      if rising_edge(i_shared_clk) then
+	 if i_rx_soft_reset = '1' then
+	    stop_fifo_wr_en <= '0';
+         else	    
+	   if i_valid_falling = '1' and m04_axi_4G_full = '1' then 
+              stop_fifo_wr_en <= '1';
+           else
+              stop_fifo_wr_en <= '0';
+           end if;
+         end if;	   
+      end if;
+    end process;
+
     --W data fifo control signals, as long as there is data coming in from cmac
     --the write data to w data fifo
- fifo_wr_en <= i_data_valid_from_cmac and i_enable_capture; 
+ fifo_wr_en <= i_data_valid_from_cmac and i_enable_capture and (not stop_fifo_wr_en); 
  fifo_rd_en <= (m01_fifo_rd_en and m01_axi_wready) or (m02_fifo_rd_en and m02_axi_wready) or (m03_fifo_rd_en and m03_axi_wready) or (m04_fifo_rd_en and m04_axi_wready);
  fifo_rd_wready <= (m01_wr and m01_axi_wready) or (m02_wr and m02_axi_wready) or (m03_wr and m03_axi_wready) or (m04_wr and m04_axi_wready); 
  rx_fifo_rst    <= i_rx_soft_reset or i_shared_rst; 
