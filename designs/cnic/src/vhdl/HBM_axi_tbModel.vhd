@@ -211,7 +211,15 @@ architecture Behavioral of HBM_axi_tbModel is
     signal r_fsm : r_fsm_type := idle;
     signal ar_addr : std_logic_vector(AXI_ADDR_WIDTH-1 downto 0) := (others => '0');
     signal ar_len : integer := 0;    
-    
+   
+    signal axi_awFIFO_din                                           : std_logic_vector(AXI_ADDR_WIDTH+10 downto 0) := (others => '0'); 
+    signal axi_awFIFO_dout                                          : std_logic_vector(AXI_ADDR_WIDTH+10 downto 0);
+    signal axi_awFIFO_empty, axi_awFIFO_wrEn, axi_awFIFO_data_valid : std_logic;
+    signal axi_awFIFO_rdEn_asserted, axi_awFIFO_rdEn                : std_logic := '0';
+    signal axi_awFIFO_awaddr                                        : std_logic_vector(AXI_ADDR_WIDTH-1 downto 0);
+    signal axi_awFIFO_awsize                                        : std_logic_vector(2 downto 0);
+    signal axi_awFIFO_awlen                                         : std_logic_vector(7 downto 0);
+
     -- The memory
     constant BLOCK_WIDTH : integer := 12;
     constant DATAWIDTHLOG2 : integer := integer(ceil(log2(real(AXI_DATA_WIDTH)))) - 3; -- = log2(width in bytes), e.g. 5 for 256 bit interface.
@@ -421,8 +429,63 @@ begin
 --        end if;
 --    end process;
     
+    fifo_aw_inst : xpm_fifo_sync
+    generic map (
+        DOUT_RESET_VALUE             => "0",          
+        ECC_MODE                     => "no_ecc",       
+        FIFO_MEMORY_TYPE             => "distributed",
+        FIFO_READ_LATENCY            => 1,     
+        FIFO_WRITE_DEPTH             => 32,
+        FULL_RESET_VALUE             => 0, 
+        PROG_EMPTY_THRESH            => 10,
+        PROG_FULL_THRESH             => 10,
+        RD_DATA_COUNT_WIDTH          => 6,
+        READ_DATA_WIDTH              => 11+AXI_ADDR_WIDTH,
+        READ_MODE                    => "fwft",
+        SIM_ASSERT_CHK               => 0,      
+        USE_ADV_FEATURES             => "1404", 
+        WAKEUP_TIME                  => 0,      
+	WRITE_DATA_WIDTH             => 11+AXI_ADDR_WIDTH,
+        WR_DATA_COUNT_WIDTH          => 6    
+    )
+    port map (
+        almost_empty                 => open, 
+        almost_full                  => open, 
+        data_valid                   => axi_awFIFO_data_valid,   
+        dbiterr                      => open,   
+        dout                         => axi_awFIFO_dout,
+        empty                        => axi_awFIFO_empty, 
+        full                         => open, 
+        overflow                     => open, 
+        prog_empty                   => open, 
+        prog_full                    => open, 
+	rd_data_count                => open,
+        rd_rst_busy                  => open,
+        sbiterr                      => open, 
+        underflow                    => open, 
+        wr_ack                       => open, 
+        wr_data_count                => open,
+        wr_rst_busy                  => open,
+        din                          => axi_awFIFO_din, 
+        injectdbiterr                => '0', 
+        injectsbiterr                => '0', 
+        rd_en                        => axi_awFIFO_rdEn,  
+        rst                          => '0',  
+        sleep                        => '0',      
+	wr_clk                       => i_clk,
+        wr_en                        => axi_awFIFO_wrEn 
+    );
+  
+    axi_awFIFO_din(AXI_ADDR_WIDTH-1   downto 0)               <= axi_awaddr;
+    axi_awFIFO_din(AXI_ADDR_WIDTH+2   downto AXI_ADDR_WIDTH)  <= axi_awsize;
+    axi_awFIFO_din(AXI_ADDR_WIDTH+10  downto AXI_ADDR_WIDTH+3)<= axi_awlen;
 
-    
+    axi_awFIFO_wrEn    <= axi_awvalid and axi_awready; 
+    axi_awFIFO_awaddr  <= axi_awFIFO_dout(AXI_ADDR_WIDTH-1  downto 0);
+    axi_awFIFO_awsize  <= axi_awFIFO_dout(AXI_ADDR_WIDTH+2  downto AXI_ADDR_WIDTH);
+    axi_awFIFO_awlen   <= axi_awFIFO_dout(AXI_ADDR_WIDTH+10 downto AXI_ADDR_WIDTH+3);   
+		      
+
     -----------------------------------------------------------------------------------
     -- Convert the AXI bus into memory transactions
     process(i_clk)
@@ -436,10 +499,16 @@ begin
             else
                 case w_fsm is
                     when idle =>
-                        if axi_awvalid = '1' then
-                            aw_addr <= axi_awaddr;
-                            aw_size <= axi_awsize;
-                            aw_len <= TO_INTEGER(unsigned(axi_awlen(7 downto 0)));
+			if axi_awFIFO_rdEn = '1' then     
+		           axi_awFIFO_rdEn          <= '0';		
+			elsif axi_awFIFO_empty = '0' and axi_awFIFO_rdEn_asserted = '0' then 
+                           axi_awFIFO_rdEn          <= '1';
+			   axi_awFIFO_rdEn_asserted <= '1';
+			end if;
+                        if axi_awFIFO_rdEn = '1' and axi_awFIFO_data_valid = '1' then
+                            aw_addr <= axi_awFIFO_awaddr;
+                            aw_size <= axi_awFIFO_awsize;
+                            aw_len <= TO_INTEGER(unsigned(axi_awFIFO_awlen(7 downto 0)));
                             if axi_wvalid = '1' or w_data_used = '1' then
                                 w_fsm <= wr_data;
                             else
@@ -453,6 +522,7 @@ begin
                         end if;
                     
                     when wr_data =>  -- write data to the memory
+			axi_awFIFO_rdEn_asserted <= '0';   
                         hbm_memory.memWrite(aw_addr,w_data);
                         aw_addr <= std_logic_vector(unsigned(aw_addr) + (AXI_DATA_WIDTH/8));
                         if (aw_len /= 0) then
@@ -476,6 +546,7 @@ begin
                         assert (2**to_integer(unsigned(aw_size)) = (AXI_DATA_WIDTH/8)) report "Bad value for axi_awsize" severity failure;
                     
                     when wr_wait =>  -- we have the address, but we are still waiting for valid data to write
+		        axi_awFIFO_rdEn_asserted <= '0';	    
                         if axi_wvalid = '1' then
                             w_data <= axi_wdata;
                             w_last <= axi_wlast;
@@ -567,7 +638,7 @@ begin
         end if;
     end process; 
     
-    axi_awready <= '1' when w_fsm = idle else '0';
+    axi_awready <= '1'; -- when w_fsm = idle else '0';
     axi_wready <= '1' when (w_data_used = '0' or w_fsm = wr_data) else '0';
     
     axi_arready_delayed <= '1' when (r_fsm = idle or (r_fsm = rd_data and ar_len = 0 and (axi_rvalid = '0' or axi_rready = '1') and readStall_fsm = running)) else '0';
