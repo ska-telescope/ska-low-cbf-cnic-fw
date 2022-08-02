@@ -320,6 +320,7 @@ architecture RTL of HBM_PktController is
     signal last_trans_falling_edge                        : std_logic;
     signal m04_4095MB_packet_across                       : std_logic;
     signal stop_fifo_wr_en                                : std_logic := '0';
+    signal m04_last_trans_asserted                        : std_logic := '0';
 
     ---------------------------
     --packet TX related signals
@@ -1586,7 +1587,7 @@ begin
 	 if i_rx_soft_reset = '1' then
             m04_fifo_rd_en  <= '0';
 	 else
-            if ((((axi_wlast_del2 = '1' and axi_wlast_del = '0' and axi_wlast = '0' and m04_wr = '1') or m04_wr_p = '1') and m04_wr_cnt /= 0 and m03_fifo_rd_en = '0' and axi_wdata_fifo_empty = '0') or (axi_wdata_fifo_empty_falling_edge = '1' and m04_wr = '1')) and last_trans = '0' then
+            if ((((axi_wlast_del2 = '1' and axi_wlast_del = '0' and axi_wlast = '0' and m04_wr = '1') or m04_wr_p = '1') and m04_wr_cnt /= 0 and m03_fifo_rd_en = '0' and axi_wdata_fifo_empty = '0') or (axi_wdata_fifo_empty_falling_edge = '1' and m04_wr = '1')) and m04_last_trans_asserted = '0' then
                m04_fifo_rd_en  <= '1';
             elsif axi_wlast = '1' then --when one packet reading from fifo is finished
                m04_fifo_rd_en  <= '0';
@@ -1594,6 +1595,19 @@ begin
 	 end if;
       end if;
     end process;
+
+    process(i_shared_clk)
+    begin
+      if rising_edge(i_shared_clk) then
+         if i_rx_soft_reset = '1' then
+            m04_last_trans_asserted <= '0';
+         else 
+            if m04_fifo_rd_en = '1' and last_trans = '1' then
+	       m04_last_trans_asserted <= '1';
+            end if;
+         end if;
+      end if;
+    end process;      
 
     process(i_shared_clk)
     begin
@@ -1623,8 +1637,6 @@ begin
          else	    
 	   if i_valid_falling = '1' and m04_axi_4G_full = '1' then 
               stop_fifo_wr_en <= '1';
-           else
-              stop_fifo_wr_en <= '0';
            end if;
          end if;	   
       end if;
