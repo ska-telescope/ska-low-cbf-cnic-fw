@@ -8,6 +8,15 @@
 set_max_delay -datapath_only -from [get_clocks -of_objects [get_cells -hierarchical *accumulators_rx*]] -to [get_clocks -of_objects [get_cells -hierarchical *system_reg*]] 10.0
 set_max_delay -datapath_only -from [get_clocks -of_objects [get_cells -hierarchical *system_reg*]] -to [get_clocks -of_objects [get_cells -hierarchical *accumulators_rx*]] 10.0
 
+########################################################################################################################
+## location constraint to help with SLR timing errors.
+
+add_cells_to_pblock pblock_dynamic_SLR0 [get_cells -hierarchical *i_HBM_PktController]
+
+add_cells_to_pblock pblock_dynamic_SLR0 [get_cells -hierarchical *m01_reg_slice]
+add_cells_to_pblock pblock_dynamic_SLR0 [get_cells -hierarchical *m02_reg_slice]
+add_cells_to_pblock pblock_dynamic_SLR0 [get_cells -hierarchical *m03_reg_slice]
+add_cells_to_pblock pblock_dynamic_SLR0 [get_cells -hierarchical *m04_reg_slice]
 
 ########################################################################################################################
 ## Time constraints if both 100G ports are in play.

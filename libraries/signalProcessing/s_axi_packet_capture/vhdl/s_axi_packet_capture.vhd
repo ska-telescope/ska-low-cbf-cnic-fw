@@ -152,6 +152,11 @@ signal packet_check_sm : packet_check_statemachine;
 signal cmac_reset                   : std_logic;
 signal cmac_reset_combined          : std_logic;
 
+signal ila_data_in_r                : std_logic_vector(127 downto 0);
+signal ila_data_out_r               : std_logic_vector(127 downto 0);
+
+signal ptp_seconds                  : std_logic_vector(47 downto 0);
+signal ptp_sub_sec                  : std_logic_vector(31 downto 0);
 ------------------------------------------------------------------------------
 -- packet stats
 
@@ -553,10 +558,27 @@ o_LFAA_spead_count      <= stats_to_host_data_out(4);
 
         
 debug_packet_capture_in : IF g_DEBUG_ILA GENERATE
+
+debug_ila_cmac_proc : process(i_clk_100GE)
+begin
+    if rising_edge(i_clk_100GE) then
+        
+--        ila_data_in_r <= rx_axis_tdata_int_d1(127 downto 0);
+        
+        ptp_seconds <= rx_axis_tuser_int_d1(79 downto 32);
+        ptp_sub_sec <= rx_axis_tuser_int_d1(31 downto 0);
+
+    end if;
+end process;
+
+
     cmac_in_ila : ila_0
     port map (
         clk                     => i_clk_100GE, 
-        probe0(127 downto 0)    => rx_buffer_ram_din(127 downto 0),
+        probe0(47 downto 0)     => rx_axis_tdata_int_d1(47 downto 0),
+--        probe0(127 downto 48)   => rx_axis_tuser_int_d1,
+        probe0(79 downto 48)    => ptp_sub_sec,
+        probe0(127 downto 80)   => ptp_seconds,
         probe0(136 downto 128)  => rx_buffer_ram_addr_in,
         probe0(137)             => rx_buffer_ram_din_wr, 
         

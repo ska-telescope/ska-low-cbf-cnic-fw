@@ -324,7 +324,7 @@ begin
 
 -------------------------------------------------------------------------------------------------------------
 
-config_ro.running   <= config_rw.start_stop_tx;
+config_ro.tx_running   <= config_rw.tx_enable;
 
 HBM_controller_proc : process(i_MACE_clk)
 begin
@@ -366,26 +366,29 @@ i_HBM_PktController : entity HBM_PktController_lib.HBM_PktController
         i_lfaa_bank4_addr                   => x"00000000",
         update_start_addr                   => '0',
 
-        o_1st_4GB_rx_addr                   => config_ro.rx_1st_4gb_rx_addr,
-        o_2nd_4GB_rx_addr                   => config_ro.rx_2nd_4gb_rx_addr,
-        o_3rd_4GB_rx_addr                   => config_ro.rx_3rd_4gb_rx_addr,
-        o_4th_4GB_rx_addr                   => config_ro.rx_4th_4gb_rx_addr,
+        o_1st_4GB_rx_addr                   => config_ro.rx_hbm_1_end_addr,
+        o_2nd_4GB_rx_addr                   => config_ro.rx_hbm_2_end_addr,
+        o_3rd_4GB_rx_addr                   => config_ro.rx_hbm_3_end_addr,
+        o_4th_4GB_rx_addr                   => config_ro.rx_hbm_4_end_addr,
 
-        o_capture_done                      => config_ro.rx_capture_done,
-        o_num_packets_received              => config_ro.rx_number_of_packets_received,
+        o_capture_done                      => config_ro.rx_complete,
+        o_num_packets_received              => config_ro.rx_packet_count_lo,
 
         -- tx
-        i_tx_packet_size                    => config_rw.packet_size(13 downto 0),
-        i_start_tx                          => config_rw.start_stop_tx,
+        i_tx_packet_size                    => config_rw.tx_packet_size(13 downto 0),
+        i_start_tx                          => config_rw.tx_enable,
       
-        i_loop_tx                           => config_rw.loop_tx,
-        i_expected_total_number_of_4k_axi   => config_rw.expected_total_number_of_4k_axi, 
-        i_expected_number_beats_per_burst   => config_rw.expected_number_beats_per_burst(12 downto 0),
-        i_expected_beats_per_packet         => config_rw.expected_beats_per_packet,
-        i_expected_packets_per_burst        => config_rw.expected_packets_per_burst,
-	    i_expected_total_number_of_bursts   => config_rw.expected_total_number_of_bursts,
-        i_expected_number_of_loops          => config_rw.expected_number_of_loops,
-        i_time_between_bursts_ns            => config_rw.time_between_bursts_ns,
+        i_loop_tx                           => config_rw.tx_loop_enable,
+        i_expected_number_of_loops          => config_rw.tx_loops,
+        
+        i_expected_total_number_of_4k_axi   => config_rw.tx_axi_transactions,               -- total number of reads out of HBM
+        i_expected_number_beats_per_burst   => config_rw.tx_beats_per_burst(12 downto 0),   -- 1 x tx_beats_per_packet
+        i_expected_beats_per_packet         => config_rw.tx_beats_per_packet,               -- number of cycles per packet rd.
+        
+        i_expected_packets_per_burst        => config_rw.tx_packets_per_burst,              -- hard coded to 1 as we don't burst currently.
+	    i_expected_total_number_of_bursts   => config_rw.tx_bursts,                         -- total bursts will be 1 x total number of packets to send.
+        
+        i_time_between_bursts_ns            => config_rw.tx_burst_gap,                      -- GAP between start of packets
         
         i_readaddr                          => x"00000000", 
         update_readaddr                     => '0',

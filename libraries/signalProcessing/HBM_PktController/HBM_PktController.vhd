@@ -1329,117 +1329,128 @@ begin
     --MUX to select among m01 m02 m03 m04 AXI W buses,
     --data is coming from wdata fifo, using ready signal 
     --to hold the W bus.
-    process(i_shared_clk)
-    begin
-      if rising_edge(i_shared_clk) then
-	 if i_rx_soft_reset = '1' then
+process(i_shared_clk)
+begin
+    if rising_edge(i_shared_clk) then
+        if i_rx_soft_reset = '1' then
             m01_axi_wvalid <= '0';
-            m01_axi_wdata  <= (others => '0');
-	    m01_axi_wlast  <= '0';
-	    m01_axi_wlast_del <= '0';
-	    m01_axi_wlast_del2<= '0';
-	 else
-           m01_axi_wlast_del2 <= m01_axi_wlast_del; 		 
-           if (m01_axi_wready = '1') then
-              m01_axi_wvalid <= axi_wvalid and m01_fifo_rd_en;
-           end if;
-	   if (m01_axi_wready = '1' and m01_fifo_rd_en = '1') then   
-              m01_axi_wdata  <= axi_wdata;
-           end if;
-	   if m01_axi_wlast = '1' and m01_axi_wready = '1' then
-	      m01_axi_wlast  <= '0';
-	      m01_axi_wlast_del <= '0';
-           elsif m01_fifo_rd_en = '1' then 
-	      m01_axi_wlast     <= axi_wlast;
-	      m01_axi_wlast_del <= axi_wlast;
-           end if;   
-	 end if;
-      end if;	
-    end process;
+--            m01_axi_wdata  <= (others => '0');
+            m01_axi_wlast  <= '0';
+            m01_axi_wlast_del <= '0';
+            m01_axi_wlast_del2<= '0';
+        else
+            m01_axi_wlast_del2 <= m01_axi_wlast_del; 		 
+            if (m01_axi_wready = '1') then
+                m01_axi_wvalid <= axi_wvalid and m01_fifo_rd_en;
+            end if;
+--            if (m01_axi_wready = '1' and m01_fifo_rd_en = '1') then   
+--                m01_axi_wdata  <= axi_wdata;
+--            end if;
+            if m01_axi_wlast = '1' and m01_axi_wready = '1' then
+                m01_axi_wlast  <= '0';
+                m01_axi_wlast_del <= '0';
+            elsif m01_fifo_rd_en = '1' then 
+                m01_axi_wlast     <= axi_wlast;
+                m01_axi_wlast_del <= axi_wlast;
+            end if;   
+        end if;
+    end if;	
+end process;
 
-    process(i_shared_clk)
-    begin
-      if rising_edge(i_shared_clk) then
-         if i_rx_soft_reset = '1' then
+process(i_shared_clk)
+begin
+    if rising_edge(i_shared_clk) then
+        if i_rx_soft_reset = '1' then
             m02_axi_wvalid <= '0';
-            m02_axi_wdata  <= (others => '0');
+--            m02_axi_wdata  <= (others => '0');
             m02_axi_wlast  <= '0';
-	    m02_axi_wlast_del <= '0';
-	    m02_axi_wlast_del2<= '0';
-         else
-           m02_axi_wlast_del2 <= m02_axi_wlast_del;		 
-           if (m02_axi_wready = '1') then
-              m02_axi_wvalid <= axi_wvalid and m02_fifo_rd_en;
-           end if;   
-	   if (m02_axi_wready = '1' and m02_fifo_rd_en = '1') then
-              m02_axi_wdata  <= axi_wdata;
-           end if;
-	   if m02_axi_wlast = '1' and m02_axi_wready = '1' then
-              m02_axi_wlast  <= '0';
-              m02_axi_wlast_del <= '0';
-           elsif m02_fifo_rd_en = '1' then
-              m02_axi_wlast     <= axi_wlast;
-	      m02_axi_wlast_del <= axi_wlast;
-           end if;
-         end if;
-      end if;
-    end process;
+            m02_axi_wlast_del <= '0';
+            m02_axi_wlast_del2<= '0';
+        else
+            m02_axi_wlast_del2 <= m02_axi_wlast_del;		 
+            if (m02_axi_wready = '1') then
+                m02_axi_wvalid <= axi_wvalid and m02_fifo_rd_en;
+            end if;   
+--            if (m02_axi_wready = '1' and m02_fifo_rd_en = '1') then
+--              m02_axi_wdata  <= axi_wdata;
+--            end if;
+            if m02_axi_wlast = '1' and m02_axi_wready = '1' then
+                m02_axi_wlast  <= '0';
+                m02_axi_wlast_del <= '0';
+            elsif m02_fifo_rd_en = '1' then
+                m02_axi_wlast     <= axi_wlast;
+                m02_axi_wlast_del <= axi_wlast;
+            end if;
+        end if;
+    end if;
+end process;
 
-    process(i_shared_clk)
-    begin
-      if rising_edge(i_shared_clk) then
-         if i_rx_soft_reset = '1' then
+process(i_shared_clk)
+begin
+    if rising_edge(i_shared_clk) then
+        if i_rx_soft_reset = '1' then
             m03_axi_wvalid <= '0';
-            m03_axi_wdata  <= (others => '0');
+--            m03_axi_wdata  <= (others => '0');
             m03_axi_wlast  <= '0';
-	    m03_axi_wlast_del <= '0';
-	    m03_axi_wlast_del2<= '0';
-         else
-           m03_axi_wlast_del2 <= m03_axi_wlast_del; 		 
-           if (m03_axi_wready = '1') then
-              m03_axi_wvalid <= axi_wvalid and m03_fifo_rd_en;
-	   end if;
-	   if (m03_axi_wready = '1' and m03_fifo_rd_en = '1') then
-              m03_axi_wdata  <= axi_wdata;
-           end if;
-	   if m03_axi_wlast = '1' and m03_axi_wready = '1' then
-              m03_axi_wlast  <= '0';
-	      m03_axi_wlast_del <= '0';
-           elsif m03_fifo_rd_en = '1' then
-              m03_axi_wlast     <= axi_wlast;
-	      m03_axi_wlast_del <= axi_wlast;
-           end if;
-         end if;
-      end if;
-    end process;
+            m03_axi_wlast_del <= '0';
+            m03_axi_wlast_del2<= '0';
+        else
+            m03_axi_wlast_del2 <= m03_axi_wlast_del; 		 
+            if (m03_axi_wready = '1') then
+                m03_axi_wvalid <= axi_wvalid and m03_fifo_rd_en;
+            end if;
+--            if (m03_axi_wready = '1' and m03_fifo_rd_en = '1') then
+--                m03_axi_wdata  <= axi_wdata;
+--            end if;
+            if m03_axi_wlast = '1' and m03_axi_wready = '1' then
+                m03_axi_wlast  <= '0';
+                m03_axi_wlast_del <= '0';
+            elsif m03_fifo_rd_en = '1' then
+                m03_axi_wlast     <= axi_wlast;
+                m03_axi_wlast_del <= axi_wlast;
+            end if;
+        end if;
+    end if;
+end process;
 
-    process(i_shared_clk)
-    begin
-      if rising_edge(i_shared_clk) then
-         if i_rx_soft_reset = '1' then
-            m04_axi_wvalid <= '0';
-            m04_axi_wdata  <= (others => '0');
-            m04_axi_wlast  <= '0';
-	    m04_axi_wlast_del <= '0';
-	    m04_axi_wlast_del2<= '0';
-         else
-           m04_axi_wlast_del2 <= m04_axi_wlast_del;		 
-           if (m04_axi_wready = '1') then
-              m04_axi_wvalid <= axi_wvalid and m04_fifo_rd_en;
-	   end if;
-	   if (m04_axi_wready = '1' and m04_fifo_rd_en = '1') then
-              m04_axi_wdata  <= axi_wdata;
-           end if;
-	   if m04_axi_wlast = '1' and m04_axi_wready = '1' then
-              m04_axi_wlast  <= '0';
-	      m04_axi_wlast_del <= '0';
-           elsif m04_fifo_rd_en = '1' then 
-              m04_axi_wlast     <= axi_wlast;
-	      m04_axi_wlast_del <= axi_wlast;
-           end if;
-         end if;
-      end if;
-    end process;
+process(i_shared_clk)
+begin
+    if rising_edge(i_shared_clk) then
+        if i_rx_soft_reset = '1' then
+            m04_axi_wvalid      <= '0';
+            --m04_axi_wdata       <= (others => '0');
+            m04_axi_wlast       <= '0';
+            m04_axi_wlast_del   <= '0';
+            m04_axi_wlast_del2  <= '0';
+        else
+            m04_axi_wlast_del2  <= m04_axi_wlast_del;		 
+            if (m04_axi_wready = '1') then
+                m04_axi_wvalid      <= axi_wvalid and m04_fifo_rd_en;
+            end if;
+    --        if (m04_axi_wready = '1' and m04_fifo_rd_en = '1') then
+    --            m04_axi_wdata       <= axi_wdata;
+    --        end if;
+            if m04_axi_wlast = '1' and m04_axi_wready = '1' then
+                m04_axi_wlast       <= '0';
+                m04_axi_wlast_del   <= '0';
+            elsif m04_fifo_rd_en = '1' then 
+                m04_axi_wlast       <= axi_wlast;
+                m04_axi_wlast_del   <= axi_wlast;
+            end if;
+        end if;
+    end if;
+end process;
+
+p_reg_output_to_hbm : process(i_shared_clk)
+begin
+    if rising_edge(i_shared_clk) then
+        m01_axi_wdata       <= axi_wdata;
+        m02_axi_wdata       <= axi_wdata;
+        m03_axi_wdata       <= axi_wdata;
+        m04_axi_wdata       <= axi_wdata;
+
+    end if;
+end process;
 
     --write trasaction counter, used to control whether a AXI transaction should be issued or not
     --only when the counter is not zero, means there is AW transaction already in queue, then a
@@ -2359,7 +2370,7 @@ input_fsm_state_count <=    x"0" when input_fsm = idle else
     hbm_capture_ila : ila_0
     port map (
         clk                     => i_shared_clk, 
-        probe0(28 downto 0)     => m01_axi_wdata(28 downto 0),
+        probe0(28 downto 0)     => ( others => '0'),
         probe0(29)              => last_aw_trans,
         probe0(30)              => m02_wr,
         probe0(31)              => m01_wr,
@@ -2375,7 +2386,7 @@ input_fsm_state_count <=    x"0" when input_fsm = idle else
         probe0(100)             => m02_axi_wready,
         probe0(108 downto 101)  => m02_axi_awlen,
         probe0(109)             => m02_fifo_rd_en,
-        probe0(125 downto 110)  => m02_axi_wdata(15 downto 0),
+        probe0(125 downto 110)  => ( others => '0'),
         probe0(126)             => last_trans,
         --probe0(126 downto 64)   => i_data_from_cmac(62 downto 0),
         probe0(127)             => m01_axi_4G_full,

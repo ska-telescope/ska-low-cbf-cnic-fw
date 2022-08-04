@@ -191,12 +191,6 @@ peripherals:
               reset_value       : 0x0
               field_description : "How many rd signals the current packet sending, to the FIFO sending to packet_player"
 
-          - - field_name        : debug_tx_total_packet_beat_count #total_beat_count
-              width             : 32
-              access_mode       : RO
-              reset_value       : 0x0
-              field_description : "Total rd signals sent to FIFO sending to packet_player"
-
           - - field_name        : debug_tx_burst_packet_count #fpga_pkt_count_in_this_burst
               width             : 32
               access_mode       : RO
