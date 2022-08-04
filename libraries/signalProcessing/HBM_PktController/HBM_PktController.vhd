@@ -1409,7 +1409,7 @@ begin
       if rising_edge(i_shared_clk) then
 	 if i_rx_soft_reset = '1' then
             m01_axi_wvalid <= '0';
-            m01_axi_wdata  <= (others => '0');
+--            m01_axi_wdata  <= (others => '0');
 	    m01_axi_wlast  <= '0';
 	    m01_axi_wlast_del <= '0';
 	 else
@@ -1417,9 +1417,9 @@ begin
            if (m01_axi_wready = '1') then
               m01_axi_wvalid <= axi_wvalid and m01_fifo_rd_en;
            end if;
-	   if (m01_axi_wready = '1' and m01_fifo_rd_en = '1') then   
-              m01_axi_wdata  <= axi_wdata;
-           end if;
+--            if (m01_axi_wready = '1' and m01_fifo_rd_en = '1') then   
+--                m01_axi_wdata  <= axi_wdata;
+--            end if;
 	   if m01_axi_wlast = '1' and m01_axi_wready = '1' then
 	      m01_axi_wlast     <= '0';
            elsif m01_fifo_rd_en = '1' and m01_axi_wlast = '0' then 
@@ -1434,7 +1434,7 @@ begin
       if rising_edge(i_shared_clk) then
          if i_rx_soft_reset = '1' then
             m02_axi_wvalid <= '0';
-            m02_axi_wdata  <= (others => '0');
+--            m02_axi_wdata  <= (others => '0');
             m02_axi_wlast  <= '0';
 	    m02_axi_wlast_del <= '0';
          else
@@ -1442,9 +1442,9 @@ begin
            if (m02_axi_wready = '1') then
               m02_axi_wvalid <= axi_wvalid and m02_fifo_rd_en;
            end if;   
-	   if (m02_axi_wready = '1' and m02_fifo_rd_en = '1') then
-              m02_axi_wdata  <= axi_wdata;
-           end if;
+--            if (m02_axi_wready = '1' and m02_fifo_rd_en = '1') then
+--              m02_axi_wdata  <= axi_wdata;
+--            end if;
 	   if m02_axi_wlast = '1' and m02_axi_wready = '1' then
               m02_axi_wlast     <= '0';
            elsif m02_fifo_rd_en = '1' and m02_axi_wlast = '0' then
@@ -1459,7 +1459,7 @@ begin
       if rising_edge(i_shared_clk) then
          if i_rx_soft_reset = '1' then
             m03_axi_wvalid <= '0';
-            m03_axi_wdata  <= (others => '0');
+--            m03_axi_wdata  <= (others => '0');
             m03_axi_wlast  <= '0';
 	    m03_axi_wlast_del <= '0';
          else
@@ -1467,9 +1467,9 @@ begin
            if (m03_axi_wready = '1') then
               m03_axi_wvalid <= axi_wvalid and m03_fifo_rd_en;
 	   end if;
-	   if (m03_axi_wready = '1' and m03_fifo_rd_en = '1') then
-              m03_axi_wdata  <= axi_wdata;
-           end if;
+--            if (m03_axi_wready = '1' and m03_fifo_rd_en = '1') then
+--                m03_axi_wdata  <= axi_wdata;
+--            end if;
 	   if m03_axi_wlast = '1' and m03_axi_wready = '1' then
               m03_axi_wlast     <= '0';
            elsif m03_fifo_rd_en = '1' and m03_axi_wlast = '0' then
@@ -1484,7 +1484,7 @@ begin
       if rising_edge(i_shared_clk) then
          if i_rx_soft_reset = '1' then
             m04_axi_wvalid <= '0';
-            m04_axi_wdata  <= (others => '0');
+            --m04_axi_wdata       <= (others => '0');
             m04_axi_wlast  <= '0';
 	    m04_axi_wlast_del <= '0';
          else
@@ -1492,9 +1492,9 @@ begin
            if (m04_axi_wready = '1') then
               m04_axi_wvalid <= axi_wvalid and m04_fifo_rd_en;
 	   end if;
-	   if (m04_axi_wready = '1' and m04_fifo_rd_en = '1') then
-              m04_axi_wdata  <= axi_wdata;
-           end if;
+    --        if (m04_axi_wready = '1' and m04_fifo_rd_en = '1') then
+    --            m04_axi_wdata       <= axi_wdata;
+    --        end if;
 	   if m04_axi_wlast = '1' and m04_axi_wready = '1' then
               m04_axi_wlast  <= '0';
            elsif m04_fifo_rd_en = '1' and m04_axi_wlast = '0' then 
@@ -1503,6 +1503,17 @@ begin
          end if;
       end if;
     end process;
+
+p_reg_output_to_hbm : process(i_shared_clk)
+begin
+    if rising_edge(i_shared_clk) then
+        m01_axi_wdata       <= axi_wdata;
+        m02_axi_wdata       <= axi_wdata;
+        m03_axi_wdata       <= axi_wdata;
+        m04_axi_wdata       <= axi_wdata;
+
+    end if;
+end process;
 
     --write trasaction counter, used to control whether a AXI transaction should be issued or not
     --only when the counter is not zero, means there is AW transaction already in queue, then a
@@ -2456,7 +2467,8 @@ input_fsm_state_count <=    x"0" when input_fsm = idle else
     hbm_capture_ila : ila_0
     port map (
         clk                     => i_shared_clk, 
-        probe0(29 downto 0)     => m01_axi_wdata(29 downto 0),
+        probe0(28 downto 0)     => m01_axi_wdata(28 downto 0),
+        probe0(29)              => last_aw_trans,
         probe0(30)              => m02_wr,
         probe0(31)              => m01_wr,
         
