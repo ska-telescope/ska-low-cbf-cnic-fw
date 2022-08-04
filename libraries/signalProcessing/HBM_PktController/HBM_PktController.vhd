@@ -254,11 +254,12 @@ architecture RTL of HBM_PktController is
 
     signal num_rx_64B_axi_beats,    num_rx_64B_axi_beats_curr_4G,    num_rx_64B_axi_beats_next_4G    : unsigned(7 downto 0);
     signal num_rx_4k_axi_trans,     num_rx_4k_axi_trans_curr_4G,     num_rx_4k_axi_trans_next_4G     : unsigned(1 downto 0);
-    signal num_rx_4k_axi_trans_fsm, num_rx_4k_axi_trans_fsm_curr_4G, num_rx_4k_axi_trans_fsm_next_4G : unsigned(1 downto 0) := "00";
+    signal num_rx_4k_axi_trans_fsm                                                                   : unsigned(1 downto 0) := "00";
 
     signal num_rx_bytes_curr_4G, num_rx_bytes_next_4G : unsigned(13 downto 0) := (others=>'0');
 
-    signal i_data_valid_del, i_valid_rising : std_logic; 
+    signal i_data_valid_del                                                       : std_logic := '0'; 
+    signal i_valid_rising,   i_valid_falling                                      : std_logic; 
     signal m01_axi_4G_full,  m02_axi_4G_full,  m03_axi_4G_full,  m04_axi_4G_full  : std_logic := '0'; 
     signal LFAAaddr1,        LFAAaddr2,        LFAAaddr3,        LFAAaddr4        : std_logic_vector(32 downto 0) := (others=>'0');
     signal LFAAaddr1_shadow, LFAAaddr2_shadow, LFAAaddr3_shadow, LFAAaddr4_shadow : std_logic_vector(32 downto 0) := (others=>'0');
@@ -273,26 +274,25 @@ architecture RTL of HBM_PktController is
     signal direct_aw2, direct_aw3, direct_aw4 : std_logic := '0';
     signal recv_pkt_counter : unsigned(31 downto 0) := (others=>'0');
 
-    signal m01_fifo_rd_en, m02_fifo_rd_en, m03_fifo_rd_en, m04_fifo_rd_en  : std_logic := '0';
-    signal fifo_wr_en, fifo_rd_en, fifo_rd_wready, tx_fifo_rst, rx_fifo_rst: std_logic;  
-    signal fifo_rd_counter                                                 : unsigned(6 downto 0) := "0000000";
-    signal axi_wlast                                                       : std_logic := '0'; 
-    signal axi_wvalid, axi_wvalid_falling                                  : std_logic; 
-    signal axi_wvalid_del                                                  : std_logic := '0';  
-    signal axi_wdata                                                       : std_logic_vector(511 downto 0);
+    signal m01_fifo_rd_en, m02_fifo_rd_en, m03_fifo_rd_en, m04_fifo_rd_en             : std_logic := '0';
+    signal fifo_wr_en, fifo_rd_en, fifo_rd_wready, tx_fifo_rst, rx_fifo_rst           : std_logic;  
+    signal fifo_rd_counter                                                            : unsigned(6 downto 0) := "0000000";
+    signal axi_wlast                                                                  : std_logic := '0'; 
+    signal axi_wvalid, axi_wvalid_falling                                             : std_logic; 
+    signal axi_wvalid_del                                                             : std_logic := '0';  
+    signal axi_wdata                                                                  : std_logic_vector(511 downto 0);
     signal m01_axi_wlast_del, m02_axi_wlast_del, m03_axi_wlast_del, m04_axi_wlast_del : std_logic := '0';
-    signal m01_axi_wlast_del2, m02_axi_wlast_del2, m03_axi_wlast_del2, m04_axi_wlast_del2 : std_logic := '0';
 
     signal wr_bank1_boundary_corss,              wr_bank2_boundary_corss              : std_logic;
     signal wr_bank3_boundary_corss,              wr_bank4_boundary_corss              : std_logic;
     signal wr_bank1_boundary_corss_curr_4G_size, wr_bank2_boundary_corss_curr_4G_size : unsigned(13 downto 0); 
     signal wr_bank3_boundary_corss_curr_4G_size, wr_bank4_boundary_corss_curr_4G_size : unsigned(13 downto 0); 
 
-    signal awfifo_wren,  awfifo_rden, awfifo_rden_reg  : std_logic := '0';
-    signal awfifo_valid, awfifo_full, awfifo_empty, awfifo_rst, awfifo_valid_reg : std_logic;
-    signal awfifo_din               : std_logic_vector(42 downto 0) := (others => '0');
-    signal awfifo_dout              : std_logic_vector(42 downto 0);
-    signal awfifo_dout_reg          : std_logic_vector(42 downto 0); 
+    signal awfifo_wren,  awfifo_rden, awfifo_rden_reg                                 : std_logic := '0';
+    signal awfifo_valid, awfifo_full, awfifo_empty, awfifo_rst, awfifo_valid_reg      : std_logic;
+    signal awfifo_din                                                                 : std_logic_vector(42 downto 0) := (others => '0');
+    signal awfifo_dout                                                                : std_logic_vector(42 downto 0);
+    signal awfifo_dout_reg                                                            : std_logic_vector(42 downto 0); 
 
     signal awlenfifo_rden, awlenfifo_rden_del               : std_logic := '0';
     signal awlenfifo_valid, awlenfifo_full, awlenfifo_empty : std_logic;
@@ -309,14 +309,18 @@ architecture RTL of HBM_PktController is
     signal m01_wr, m02_wr, m03_wr, m04_wr                 : std_logic := '0';
     signal m01_wr_p, m02_wr_p, m03_wr_p, m04_wr_p         : std_logic := '0';
     signal awfifo_wren_cond                               : std_logic;
+    signal awfifo_wren_cond_del                           : std_logic := '0';
     signal m01_wr_del, m02_wr_del, m03_wr_del, m04_wr_del : std_logic := '0';
-    signal axi_wlast_del, axi_wlast_del2, axi_wlast_del3  : std_logic := '0';
+    signal axi_wlast_del, axi_wlast_del2                  : std_logic := '0';
     signal m01_wr_cnt, m02_wr_cnt, m03_wr_cnt, m04_wr_cnt : unsigned(3 downto 0) := "0000";
 
     signal update_start_addr_del, update_start_addr_p     : std_logic := '0';
     signal update_readaddr_del,  update_readaddr_p        : std_logic := '0';
     signal last_trans, last_trans_del, last_aw_trans      : std_logic := '0';
     signal last_trans_falling_edge                        : std_logic;
+    signal m04_4095MB_packet_across                       : std_logic;
+    signal stop_fifo_wr_en                                : std_logic := '0';
+    signal m04_last_trans_asserted                        : std_logic := '0';
 
     ---------------------------
     --packet TX related signals
@@ -425,6 +429,9 @@ architecture RTL of HBM_PktController is
     signal axi_wdata_fifo_empty_falling_edge : std_logic;
     signal axi_wdata_fifo_empty_reg : std_logic := '0';
     signal axi_wlast_asserted  : std_logic := '0';
+    signal size_64B            : std_logic;
+    signal first_awfifo_wren, first_awfifo_wren_del   : std_logic := '0';
+    signal first_awfifo_wren_falling                  : std_logic;
 
 begin
 
@@ -473,6 +480,9 @@ begin
                                               (num_rx_bytes_next_4G - 4096) when num_rx_bytes_next_4G >= 4096 else
                                                num_rx_bytes_next_4G;
 
+    m04_4095MB_packet_across  <= '1' when (unsigned(LFAAaddr4_shadow(31 downto 0)) + resize(unsigned(i_rx_packet_size(13 downto 0)), 32)) > max_space_4095MB else 					  '0';    
+
+    size_64B                  <= '1' when (i_rx_packet_size(13 downto 0) = "00000001000000") else '0';
 
     --HBM bank boundary cross condition logic, due to the fact that XRT cannot allocate 4GB size of HBM buffer, so
     --need to support the size of HBM bank to be any size, currently 4095MB is by default, and still 4096MB is second
@@ -506,7 +516,8 @@ begin
       end if;
     end process;      
 
-    i_valid_rising <= i_data_valid_from_cmac and (not i_data_valid_del);
+    i_valid_rising  <= i_data_valid_from_cmac and (not i_data_valid_del);
+    i_valid_falling <= (not i_data_valid_from_cmac) and i_data_valid_del;
 
     process(i_shared_clk)
     begin	    
@@ -526,8 +537,6 @@ begin
          if i_rx_soft_reset = '1' then
             input_fsm <= idle;
             num_rx_4k_axi_trans_fsm         <= "00";
-            num_rx_4k_axi_trans_fsm_curr_4G <= "00";
-            num_rx_4k_axi_trans_fsm_next_4G <= "00";
             num_rx_bytes_curr_4G            <= (others => '0');
             num_rx_bytes_next_4G            <= (others => '0');
             m01_axi_4G_full  <= '0';
@@ -546,6 +555,7 @@ begin
             LFAAaddr3_shadow <= (others => '0');
             LFAAaddr4_shadow <= (others => '0');
             recv_pkt_counter <= (others => '0');
+	    first_awfifo_wren <= '0';
 	 else 
          case input_fsm is
            when idle =>
@@ -558,13 +568,18 @@ begin
              num_rx_4k_axi_trans_fsm <= num_rx_4k_axi_trans;
 	     awfifo_wren <= '0';
 	     --if one 4GB bank is full, then move to next bank
-             if i_valid_rising = '1'    and i_enable_capture = '1' and m03_axi_4G_full = '1' then
+	     --for m04 4GB bank, if when a whole packet is tried to be filled in, it will across the 16GB, then abort this packet
+             if i_valid_rising = '1'    and i_enable_capture = '1' and m03_axi_4G_full = '1' and m04_axi_4G_full = '0' and m04_4095MB_packet_across = '0' then     
+		first_awfifo_wren <= '1';     
 		input_fsm     <= generate_aw4_shadow_addr;	     
-             elsif i_valid_rising = '1' and i_enable_capture = '1' and m02_axi_4G_full = '1' then
+             elsif i_valid_rising = '1' and i_enable_capture = '1' and m02_axi_4G_full = '1' and m04_axi_4G_full = '0' then
+		first_awfifo_wren <= '1';     
  	        input_fsm     <= generate_aw3_shadow_addr;
-             elsif i_valid_rising = '1' and i_enable_capture = '1' and m01_axi_4G_full = '1' then
+             elsif i_valid_rising = '1' and i_enable_capture = '1' and m01_axi_4G_full = '1' and m04_axi_4G_full = '0' then
+		first_awfifo_wren <= '1';     
 	        input_fsm     <= generate_aw2_shadow_addr;
-	     elsif i_valid_rising = '1' and i_enable_capture = '1' then
+	     elsif i_valid_rising = '1' and i_enable_capture = '1' and m04_axi_4G_full = '0' then
+		first_awfifo_wren <= '1';     
                 input_fsm     <= generate_aw1_shadow_addr;
              end if;
            when generate_aw1_shadow_addr  => --shadow addr used to detect if a 4GB AXI HBM section is filled
@@ -585,8 +600,6 @@ begin
                 num_rx_bytes_curr_4G         <= (others=>'0');
 		num_rx_bytes_next_4G         <= (others=>'0');
              end if;
-	     num_rx_4k_axi_trans_fsm_curr_4G <= num_rx_4k_axi_trans_curr_4G;
-	     num_rx_4k_axi_trans_fsm_next_4G <= num_rx_4k_axi_trans_next_4G;
 	     input_fsm                       <= generate_aw1;
            when generate_aw1 =>
              if (wr_bank1_boundary_corss = '0') then
@@ -604,6 +617,9 @@ begin
 		   num_rx_4k_axi_trans_fsm    <= num_rx_4k_axi_trans_fsm - 1;
                    LFAAaddr1(32 downto 12)    <= std_logic_vector(unsigned(LFAAaddr1(32 downto 12)) + 1);
                    input_fsm                  <= generate_aw1_shadow_addr;
+		   if first_awfifo_wren = '1' then
+		      first_awfifo_wren       <= '0';
+	           end if;	      
                 elsif (num_rx_4k_axi_trans_fsm = 0 and num_rx_64B_axi_beats /= 0) then 
 		   --if no 4k transaction for current received packet is needed or if 4k transaction has been sent out and no more 4k transactions left, but still
 		   --less than 4k transaction left, then write the left less than 4k transaction to AW fifo. state go back to idle and update address	
@@ -615,7 +631,10 @@ begin
 		   awlenfifo_din(8)           <= '0';
                    awfifo_wren                <= '1'; 
 		   recv_pkt_counter           <= recv_pkt_counter + 1;
-                   LFAAaddr1(32 downto 6)     <= std_logic_vector(unsigned(LFAAaddr1(32 downto 6)) + resize(num_rx_64B_axi_beats,27)); 
+                   LFAAaddr1(32 downto 6)     <= std_logic_vector(unsigned(LFAAaddr1(32 downto 6)) + resize(num_rx_64B_axi_beats,27));
+		   if first_awfifo_wren = '1' then
+	              first_awfifo_wren       <= '0';	
+	           end if;	      
                    input_fsm                  <= idle;
                 elsif (num_rx_4k_axi_trans_fsm = 0 and num_rx_64B_axi_beats = 0) then
 		   recv_pkt_counter           <= recv_pkt_counter + 1;	   
@@ -624,7 +643,7 @@ begin
              else
 	       --situation where cross 4GB happens, and issue AXI transactions to fill current 4GB to full, the tx size has been calculated before already
 	       --move state to next 4GB buffer	     
-	       if (num_rx_4k_axi_trans_fsm_curr_4G > 0) then
+	       if (num_rx_4k_axi_trans_curr_4G > 0) then
                   awfifo_din(31 downto 0)     <= LFAAaddr1(31 downto 0);
                   awfifo_din(39 downto 32)    <= "00111111";
                   awfifo_din(41 downto 40)    <= "00";
@@ -632,7 +651,9 @@ begin
                   awlenfifo_din(7 downto 0)   <= "00111111";
 		  awlenfifo_din(8)            <= '1';
                   awfifo_wren                 <= '1';
-                  num_rx_4k_axi_trans_fsm_curr_4G  <= num_rx_4k_axi_trans_fsm_curr_4G - 1;
+                  if first_awfifo_wren = '1' then
+                     first_awfifo_wren       <= '0';
+                  end if;
                   LFAAaddr1(32 downto 12)     <= std_logic_vector(unsigned(LFAAaddr1(32 downto 12)) + 1);
 	       elsif (num_rx_64B_axi_beats_curr_4G /= 0) then
 		  awfifo_din(31 downto 0)     <= LFAAaddr1(31 downto 0);
@@ -642,11 +663,12 @@ begin
 		  awlenfifo_din(7 downto 0)   <= std_logic_vector(num_rx_64B_axi_beats_curr_4G-1);
 		  awlenfifo_din(8)            <= '1';
 		  awfifo_wren                 <= '1';
-		  m01_axi_4G_full             <= '1';
+		  if first_awfifo_wren = '1' then
+                     first_awfifo_wren       <= '0';
+                  end if;
                   LFAAaddr1(31 downto 0)      <= std_logic_vector(max_space_4095MB);
-	       else
-	          m01_axi_4G_full             <= '1';
                end if;
+	       m01_axi_4G_full                <= '1';
 	       direct_aw2                     <= '1';
 	       input_fsm                      <= generate_aw2;
              end if;
@@ -668,14 +690,12 @@ begin
                 num_rx_bytes_curr_4G         <= (others=>'0');
                 num_rx_bytes_next_4G         <= (others=>'0');		
 	     end if;
-	     num_rx_4k_axi_trans_fsm_curr_4G <= num_rx_4k_axi_trans_curr_4G;
-	     num_rx_4k_axi_trans_fsm_next_4G <= num_rx_4k_axi_trans_next_4G;
              input_fsm                       <= generate_aw2;
            when generate_aw2 =>
              if (direct_aw2 = '1') then
                 --this is the state which comes directly from generate_aw1 that AXI transfers for the residual of last 4GB has been filled and last 4GB was full
 		--and now it's turn is to handle the start of the next 4GB     
-                if (num_rx_4k_axi_trans_fsm_next_4G > 0) then --start 4K transaction first, if packet size is more than 4K
+                if (num_rx_4k_axi_trans_next_4G > 0) then --start 4K transaction first, if packet size is more than 4K
                    awfifo_din(31 downto 0)    <= LFAAaddr2(31 downto 0);
                    awfifo_din(39 downto 32)   <= "00111111";
                    awfifo_din(41 downto 40)   <= "01";
@@ -683,9 +703,8 @@ begin
 		   awlenfifo_din(7 downto 0)  <= "00111111";
 		   awlenfifo_din(8)           <= '0';
                    awfifo_wren                <= '1';
-                   num_rx_4k_axi_trans_fsm_next_4G <= num_rx_4k_axi_trans_fsm_next_4G - 1;
                    LFAAaddr2(32 downto 12)    <= std_logic_vector(unsigned(LFAAaddr2(32 downto 12)) + 1);
-                elsif (num_rx_4k_axi_trans_fsm_next_4G = 0 and num_rx_64B_axi_beats_next_4G /= 0) then
+                elsif (num_rx_64B_axi_beats_next_4G /= 0) then
                    awfifo_din(31 downto 0)    <= LFAAaddr2(31 downto 0);
                    awfifo_din(39 downto 32)   <= std_logic_vector(num_rx_64B_axi_beats_next_4G-1);
                    awfifo_din(41 downto 40)   <= "01";
@@ -694,6 +713,8 @@ begin
 		   awlenfifo_din(8)           <= '0';
                    awfifo_wren                <= '1';
                    LFAAaddr2(32 downto 6)     <= std_logic_vector(unsigned(LFAAaddr2(32 downto 6)) + resize(num_rx_64B_axi_beats_next_4G,27));
+	        else
+		   awfifo_wren                <= '0';  	
                 end if;
 		direct_aw2                    <= '0';
 		if num_rx_4k_axi_trans_fsm > 0 then
@@ -718,6 +739,9 @@ begin
                    awfifo_wren                <= '1';
                    num_rx_4k_axi_trans_fsm    <= num_rx_4k_axi_trans_fsm - 1;
                    LFAAaddr2(32 downto 12)    <= std_logic_vector(unsigned(LFAAaddr2(32 downto 12)) + 1);
+		   if first_awfifo_wren = '1' then
+		      first_awfifo_wren       <= '0';
+	           end if;	      
                    input_fsm                  <= generate_aw2_shadow_addr;
                 elsif (num_rx_4k_axi_trans_fsm = 0 and num_rx_64B_axi_beats /= 0) then
                    awfifo_din(31 downto 0)    <= LFAAaddr2(31 downto 0);
@@ -729,13 +753,16 @@ begin
                    awfifo_wren                <= '1';
                    recv_pkt_counter           <= recv_pkt_counter + 1;
                    LFAAaddr2(32 downto 6)     <= std_logic_vector(unsigned(LFAAaddr2(32 downto 6)) + resize(num_rx_64B_axi_beats,27));
-                   input_fsm                  <= idle;
+                   if first_awfifo_wren = '1' then
+                      first_awfifo_wren       <= '0';
+	           end if;
+		   input_fsm                  <= idle;
                 elsif (num_rx_4k_axi_trans_fsm = 0 and num_rx_64B_axi_beats = 0) then
                    recv_pkt_counter           <= recv_pkt_counter + 1;
                    input_fsm                  <= idle; --one transaction finished
                 end if;     
              else
-		if (num_rx_4k_axi_trans_fsm_curr_4G > 0) then
+		if (num_rx_4k_axi_trans_curr_4G > 0) then
                   awfifo_din(31 downto 0)     <= LFAAaddr2(31 downto 0);
                   awfifo_din(39 downto 32)    <= "00111111";
                   awfifo_din(41 downto 40)    <= "01";
@@ -743,7 +770,9 @@ begin
                   awlenfifo_din(7 downto 0)   <= "00111111";
 		  awlenfifo_din(8)            <= '1';
                   awfifo_wren                 <= '1';
-                  num_rx_4k_axi_trans_fsm_curr_4G  <= num_rx_4k_axi_trans_fsm_curr_4G - 1;
+		  if first_awfifo_wren = '1' then
+                     first_awfifo_wren        <= '0';
+                  end if;
                   LFAAaddr2(32 downto 12)     <= std_logic_vector(unsigned(LFAAaddr2(32 downto 12)) + 1);
                elsif (num_rx_64B_axi_beats_curr_4G /= 0) then
                   awfifo_din(31 downto 0)     <= LFAAaddr2(31 downto 0);
@@ -753,11 +782,12 @@ begin
                   awlenfifo_din(7 downto 0)   <= std_logic_vector(num_rx_64B_axi_beats_curr_4G-1);
 		  awlenfifo_din(8)            <= '1';
                   awfifo_wren                 <= '1';
-                  m02_axi_4G_full             <= '1';
+		  if first_awfifo_wren = '1' then
+                     first_awfifo_wren        <= '0';
+                  end if;
                   LFAAaddr2(31 downto 0)      <= std_logic_vector(max_space_4095MB);
-               else
-                  m02_axi_4G_full             <= '1';
                end if;
+	       m02_axi_4G_full                <= '1';
                direct_aw3                     <= '1';
                input_fsm                      <= generate_aw3;     
              end if;
@@ -779,12 +809,10 @@ begin
                 num_rx_bytes_curr_4G         <= (others=>'0');
                 num_rx_bytes_next_4G         <= (others=>'0');
              end if;
-             num_rx_4k_axi_trans_fsm_curr_4G <= num_rx_4k_axi_trans_curr_4G;
-             num_rx_4k_axi_trans_fsm_next_4G <= num_rx_4k_axi_trans_next_4G;
              input_fsm                       <= generate_aw3;
            when generate_aw3 =>
              if (direct_aw3 = '1') then
-		if (num_rx_4k_axi_trans_fsm_next_4G > 0) then --start 4K transaction first, if packet size is more than 4K
+		if (num_rx_4k_axi_trans_next_4G > 0) then --start 4K transaction first, if packet size is more than 4K
                    awfifo_din(31 downto 0)    <= LFAAaddr3(31 downto 0);
                    awfifo_din(39 downto 32)   <= "00111111";
                    awfifo_din(41 downto 40)   <= "10";
@@ -792,9 +820,8 @@ begin
                    awlenfifo_din(7 downto 0)  <= "00111111";
 		   awlenfifo_din(8)           <= '0'; 
                    awfifo_wren                <= '1';
-                   num_rx_4k_axi_trans_fsm_next_4G <= num_rx_4k_axi_trans_fsm_next_4G - 1;
                    LFAAaddr3(32 downto 12)    <= std_logic_vector(unsigned(LFAAaddr3(32 downto 12)) + 1);
-                elsif (num_rx_4k_axi_trans_fsm_next_4G = 0 and num_rx_64B_axi_beats_next_4G /= 0) then
+                elsif (num_rx_64B_axi_beats_next_4G /= 0) then
                    awfifo_din(31 downto 0)    <= LFAAaddr3(31 downto 0);
                    awfifo_din(39 downto 32)   <= std_logic_vector(num_rx_64B_axi_beats_next_4G-1);
                    awfifo_din(41 downto 40)   <= "10";
@@ -803,6 +830,8 @@ begin
 		   awlenfifo_din(8)           <= '0';
                    awfifo_wren                <= '1';
                    LFAAaddr3(32 downto 6)     <= std_logic_vector(unsigned(LFAAaddr3(32 downto 6)) + resize(num_rx_64B_axi_beats_next_4G,27));
+	        else
+                   awfifo_wren                <= '0';
                 end if;
                 direct_aw3                    <= '0';
 		if num_rx_4k_axi_trans_fsm > 0 then
@@ -827,6 +856,9 @@ begin
                    awfifo_wren                <= '1';
                    num_rx_4k_axi_trans_fsm    <= num_rx_4k_axi_trans_fsm - 1;
                    LFAAaddr3(32 downto 12)    <= std_logic_vector(unsigned(LFAAaddr3(32 downto 12)) + 1);
+		   if first_awfifo_wren = '1' then
+	              first_awfifo_wren <= '0';
+                   end if;		      
                    input_fsm                  <= generate_aw3_shadow_addr;
                 elsif (num_rx_4k_axi_trans_fsm = 0 and num_rx_64B_axi_beats /= 0) then
                    awfifo_din(31 downto 0)    <= LFAAaddr3(31 downto 0);
@@ -838,13 +870,16 @@ begin
                    awfifo_wren                <= '1';
                    recv_pkt_counter           <= recv_pkt_counter + 1;
                    LFAAaddr3(32 downto 6)     <= std_logic_vector(unsigned(LFAAaddr3(32 downto 6)) + resize(num_rx_64B_axi_beats,27));
+		   if first_awfifo_wren = '1' then
+                      first_awfifo_wren <= '0';
+                   end if;
                    input_fsm                  <= idle;
                 elsif (num_rx_4k_axi_trans_fsm = 0 and num_rx_64B_axi_beats = 0) then
                    recv_pkt_counter           <= recv_pkt_counter + 1;
                    input_fsm                  <= idle; --one transaction finished
                 end if;     
              else
-		if (num_rx_4k_axi_trans_fsm_curr_4G > 0) then
+		if (num_rx_4k_axi_trans_curr_4G > 0) then
                   awfifo_din(31 downto 0)     <= LFAAaddr3(31 downto 0);
                   awfifo_din(39 downto 32)    <= "00111111";
                   awfifo_din(41 downto 40)    <= "10";
@@ -852,7 +887,9 @@ begin
                   awlenfifo_din(7 downto 0)   <= "00111111";
 		  awlenfifo_din(8)            <= '1';
                   awfifo_wren                 <= '1';
-                  num_rx_4k_axi_trans_fsm_curr_4G  <= num_rx_4k_axi_trans_fsm_curr_4G - 1;
+		  if first_awfifo_wren = '1' then
+                     first_awfifo_wren        <= '0';
+                  end if;
                   LFAAaddr3(32 downto 12)     <= std_logic_vector(unsigned(LFAAaddr3(32 downto 12)) + 1);
                elsif (num_rx_64B_axi_beats_curr_4G /= 0) then
                   awfifo_din(31 downto 0)     <= LFAAaddr3(31 downto 0);
@@ -862,11 +899,12 @@ begin
                   awlenfifo_din(7 downto 0)   <= std_logic_vector(num_rx_64B_axi_beats_curr_4G-1);
 		  awlenfifo_din(8)            <= '1';
                   awfifo_wren                 <= '1';
-                  m03_axi_4G_full             <= '1';
+		  if first_awfifo_wren = '1' then
+                     first_awfifo_wren        <= '0';
+                  end if;
                   LFAAaddr3(31 downto 0)      <= std_logic_vector(max_space_4095MB);
-               else
-                  m02_axi_4G_full             <= '1';
                end if;
+	       m03_axi_4G_full                <= '1';
                direct_aw4                     <= '1';
                input_fsm                      <= generate_aw4;     
              end if;
@@ -888,12 +926,10 @@ begin
                 num_rx_bytes_curr_4G         <= (others=>'0');
                 num_rx_bytes_next_4G         <= (others=>'0');
              end if;
-             num_rx_4k_axi_trans_fsm_curr_4G <= num_rx_4k_axi_trans_curr_4G;
-             num_rx_4k_axi_trans_fsm_next_4G <= num_rx_4k_axi_trans_next_4G;
              input_fsm <= generate_aw4;
            when generate_aw4 =>
              if (direct_aw4 = '1') then
-		if (num_rx_4k_axi_trans_fsm_next_4G > 0) then --start 4K transaction first, if packet size is more than 4K
+		if (num_rx_4k_axi_trans_next_4G > 0) then --start 4K transaction first, if packet size is more than 4K
                    awfifo_din(31 downto 0)    <= LFAAaddr4(31 downto 0);
                    awfifo_din(39 downto 32)   <= "00111111";
                    awfifo_din(41 downto 40)   <= "11";
@@ -901,9 +937,8 @@ begin
                    awlenfifo_din(7 downto 0)  <= "00111111";
 		   awlenfifo_din(8)           <= '0';
                    awfifo_wren                <= '1';
-                   num_rx_4k_axi_trans_fsm_next_4G <= num_rx_4k_axi_trans_fsm_next_4G - 1;
                    LFAAaddr4(32 downto 12)    <= std_logic_vector(unsigned(LFAAaddr4(32 downto 12)) + 1);
-                elsif (num_rx_4k_axi_trans_fsm_next_4G = 0 and num_rx_64B_axi_beats_next_4G /= 0) then
+                elsif (num_rx_64B_axi_beats_next_4G /= 0) then
                    awfifo_din(31 downto 0)    <= LFAAaddr4(31 downto 0);
                    awfifo_din(39 downto 32)   <= std_logic_vector(num_rx_64B_axi_beats_next_4G-1);
                    awfifo_din(41 downto 40)   <= "11";
@@ -912,6 +947,8 @@ begin
 		   awlenfifo_din(8)           <= '0';
                    awfifo_wren                <= '1';
                    LFAAaddr4(32 downto 6)     <= std_logic_vector(unsigned(LFAAaddr4(32 downto 6)) + resize(num_rx_64B_axi_beats_next_4G,27));
+	        else   
+	           awfifo_wren                <= '0';		
                 end if;
                 direct_aw4                    <= '0';
 		if num_rx_4k_axi_trans_fsm > 0 then
@@ -926,6 +963,9 @@ begin
                    num_rx_4k_axi_trans_fsm    <= num_rx_4k_axi_trans_fsm - 1;
                 end if;     
              elsif (wr_bank4_boundary_corss = '0') then
+		if m04_4095MB_packet_across = '1' then
+	           m04_axi_4G_full            <= '1';	
+	        end if;	   
                 if (num_rx_4k_axi_trans_fsm > 0) then --start 4K transaction first, if packet size is more than 4K
                    awfifo_din(31 downto 0)    <= LFAAaddr4(31 downto 0);
                    awfifo_din(39 downto 32)   <= "00111111";
@@ -936,6 +976,9 @@ begin
                    awfifo_wren                <= '1';
                    num_rx_4k_axi_trans_fsm    <= num_rx_4k_axi_trans_fsm - 1;
                    LFAAaddr4(32 downto 12)    <= std_logic_vector(unsigned(LFAAaddr4(32 downto 12)) + 1);
+		   if first_awfifo_wren = '1' then
+                      first_awfifo_wren <= '0';
+                   end if;
                    input_fsm                  <= generate_aw4_shadow_addr;
                 elsif (num_rx_4k_axi_trans_fsm = 0 and num_rx_64B_axi_beats /= 0) then
                    awfifo_din(31 downto 0)    <= LFAAaddr4(31 downto 0);
@@ -943,16 +986,25 @@ begin
                    awfifo_din(41 downto 40)   <= "11";
 		   awfifo_din(42)             <= '0';
                    awlenfifo_din(7 downto 0)  <= std_logic_vector(num_rx_64B_axi_beats-1);
-		   awlenfifo_din(8)           <= '0';
+		   if m04_4095MB_packet_across = '1' then
+	              awfifo_din(42)          <= '1';
+		      awlenfifo_din(8)        <= '1';
+	           else 
+	              awfifo_din(42)          <= '0';
+                      awlenfifo_din(8)        <= '0';		   
+		   end if;
                    awfifo_wren                <= '1';
                    recv_pkt_counter           <= recv_pkt_counter + 1;
                    LFAAaddr4(32 downto 6)     <= std_logic_vector(unsigned(LFAAaddr4(32 downto 6)) + resize(num_rx_64B_axi_beats,27));
+		   if first_awfifo_wren = '1' then
+                      first_awfifo_wren <= '0';
+                   end if;
                    input_fsm                  <= idle;
                 elsif (num_rx_4k_axi_trans_fsm = 0 and num_rx_64B_axi_beats = 0) then
                    recv_pkt_counter           <= recv_pkt_counter + 1;
                    input_fsm                  <= idle; --one transaction finished
                 end if;
-             else
+             else     
 		num_rx_bytes_curr_4G          <= (others=>'0');
                 num_rx_bytes_next_4G          <= (others=>'0');     
                 m04_axi_4G_full               <= '1';
@@ -967,7 +1019,9 @@ begin
 
     awfifo_rst <= i_rx_soft_reset or i_shared_rst;
 
-    --awlen fifo, 9 bits width
+    --awlen fifo, 9 bits width, split from awfifo because AXI AW is totoally separated from AXI W part, AW can lead or behind W, so the length info should be stored
+    --and read out when the AXI W start.
+    --The function of this fifo is to provide AXI write length info for the AXI W read counter to know when the reading should stop for the end of AXI W transaction
     --bit 8   last AXI transaction for a bank indication signal, its falling edge is used to switch the m0x_wr signal, and trigger the next bank AW transaction
     --bit 7:0 AW length, used to stop the W data fifo read counter when its value is equal to the AW length - 1 
     fifo_awlen_inst : xpm_fifo_sync
@@ -1017,7 +1071,11 @@ begin
         wr_en        => awfifo_wren
     );
 
-
+    --AW fifo, 43 bit width, stored AW parameters
+    --bit 31:0   AXI AW address
+    --bit 39:32  AXI AW length
+    --bit 41:40  m01/m02/m03/m04 4GB selection signal
+    --bit 42     last AXI AW transaction for a bank indication signal 
     fifo_aw_inst : xpm_fifo_sync
     generic map (
         DOUT_RESET_VALUE  => "0",    
@@ -1091,13 +1149,23 @@ begin
       end if;	 
     end process;  
 
+    process(i_shared_clk)
+    begin
+      if rising_edge(i_shared_clk) then
+         first_awfifo_wren_del <= first_awfifo_wren;
+      end if;
+    end process;      
+
+    first_awfifo_wren_falling <= first_awfifo_wren_del and (not first_awfifo_wren); 
+
+    --first_awfifo_wren signal is used to indicate when the first AW transfer of one packet should be issued   
     process(i_shared_clk) 
     begin
       if rising_edge(i_shared_clk) then
 	 if awfifo_cnt = 5 then   
             awfifo_cnt_en  <= '0';
             awfifo_cnt     <= (others => '0');	    
-	 elsif awfifo_wren = '1' and awfifo_empty = '1' then 	
+	 elsif awfifo_wren = '1' and first_awfifo_wren_falling = '1' then 	
             awfifo_cnt_en  <= '1';		 
 	    awfifo_cnt     <= awfifo_cnt + 1;
          elsif awfifo_cnt_en = '1' then
@@ -1114,23 +1182,23 @@ begin
          awfifo_wren_del3 <= awfifo_wren_del2;
 	 awfifo_wren_del4 <= awfifo_wren_del3;
 	 awfifo_wren_del5 <= awfifo_wren_del4;
-	 awfifo_wren_del6 <= awfifo_wren_del5;
-	 awfifo_wren_del7 <= awfifo_wren_del6;
       end if;
     end process;
 
     --aw fifo read enable signal, due to fifo takes 2 clock cycles to make the write to take effect
     --so give a short period wait until fifo write to take effect OR when the fifo is not empty and 
-    --an AW is finished
+    --an AW is finished, when last AW transaction for current 4GB bank is not reached yet, read the 
+    --fifo ASAP, it must wait until the last AW and W transaction for current 4GB bank is totoally 
+    --finished, then it can read the fifo to start next bank's AXI transaction
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
 	 if awfifo_rden = '1' then
             awfifo_rden <= '0';
-	 elsif (awfifo_empty = '0' and awfifo_wren_cond = '1'        and last_trans = '0' and last_aw_trans = '0') or 
-	       (awfifo_empty = '0' and last_trans_falling_edge = '1' and last_aw_trans = '1') then
+	 elsif ((awfifo_empty = '0' and awfifo_wren_cond = '1'        and last_trans = '0' and last_aw_trans = '0') or 
+	        (awfifo_empty = '0' and last_trans_falling_edge = '1' and last_aw_trans = '1')) and size_64B = '0' then
             awfifo_rden <= '1';
-         elsif awfifo_cnt = 5 and m01_axi_awvalid = '0' and m02_axi_awvalid = '0' and m03_axi_awvalid = '0' and m04_axi_awvalid = '0' then
+         elsif (awfifo_cnt = 5 and m01_axi_awvalid = '0' and m02_axi_awvalid = '0' and m03_axi_awvalid = '0' and m04_axi_awvalid = '0') or size_64B = '1' then
             awfifo_rden <= awfifo_wren_del5; 
          end if; 
       end if;
@@ -1140,6 +1208,13 @@ begin
                         (m02_axi_awready and m02_axi_awvalid) or
 		        (m03_axi_awready and m03_axi_awvalid) or
 		        (m04_axi_awready and m04_axi_awvalid);
+
+    process(i_shared_clk)
+    begin
+      if rising_edge(i_shared_clk) then
+         awfifo_wren_cond_del <= awfifo_wren_cond;
+      end if;
+    end process;
 
     process(i_shared_clk)
     begin
@@ -1270,7 +1345,7 @@ begin
 
     --m01 to m04 write inidication signal, used to indicate currently whether it's m01 or m02 or m03 or m04 write 
     --situation so a certain bank AXI write transaction only happen within itself and will not across to another bank
-    --if all the fifos are empty and data incoming, then deassert all the indication signals  
+    --if all the fifos are empty and no packet is incoming, then deassert all the indication signals  
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
@@ -1329,128 +1404,116 @@ begin
     --MUX to select among m01 m02 m03 m04 AXI W buses,
     --data is coming from wdata fifo, using ready signal 
     --to hold the W bus.
-process(i_shared_clk)
-begin
-    if rising_edge(i_shared_clk) then
-        if i_rx_soft_reset = '1' then
+    process(i_shared_clk)
+    begin
+      if rising_edge(i_shared_clk) then
+	 if i_rx_soft_reset = '1' then
             m01_axi_wvalid <= '0';
---            m01_axi_wdata  <= (others => '0');
-            m01_axi_wlast  <= '0';
-            m01_axi_wlast_del <= '0';
-            m01_axi_wlast_del2<= '0';
-        else
-            m01_axi_wlast_del2 <= m01_axi_wlast_del; 		 
-            if (m01_axi_wready = '1') then
-                m01_axi_wvalid <= axi_wvalid and m01_fifo_rd_en;
+            m01_axi_wdata  <= (others => '0');
+	    m01_axi_wlast  <= '0';
+	    m01_axi_wlast_del <= '0';
+	 else
+           m01_axi_wlast_del <= m01_axi_wlast; 		 
+           if (m01_axi_wready = '1') then
+              m01_axi_wvalid <= axi_wvalid and m01_fifo_rd_en;
+           end if;
+            if (m01_axi_wready = '1' and m01_fifo_rd_en = '1') then   
+                m01_axi_wdata  <= axi_wdata;
             end if;
---            if (m01_axi_wready = '1' and m01_fifo_rd_en = '1') then   
---                m01_axi_wdata  <= axi_wdata;
---            end if;
-            if m01_axi_wlast = '1' and m01_axi_wready = '1' then
-                m01_axi_wlast  <= '0';
-                m01_axi_wlast_del <= '0';
-            elsif m01_fifo_rd_en = '1' then 
-                m01_axi_wlast     <= axi_wlast;
-                m01_axi_wlast_del <= axi_wlast;
-            end if;   
-        end if;
-    end if;	
-end process;
+	   if m01_axi_wlast = '1' and m01_axi_wready = '1' then
+	      m01_axi_wlast     <= '0';
+           elsif m01_fifo_rd_en = '1' and m01_axi_wlast = '0' then 
+	      m01_axi_wlast     <= axi_wlast;
+           end if;   
+	 end if;
+      end if;	
+    end process;
 
-process(i_shared_clk)
-begin
-    if rising_edge(i_shared_clk) then
-        if i_rx_soft_reset = '1' then
+    process(i_shared_clk)
+    begin
+      if rising_edge(i_shared_clk) then
+         if i_rx_soft_reset = '1' then
             m02_axi_wvalid <= '0';
---            m02_axi_wdata  <= (others => '0');
+            m02_axi_wdata  <= (others => '0');
             m02_axi_wlast  <= '0';
-            m02_axi_wlast_del <= '0';
-            m02_axi_wlast_del2<= '0';
-        else
-            m02_axi_wlast_del2 <= m02_axi_wlast_del;		 
-            if (m02_axi_wready = '1') then
-                m02_axi_wvalid <= axi_wvalid and m02_fifo_rd_en;
-            end if;   
---            if (m02_axi_wready = '1' and m02_fifo_rd_en = '1') then
---              m02_axi_wdata  <= axi_wdata;
---            end if;
-            if m02_axi_wlast = '1' and m02_axi_wready = '1' then
-                m02_axi_wlast  <= '0';
-                m02_axi_wlast_del <= '0';
-            elsif m02_fifo_rd_en = '1' then
-                m02_axi_wlast     <= axi_wlast;
-                m02_axi_wlast_del <= axi_wlast;
+	    m02_axi_wlast_del <= '0';
+         else
+           m02_axi_wlast_del <= m02_axi_wlast; 
+           if (m02_axi_wready = '1') then
+              m02_axi_wvalid <= axi_wvalid and m02_fifo_rd_en;
+           end if;   
+            if (m02_axi_wready = '1' and m02_fifo_rd_en = '1') then
+              m02_axi_wdata  <= axi_wdata;
             end if;
-        end if;
-    end if;
-end process;
+	   if m02_axi_wlast = '1' and m02_axi_wready = '1' then
+              m02_axi_wlast     <= '0';
+           elsif m02_fifo_rd_en = '1' and m02_axi_wlast = '0' then
+              m02_axi_wlast     <= axi_wlast;
+           end if;
+         end if;
+      end if;
+    end process;
 
-process(i_shared_clk)
-begin
-    if rising_edge(i_shared_clk) then
-        if i_rx_soft_reset = '1' then
+    process(i_shared_clk)
+    begin
+      if rising_edge(i_shared_clk) then
+         if i_rx_soft_reset = '1' then
             m03_axi_wvalid <= '0';
---            m03_axi_wdata  <= (others => '0');
+            m03_axi_wdata  <= (others => '0');
             m03_axi_wlast  <= '0';
-            m03_axi_wlast_del <= '0';
-            m03_axi_wlast_del2<= '0';
-        else
-            m03_axi_wlast_del2 <= m03_axi_wlast_del; 		 
-            if (m03_axi_wready = '1') then
-                m03_axi_wvalid <= axi_wvalid and m03_fifo_rd_en;
+	    m03_axi_wlast_del <= '0';
+         else
+           m03_axi_wlast_del <= m03_axi_wlast; 
+           if (m03_axi_wready = '1') then
+              m03_axi_wvalid <= axi_wvalid and m03_fifo_rd_en;
+	   end if;
+            if (m03_axi_wready = '1' and m03_fifo_rd_en = '1') then
+                m03_axi_wdata  <= axi_wdata;
             end if;
---            if (m03_axi_wready = '1' and m03_fifo_rd_en = '1') then
---                m03_axi_wdata  <= axi_wdata;
---            end if;
-            if m03_axi_wlast = '1' and m03_axi_wready = '1' then
-                m03_axi_wlast  <= '0';
-                m03_axi_wlast_del <= '0';
-            elsif m03_fifo_rd_en = '1' then
-                m03_axi_wlast     <= axi_wlast;
-                m03_axi_wlast_del <= axi_wlast;
-            end if;
-        end if;
-    end if;
-end process;
+	   if m03_axi_wlast = '1' and m03_axi_wready = '1' then
+              m03_axi_wlast     <= '0';
+           elsif m03_fifo_rd_en = '1' and m03_axi_wlast = '0' then
+              m03_axi_wlast     <= axi_wlast;
+           end if;
+         end if;
+      end if;
+    end process;
 
-process(i_shared_clk)
-begin
-    if rising_edge(i_shared_clk) then
-        if i_rx_soft_reset = '1' then
-            m04_axi_wvalid      <= '0';
-            --m04_axi_wdata       <= (others => '0');
-            m04_axi_wlast       <= '0';
-            m04_axi_wlast_del   <= '0';
-            m04_axi_wlast_del2  <= '0';
-        else
-            m04_axi_wlast_del2  <= m04_axi_wlast_del;		 
-            if (m04_axi_wready = '1') then
-                m04_axi_wvalid      <= axi_wvalid and m04_fifo_rd_en;
+    process(i_shared_clk)
+    begin
+      if rising_edge(i_shared_clk) then
+         if i_rx_soft_reset = '1' then
+            m04_axi_wvalid <= '0';
+            m04_axi_wdata       <= (others => '0');
+            m04_axi_wlast  <= '0';
+	    m04_axi_wlast_del <= '0';
+         else
+           m04_axi_wlast_del <= m04_axi_wlast;		 
+           if (m04_axi_wready = '1') then
+              m04_axi_wvalid <= axi_wvalid and m04_fifo_rd_en;
+	   end if;
+            if (m04_axi_wready = '1' and m04_fifo_rd_en = '1') then
+                m04_axi_wdata       <= axi_wdata;
             end if;
-    --        if (m04_axi_wready = '1' and m04_fifo_rd_en = '1') then
-    --            m04_axi_wdata       <= axi_wdata;
-    --        end if;
-            if m04_axi_wlast = '1' and m04_axi_wready = '1' then
-                m04_axi_wlast       <= '0';
-                m04_axi_wlast_del   <= '0';
-            elsif m04_fifo_rd_en = '1' then 
-                m04_axi_wlast       <= axi_wlast;
-                m04_axi_wlast_del   <= axi_wlast;
-            end if;
-        end if;
-    end if;
-end process;
+	   if m04_axi_wlast = '1' and m04_axi_wready = '1' then
+              m04_axi_wlast  <= '0';
+           elsif m04_fifo_rd_en = '1' and m04_axi_wlast = '0' then 
+              m04_axi_wlast     <= axi_wlast;
+           end if;
+         end if;
+      end if;
+    end process;
 
-p_reg_output_to_hbm : process(i_shared_clk)
-begin
-    if rising_edge(i_shared_clk) then
-        m01_axi_wdata       <= axi_wdata;
-        m02_axi_wdata       <= axi_wdata;
-        m03_axi_wdata       <= axi_wdata;
-        m04_axi_wdata       <= axi_wdata;
+--p_reg_output_to_hbm : process(i_shared_clk)
+--begin
+--    if rising_edge(i_shared_clk) then
+--        m01_axi_wdata       <= axi_wdata;
+--        m02_axi_wdata       <= axi_wdata;
+--        m03_axi_wdata       <= axi_wdata;
+--        m04_axi_wdata       <= axi_wdata;
 
-    end if;
-end process;
+--    end if;
+--end process;
 
     --write trasaction counter, used to control whether a AXI transaction should be issued or not
     --only when the counter is not zero, means there is AW transaction already in queue, then a
@@ -1464,28 +1527,36 @@ end process;
             m02_wr_cnt <= (others => '0');
             m03_wr_cnt <= (others => '0');
             m04_wr_cnt <= (others => '0');
-         else	    
-	    if (awfifo_rden = '1' and awfifo_valid = '1' and awfifo_dout(41 downto 40) = "00") then     
+         else
+            if (awfifo_rden = '1' and awfifo_valid = '1' and awfifo_dout(41 downto 40) = "00" and m01_axi_wlast_del = '1' and m01_axi_wlast = '0') then
+               m01_wr_cnt <= m01_wr_cnt; 		    
+	    elsif (awfifo_rden = '1' and awfifo_valid = '1' and awfifo_dout(41 downto 40) = "00") then     
                m01_wr_cnt <= m01_wr_cnt + 1;
-	    elsif (m01_axi_wlast_del2 = '1' and m01_axi_wready = '1') then
+	    elsif (m01_axi_wlast_del = '1' and m01_axi_wlast = '0') then
                m01_wr_cnt <= m01_wr_cnt - 1;
             end if;
 
-            if (awfifo_rden = '1' and awfifo_valid = '1' and awfifo_dout(41 downto 40) = "01") then
+	    if (awfifo_rden = '1' and awfifo_valid = '1' and awfifo_dout(41 downto 40) = "01" and m02_axi_wlast_del = '1' and m02_axi_wlast = '0') then
+	       m02_wr_cnt <= m02_wr_cnt;	    
+            elsif (awfifo_rden = '1' and awfifo_valid = '1' and awfifo_dout(41 downto 40) = "01") then
                m02_wr_cnt <= m02_wr_cnt + 1;
-            elsif (m02_axi_wlast_del2 = '1' and m02_axi_wready = '1') then
+            elsif (m02_axi_wlast_del = '1' and m02_axi_wlast = '0') then
                m02_wr_cnt <= m02_wr_cnt - 1;
             end if;
 
-	    if (awfifo_rden = '1' and awfifo_valid = '1' and awfifo_dout(41 downto 40) = "10") then
+	    if (awfifo_rden = '1' and awfifo_valid = '1' and awfifo_dout(41 downto 40) = "10" and m03_axi_wlast_del = '1' and m03_axi_wlast = '0') then
+               m03_wr_cnt <= m03_wr_cnt;
+	    elsif (awfifo_rden = '1' and awfifo_valid = '1' and awfifo_dout(41 downto 40) = "10") then
                m03_wr_cnt <= m03_wr_cnt + 1;
-            elsif (m03_axi_wlast_del2 = '1' and m03_axi_wready = '1') then
+            elsif (m03_axi_wlast_del = '1' and m03_axi_wlast = '0') then
                m03_wr_cnt <= m03_wr_cnt - 1;
             end if;
 
-	    if (awfifo_rden = '1' and awfifo_valid = '1' and awfifo_dout(41 downto 40) = "11") then
+	    if (awfifo_rden = '1' and awfifo_valid = '1' and awfifo_dout(41 downto 40) = "11" and m04_axi_wlast_del = '1' and m04_axi_wlast = '0') then
+               m04_wr_cnt <= m04_wr_cnt;
+	    elsif (awfifo_rden = '1' and awfifo_valid = '1' and awfifo_dout(41 downto 40) = "11") then
                m04_wr_cnt <= m04_wr_cnt + 1;
-            elsif (m04_axi_wlast_del2 = '1' and m04_axi_wready = '1') then
+            elsif (m04_axi_wlast_del = '1' and m04_axi_wlast = '0') then
                m04_wr_cnt <= m04_wr_cnt - 1;
             end if;
          end if;   
@@ -1539,7 +1610,7 @@ end process;
 	 if i_rx_soft_reset = '1' then
             m01_fifo_rd_en  <= '0';
          else
-	    if (((axi_wlast_del2 = '1' and axi_wlast_del = '0' and axi_wlast = '0' and m01_wr = '1') or m01_wr_p = '1') and m01_wr_cnt /= 0 and axi_wdata_fifo_empty = '0') or (axi_wdata_fifo_empty_falling_edge = '1' and m01_wr = '1') then
+	    if (((axi_wlast_del2 = '1' and axi_wlast_del = '0' and m01_wr = '1' and size_64B = '0') or m01_wr_p = '1') and m01_wr_cnt /= 0 and axi_wdata_fifo_empty = '0') or (axi_wdata_fifo_empty_falling_edge = '1' and m01_wr = '1') or (size_64B = '1' and awfifo_wren_cond_del = '1' and m01_wr = '1') then
                m01_fifo_rd_en  <= '1';
             elsif axi_wlast = '1' then
 	       m01_fifo_rd_en  <= '0';  	 
@@ -1554,7 +1625,7 @@ end process;
 	 if i_rx_soft_reset = '1' then    
             m02_fifo_rd_en  <= '0';
          else	    
-            if (((axi_wlast_del2 = '1' and axi_wlast_del = '0' and axi_wlast = '0' and m02_wr = '1') or m02_wr_p = '1') and m02_wr_cnt /= 0 and m01_fifo_rd_en = '0' and axi_wdata_fifo_empty = '0') or (axi_wdata_fifo_empty_falling_edge = '1' and m02_wr = '1') then
+            if (((axi_wlast_del2 = '1' and axi_wlast_del = '0' and m02_wr = '1' and size_64B = '0') or m02_wr_p = '1') and m02_wr_cnt /= 0 and m01_fifo_rd_en = '0' and axi_wdata_fifo_empty = '0') or (axi_wdata_fifo_empty_falling_edge = '1' and m02_wr = '1') or (size_64B = '1' and awfifo_wren_cond_del = '1' and m02_wr = '1') then
                m02_fifo_rd_en  <= '1';
             elsif axi_wlast = '1' then
                m02_fifo_rd_en  <= '0';
@@ -1569,7 +1640,7 @@ end process;
 	 if i_rx_soft_reset = '1' then     
 	    m03_fifo_rd_en  <= '0';
          else   
-            if (((axi_wlast_del2 = '1' and axi_wlast_del = '0' and axi_wlast = '0' and m03_wr = '1') or m03_wr_p = '1') and m03_wr_cnt /= 0  and m02_fifo_rd_en = '0' and axi_wdata_fifo_empty = '0') or (axi_wdata_fifo_empty_falling_edge = '1' and m03_wr = '1') then
+            if (((axi_wlast_del2 = '1' and axi_wlast_del = '0' and m03_wr = '1' and size_64B = '0') or m03_wr_p = '1') and m03_wr_cnt /= 0  and m02_fifo_rd_en = '0' and axi_wdata_fifo_empty = '0') or (axi_wdata_fifo_empty_falling_edge = '1' and m03_wr = '1') or (size_64B = '1' and awfifo_wren_cond_del = '1' and m03_wr = '1') then
                m03_fifo_rd_en  <= '1';
             elsif axi_wlast = '1' then
                m03_fifo_rd_en  <= '0';
@@ -1584,7 +1655,7 @@ end process;
 	 if i_rx_soft_reset = '1' then
             m04_fifo_rd_en  <= '0';
 	 else
-            if (((axi_wlast_del2 = '1' and axi_wlast_del = '0' and axi_wlast = '0' and m04_wr = '1') or m04_wr_p = '1') and m04_wr_cnt /= 0 and m03_fifo_rd_en = '0' and axi_wdata_fifo_empty = '0') or (axi_wdata_fifo_empty_falling_edge = '1' and m04_wr = '1') then
+            if ((((axi_wlast_del2 = '1' and axi_wlast_del = '0' and m04_wr = '1' and size_64B = '0') or m04_wr_p = '1') and m04_wr_cnt /= 0 and m03_fifo_rd_en = '0' and axi_wdata_fifo_empty = '0') or (axi_wdata_fifo_empty_falling_edge = '1' and m04_wr = '1') or (size_64B = '1' and awfifo_wren_cond_del = '1' and m04_wr = '1')) and m04_last_trans_asserted = '0' then
                m04_fifo_rd_en  <= '1';
             elsif axi_wlast = '1' then --when one packet reading from fifo is finished
                m04_fifo_rd_en  <= '0';
@@ -1592,6 +1663,19 @@ end process;
 	 end if;
       end if;
     end process;
+
+    process(i_shared_clk)
+    begin
+      if rising_edge(i_shared_clk) then
+         if i_rx_soft_reset = '1' then
+            m04_last_trans_asserted <= '0';
+         else 
+            if m04_fifo_rd_en = '1' and last_trans = '1' then
+	       m04_last_trans_asserted <= '1';
+            end if;
+         end if;
+      end if;
+    end process;      
 
     process(i_shared_clk)
     begin
@@ -1612,9 +1696,23 @@ end process;
 
     last_trans_falling_edge <= last_trans_del and (not last_trans);
 
+    --when 16GB is writtern to full, then stop write to axi wdata fifo anymore
+    process(i_shared_clk)
+    begin
+      if rising_edge(i_shared_clk) then
+	 if i_rx_soft_reset = '1' then
+	    stop_fifo_wr_en <= '0';
+         else	    
+	   if i_valid_falling = '1' and m04_axi_4G_full = '1' then 
+              stop_fifo_wr_en <= '1';
+           end if;
+         end if;	   
+      end if;
+    end process;
+
     --W data fifo control signals, as long as there is data coming in from cmac
     --the write data to w data fifo
- fifo_wr_en <= i_data_valid_from_cmac and i_enable_capture; 
+ fifo_wr_en <= i_data_valid_from_cmac and i_enable_capture and (not stop_fifo_wr_en); 
  fifo_rd_en <= (m01_fifo_rd_en and m01_axi_wready) or (m02_fifo_rd_en and m02_axi_wready) or (m03_fifo_rd_en and m03_axi_wready) or (m04_fifo_rd_en and m04_axi_wready);
  fifo_rd_wready <= (m01_wr and m01_axi_wready) or (m02_wr and m02_axi_wready) or (m03_wr and m03_axi_wready) or (m04_wr and m04_axi_wready); 
  rx_fifo_rst    <= i_rx_soft_reset or i_shared_rst; 
@@ -1639,7 +1737,7 @@ end process;
     --1. when transaction length is 1
     --2. when transaction length is 2
     --3. when transaction length is not 1 and not 2
-    --condition 1 and 2 are special conditions, because length start from 0, and wlast is one cycle before actual m01/02/03/04_axi_wlast
+    --condition 1 and 2 are special conditions, because length start from 0, and axi_wlast is one cycle before actual m01/02/03/04_axi_wlast
     --so need to take care of length 1 and 2 as special condition 
     process(i_shared_clk)
     begin
@@ -1648,19 +1746,18 @@ end process;
             axi_wlast        <= '0';
 	    axi_wlast_del    <= '0';
 	    axi_wlast_del2   <= '0';
-	    axi_wlast_del3   <= '0';
 	 else
-            if (aw_len = X"00"  and axi_wlast_del2 = '1' and axi_wlast_del = '0' and axi_wlast = '0' and awlenfifo_rden_del = '1') or
+            if (aw_len = X"00"  and axi_wlast_del2 = '1' and axi_wlast_del = '0' and axi_wlast = '0' and awlenfifo_rden_del = '1' and size_64B = '0') or
 	       --(aw_len = X"00"  and m01_wr_p = '1') or 
 	       (aw_len = X"01"  and fifo_rd_counter = 0 and fifo_rd_en = '1') or 
-	       (aw_len /= X"00" and aw_len /= X"01"     and fifo_rd_counter = (unsigned(aw_len)-1) and fifo_rd_en = '1') then
+	       (aw_len /= X"00" and aw_len /= X"01"     and fifo_rd_counter = (unsigned(aw_len)-1) and fifo_rd_en = '1') or 
+	       (size_64B = '1'  and awfifo_wren_cond_del = '1') then
                axi_wlast     <= '1';     
             elsif fifo_rd_wready = '1' and axi_wdata_fifo_empty = '0' and axi_wdata_fifo_empty_falling_edge = '0' then
                axi_wlast        <= '0';
             end if;
-	    axi_wlast_del       <= axi_wlast;
-	    axi_wlast_del2      <= axi_wlast_del;
-	    axi_wlast_del3      <= axi_wlast_del2;
+	    axi_wlast_del  <= axi_wlast;
+	    axi_wlast_del2 <= axi_wlast_del;
          end if;
       end if;
     end process;
@@ -2370,7 +2467,7 @@ input_fsm_state_count <=    x"0" when input_fsm = idle else
     hbm_capture_ila : ila_0
     port map (
         clk                     => i_shared_clk, 
-        probe0(28 downto 0)     => ( others => '0'),
+        probe0(28 downto 0)     => m01_axi_wdata(28 downto 0),
         probe0(29)              => last_aw_trans,
         probe0(30)              => m02_wr,
         probe0(31)              => m01_wr,
@@ -2386,7 +2483,7 @@ input_fsm_state_count <=    x"0" when input_fsm = idle else
         probe0(100)             => m02_axi_wready,
         probe0(108 downto 101)  => m02_axi_awlen,
         probe0(109)             => m02_fifo_rd_en,
-        probe0(125 downto 110)  => ( others => '0'),
+        probe0(125 downto 110)  => m02_axi_wdata(15 downto 0),
         probe0(126)             => last_trans,
         --probe0(126 downto 64)   => i_data_from_cmac(62 downto 0),
         probe0(127)             => m01_axi_4G_full,
