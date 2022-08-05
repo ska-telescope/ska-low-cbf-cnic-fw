@@ -103,7 +103,7 @@ signal rx_axis_tvalid_int       : std_logic;
 
 signal rx_axis_tdata_int_d1     : std_logic_vector ( 511 downto 0 );
 signal rx_axis_tkeep_int_d1     : std_logic_vector ( 63 downto 0 );
-signal rx_axis_tlast_int_d1     : std_logic;
+signal rx_axis_tlast_int_d1     : std_logic_vector ( 1 downto 0 );
 signal rx_axis_tuser_int_d1     : std_logic_vector ( 79 downto 0 );
 signal rx_axis_tvalid_int_d1    : std_logic;
 
@@ -125,6 +125,8 @@ signal rx_buffer_ram_addr_out   : std_logic_vector(8 downto 0);
 signal words_to_send_to_hbm     : std_logic_vector(7 downto 0);
 
 signal wr_page, rd_page         : std_logic_vector(0 downto 0) := "0";
+signal wr_page_d                : std_logic_vector(0 downto 0) := "0";
+
 signal rd_page_cache            : std_logic;
 signal rd_page_active           : std_logic;
 
@@ -157,6 +159,10 @@ signal ila_data_out_r               : std_logic_vector(127 downto 0);
 
 signal ptp_seconds                  : std_logic_vector(47 downto 0);
 signal ptp_sub_sec                  : std_logic_vector(31 downto 0);
+
+signal capture_timestamp            : std_logic;
+signal timestamp                    : std_logic_vector(511 downto 0);
+
 ------------------------------------------------------------------------------
 -- packet stats
 
@@ -213,10 +219,15 @@ begin
         
         rx_axis_tdata_int_d1    <= rx_axis_tdata_int;
         rx_axis_tkeep_int_d1    <= rx_axis_tkeep_int;
-        rx_axis_tlast_int_d1    <= rx_axis_tlast_int;
+        rx_axis_tlast_int_d1(0) <= rx_axis_tlast_int;
         rx_axis_tuser_int_d1    <= rx_axis_tuser_int;
         rx_axis_tvalid_int_d1   <= rx_axis_tvalid_int;
         
+        -- lengthen last signal to insert the timestamp immediately after packet end.
+        -- the second bit is only relevant for end of packet due the cyclic nature of 64/66 writing from CMAC.
+
+        rx_axis_tlast_int_d1(1) <= rx_axis_tlast_int_d1(0);
+
     end if;
 end process;
 
@@ -265,11 +276,13 @@ begin
                 current_inc_close_to_target <= '0';
             end if;
             
-            if rx_axis_tlast_int_d1 = '1' AND calib_done = '1' then
+            if rx_axis_tlast_int_d1(0) = '1' AND calib_done = '1' then
                 if final_byte = rx_axis_tkeep_int_d1 AND current_inc_close_to_target = '1' then
                     wr_page <= not wr_page;
                 end if;
             end if;
+            
+            wr_page_d   <= wr_page;
         end if;
     end if;
 end process;
@@ -280,19 +293,39 @@ end process;
 write_rx_data_proc : process(i_clk_100GE)
 begin
     if rising_edge(i_clk_100GE) then
-        -- for back to back packets
-        if rx_axis_tlast_int_d1 = '1' then
-            wr_addr <= (others => '0');
-        elsif rx_axis_tvalid_int_d1 = '1' then
-            wr_addr <= std_logic_vector(unsigned(wr_addr) + 1);
+        if cmac_rx_reset_capture = '1' then
+            wr_addr             <= (others => '0');
+            capture_timestamp   <= '1';
+            timestamp           <= zero_512;
+        else
+            -- timestamp is provided with the first write, otherwise bus provides zero.
+            -- re-enable the capture of timestamp after last write from packet indicated.
+            if rx_axis_tlast_int_d1(0) then
+                capture_timestamp       <= '1';
+            elsif rx_axis_tvalid_int_d1 = '1' and capture_timestamp = '1' then
+                -- byte swap as per how it will be read from HBM.
+                --timestamp(79 downto 0)  <= rx_axis_tuser_int_d1;
+                timestamp(79 downto 40) <= rx_axis_tuser_int_d1(7 downto 0) & rx_axis_tuser_int_d1(15 downto 8) & rx_axis_tuser_int_d1(23 downto 16) & rx_axis_tuser_int_d1(31 downto 24) & rx_axis_tuser_int_d1(39 downto 32);
+                timestamp(39 downto 0)  <= rx_axis_tuser_int_d1(47 downto 40) & rx_axis_tuser_int_d1(55 downto 48) & rx_axis_tuser_int_d1(63 downto 56) & rx_axis_tuser_int_d1(71 downto 64) & rx_axis_tuser_int_d1(79 downto 72);
+                capture_timestamp       <= '0';
+            end if;
+            
+            -- for back to back packets
+            if rx_axis_tlast_int_d1(1) = '1' then
+                wr_addr <= (others => '0');
+            elsif rx_axis_tvalid_int_d1 = '1' then
+                wr_addr <= std_logic_vector(unsigned(wr_addr) + 1);
+            end if;
         end if;
     end if;
 end process;
 
 
-rx_buffer_ram_din       <= rx_axis_tdata_int_d1;
-rx_buffer_ram_din_wr    <= rx_axis_tvalid_int_d1;
-rx_buffer_ram_addr_in   <= wr_page & wr_addr;
+rx_buffer_ram_din       <= rx_axis_tdata_int_d1 when rx_axis_tlast_int_d1(1) = '0' else
+                            timestamp;
+                            
+rx_buffer_ram_din_wr    <= rx_axis_tvalid_int_d1 OR rx_axis_tlast_int_d1(1);
+rx_buffer_ram_addr_in   <= wr_page_d & wr_addr;
 
 -- assuming dual pages, can expand to 4 with more memory if we go for smaller packets.
 -- while one page is available to write, the other is being drained to the HBM WR FIFO.
@@ -360,6 +393,7 @@ cmac_reset_combined <= cmac_rx_reset_capture OR cmac_reset;
 config_proc : process(i_clk_300)
 begin
     if rising_edge(i_clk_300) then
+        -- ARGS axi Reset
         if i_clk_300_rst = '1' then
             rd_addr                 <= x"00";
             hbm_streaming_sm        <= IDLE;
@@ -369,8 +403,13 @@ begin
             hold                    <= '0';
         else
             
+            -- add 64 bytes to the byte count to include the time stamp.
+            if i_rx_reset_capture = '1' then
+                words_to_send_to_hbm    <= std_logic_vector(unsigned(i_rx_packet_size(13 downto 6)) + x"01");
+            end if;
+            
             rd_page_cache           <= rd_page(0);
-            words_to_send_to_hbm    <= i_rx_packet_size(13 downto 6);
+            --words_to_send_to_hbm    <= i_rx_packet_size(13 downto 6);
             
             case hbm_streaming_sm is
                 when IDLE => 
@@ -383,7 +422,7 @@ begin
                     end if;            
                 
                 when PREP =>
-                    rd_addr <= std_logic_vector(unsigned(rd_addr) + 1);
+                    rd_addr                 <= std_logic_vector(unsigned(rd_addr) + 1);
                     if rd_addr = x"02" then
                         hbm_streaming_sm    <= DATA;
                         data_to_hbm_wr_int  <= '1';
@@ -427,7 +466,7 @@ begin
             stat_done           <= '0';
         else
         
-            if rx_axis_tlast_int_d1 = '1' then
+            if rx_axis_tlast_int_d1(0) = '1' then
                 stat_byte_count     <= 0;
             elsif rx_axis_tvalid_int_d1 = '1' then
                 stat_byte_count     <= stat_byte_count + 64;
@@ -436,7 +475,7 @@ begin
     
             case detected_check_sm is
                 when IDLE =>
-                    if rx_axis_tlast_int_d1 = '1' then
+                    if rx_axis_tlast_int_d1(0) = '1' then
                         b0_cached               <= b0;
                         b1_cached               <= b1;
                         b2_cached               <= b2;
@@ -582,7 +621,7 @@ end process;
         probe0(136 downto 128)  => rx_buffer_ram_addr_in,
         probe0(137)             => rx_buffer_ram_din_wr, 
         
-        probe0(138)             => rx_axis_tlast_int_d1,
+        probe0(138)             => rx_axis_tlast_int_d1(0),
         probe0(139)             => rx_axis_tvalid_int_d1,
         probe0(153 downto 140)  => inc_packet_byte_count,
         probe0(191 downto 154)  => (others => '0')

@@ -308,7 +308,7 @@ end process;
 
 i_rx_axis_tdata        <= streaming_data;
 
-
+i_rx_axis_tuser        <= zero_word & one_dword & zero_dword; 
 
 
 rx_reset_counter        <= '0';

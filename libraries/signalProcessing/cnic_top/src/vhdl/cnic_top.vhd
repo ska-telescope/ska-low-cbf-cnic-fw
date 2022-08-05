@@ -274,6 +274,7 @@ ARCHITECTURE structure OF cnic_top IS
     
     signal rx_packet_size_mod64b    : std_logic_vector(13 downto 0);
     signal packet_size_calc         : std_logic_vector(13 downto 0);
+    signal packet_size_calc_b       : std_logic_vector(13 downto 0);
     signal packet_size_ceil         : std_logic_vector(5 downto 0) := "000000";
     
 begin
@@ -333,8 +334,12 @@ begin
             packet_size_ceil(0)             <= config_rw.rx_packet_size(5) OR config_rw.rx_packet_size(4) OR config_rw.rx_packet_size(3) OR config_rw.rx_packet_size(2) OR config_rw.rx_packet_size(1) OR config_rw.rx_packet_size(0); 
             packet_size_calc(13 downto 6)   <= std_logic_vector(unsigned(config_rw.rx_packet_size(13 downto 6)) + unsigned(packet_size_ceil));
             packet_size_calc(5 downto 0)    <= "000000";
+            
+            -- add extra 64 bytes for timestamp/metadata vector.
+            packet_size_calc_b(13 downto 6) <= std_logic_vector(unsigned(packet_size_calc(13 downto 6)) + x"01");
+            packet_size_calc_b(5 downto 0)  <= packet_size_calc(5 downto 0);  
              
-            rx_packet_size_mod64b           <= packet_size_calc;
+            rx_packet_size_mod64b           <= packet_size_calc_b;        
         end if;
     end if;
 end process;
