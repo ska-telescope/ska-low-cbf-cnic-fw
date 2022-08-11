@@ -1422,7 +1422,7 @@ begin
             end if;
 	   if m01_axi_wlast = '1' and m01_axi_wready = '1' then
 	      m01_axi_wlast     <= '0';
-           elsif m01_fifo_rd_en = '1' and m01_axi_wlast = '0' then 
+           elsif m01_fifo_rd_en = '1' and m01_axi_wlast = '0' and m01_axi_wready = '1' then 
 	      m01_axi_wlast     <= axi_wlast;
            end if;   
 	 end if;
@@ -1447,7 +1447,7 @@ begin
             end if;
 	   if m02_axi_wlast = '1' and m02_axi_wready = '1' then
               m02_axi_wlast     <= '0';
-           elsif m02_fifo_rd_en = '1' and m02_axi_wlast = '0' then
+           elsif m02_fifo_rd_en = '1' and m02_axi_wlast = '0' and m02_axi_wready = '1' then
               m02_axi_wlast     <= axi_wlast;
            end if;
          end if;
@@ -1472,7 +1472,7 @@ begin
             end if;
 	   if m03_axi_wlast = '1' and m03_axi_wready = '1' then
               m03_axi_wlast     <= '0';
-           elsif m03_fifo_rd_en = '1' and m03_axi_wlast = '0' then
+           elsif m03_fifo_rd_en = '1' and m03_axi_wlast = '0' and m03_axi_wready = '1' then
               m03_axi_wlast     <= axi_wlast;
            end if;
          end if;
@@ -1497,7 +1497,7 @@ begin
             end if;
 	   if m04_axi_wlast = '1' and m04_axi_wready = '1' then
               m04_axi_wlast  <= '0';
-           elsif m04_fifo_rd_en = '1' and m04_axi_wlast = '0' then 
+           elsif m04_fifo_rd_en = '1' and m04_axi_wlast = '0' and m04_axi_wready = '1' then 
               m04_axi_wlast     <= axi_wlast;
            end if;
          end if;
@@ -1612,7 +1612,7 @@ begin
          else
 	    if (((axi_wlast_del2 = '1' and axi_wlast_del = '0' and m01_wr = '1' and size_64B = '0') or m01_wr_p = '1') and m01_wr_cnt /= 0 and axi_wdata_fifo_empty = '0') or (axi_wdata_fifo_empty_falling_edge = '1' and m01_wr = '1') or (size_64B = '1' and awfifo_wren_cond_del = '1' and m01_wr = '1') then
                m01_fifo_rd_en  <= '1';
-            elsif axi_wlast = '1' then
+            elsif axi_wlast = '1' and m01_axi_wready = '1' then
 	       m01_fifo_rd_en  <= '0';  	 
 	    end if;
          end if;
@@ -1627,7 +1627,7 @@ begin
          else	    
             if (((axi_wlast_del2 = '1' and axi_wlast_del = '0' and m02_wr = '1' and size_64B = '0') or m02_wr_p = '1') and m02_wr_cnt /= 0 and m01_fifo_rd_en = '0' and axi_wdata_fifo_empty = '0') or (axi_wdata_fifo_empty_falling_edge = '1' and m02_wr = '1') or (size_64B = '1' and awfifo_wren_cond_del = '1' and m02_wr = '1') then
                m02_fifo_rd_en  <= '1';
-            elsif axi_wlast = '1' then
+            elsif axi_wlast = '1' and m02_axi_wready = '1' then
                m02_fifo_rd_en  <= '0';
             end if;
 	 end if;
@@ -1642,7 +1642,7 @@ begin
          else   
             if (((axi_wlast_del2 = '1' and axi_wlast_del = '0' and m03_wr = '1' and size_64B = '0') or m03_wr_p = '1') and m03_wr_cnt /= 0  and m02_fifo_rd_en = '0' and axi_wdata_fifo_empty = '0') or (axi_wdata_fifo_empty_falling_edge = '1' and m03_wr = '1') or (size_64B = '1' and awfifo_wren_cond_del = '1' and m03_wr = '1') then
                m03_fifo_rd_en  <= '1';
-            elsif axi_wlast = '1' then
+            elsif axi_wlast = '1' and m03_axi_wready = '1' then
                m03_fifo_rd_en  <= '0';
 	    end if;
          end if;
@@ -1657,7 +1657,7 @@ begin
 	 else
             if ((((axi_wlast_del2 = '1' and axi_wlast_del = '0' and m04_wr = '1' and size_64B = '0') or m04_wr_p = '1') and m04_wr_cnt /= 0 and m03_fifo_rd_en = '0' and axi_wdata_fifo_empty = '0') or (axi_wdata_fifo_empty_falling_edge = '1' and m04_wr = '1') or (size_64B = '1' and awfifo_wren_cond_del = '1' and m04_wr = '1')) and m04_last_trans_asserted = '0' then
                m04_fifo_rd_en  <= '1';
-            elsif axi_wlast = '1' then --when one packet reading from fifo is finished
+            elsif axi_wlast = '1' and m04_axi_wready = '1' then --when one packet reading from fifo is finished
                m04_fifo_rd_en  <= '0';
             end if;
 	 end if;
@@ -1927,7 +1927,9 @@ end process;
              boundary_across_num  <= (others => '0');
 	     readaddr_reg         <= (others => '0');
 	     if update_readaddr_p = '1' then
-		readaddr          <= unsigned(i_readaddr); 
+		readaddr          <= unsigned(i_readaddr);
+	     else  
+	        readaddr          <= (others => '0');	     
              end if;		
              current_axi_4k_count <= (others =>'0');
              rd_fsm               <= wait_fifo_reset;
