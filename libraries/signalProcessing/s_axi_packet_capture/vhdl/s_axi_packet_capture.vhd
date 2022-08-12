@@ -112,6 +112,7 @@ signal rx_axis_tready_int       : std_logic;
 signal inc_packet_byte_count    : std_logic_vector (13 downto 0) := "00" & x"040"; 
 signal packet_byte_count        : std_logic_vector (13 downto 0);
 
+
 signal final_byte_vector        : std_logic_vector (63 downto 0);   
 signal final_byte               : std_logic_vector (63 downto 0);   
 signal expected_tx_last_byte    : std_logic_vector (5 downto 0);
@@ -145,7 +146,7 @@ signal no_remainder,whole_interval  : std_logic;
 signal cmac_rx_reset_capture        : std_logic;
 signal cmac_rx_packet_size          : std_logic_vector(13 downto 0);
 
-type hbm_streaming_statemachine is (IDLE, PREP, DATA, FINISH);
+type hbm_streaming_statemachine is (IDLE, PREP, DATA, FINISH, STAMP);
 signal hbm_streaming_sm : hbm_streaming_statemachine;
 
 type packet_check_statemachine is (IDLE, PREP, DATA, FINISH);
@@ -161,8 +162,16 @@ signal ptp_seconds                  : std_logic_vector(47 downto 0);
 signal ptp_sub_sec                  : std_logic_vector(31 downto 0);
 
 signal capture_timestamp            : std_logic;
-signal timestamp                    : std_logic_vector(511 downto 0);
+signal timestamp                    : std_logic_vector(79 downto 0);
 
+signal timestamp_data_fifo_wr       : std_logic;
+signal timestamp_data_fifo_rd       : std_logic;
+signal timestamp_data_fifo_data     : std_logic_vector(79 downto 0);
+signal timestamp_data_fifo_q        : std_logic_vector(79 downto 0);
+
+signal timestamp_out                : std_logic_vector(511 downto 0) := zero_512;
+signal data_to_hbm                  : std_logic_vector(511 downto 0);
+signal data_to_hbm_wr               : std_logic;
 ------------------------------------------------------------------------------
 -- packet stats
 
@@ -193,16 +202,16 @@ signal stats_increment                                  : t_slv_3_arr(0 to (STAT
 signal stats_to_host_data_out                           : t_slv_32_arr(0 to (STAT_REGISTERS-1));
 
 ------------------------------------------------------------------------------
-
+signal debug_count                                      : unsigned(7 downto 0) := x"00";
 
 begin
 
 ------------------------------------------------------------------------------
 -- assume always ready if CMAC is locked.
 o_rx_axis_tready        <= rx_axis_tready_int;
+o_data_to_hbm           <= data_to_hbm;
+o_data_to_hbm_wr        <= data_to_hbm_wr;
 
-o_data_to_hbm           <= rx_buffer_ram_dout;
-o_data_to_hbm_wr        <= data_to_hbm_wr_int;
 
 -- register AXI bus
 s_axi_proc : process(i_clk_100GE)
@@ -226,7 +235,8 @@ begin
         -- lengthen last signal to insert the timestamp immediately after packet end.
         -- the second bit is only relevant for end of packet due the cyclic nature of 64/66 writing from CMAC.
 
-        rx_axis_tlast_int_d1(1) <= rx_axis_tlast_int_d1(0);
+        --rx_axis_tlast_int_d1(1) <= rx_axis_tlast_int_d1(0);
+
 
     end if;
 end process;
@@ -240,6 +250,7 @@ begin
             expected_tx_last_byte   <= cmac_rx_packet_size(5 downto 0);
             calib_done              <= '0';
             no_remainder            <= '1';
+            packet_byte_count       <= "00" & x"000";
         else
             if expected_tx_last_byte /= "000000" then
                 expected_tx_last_byte   <= std_logic_vector(unsigned(expected_tx_last_byte) + 1);
@@ -250,6 +261,16 @@ begin
                 calib_done              <= '1';
             end if;
             final_byte <= final_byte_vector;
+            
+            
+            -- how many 64 bytes transfer to look for before LAST signal
+            -- if there is a modulo 64 then deduct 64 otherwise look for modulo.
+            if cmac_rx_packet_size(5 downto 0) = "000000" AND calib_done = '0' then
+                packet_byte_count <= std_logic_vector(unsigned(cmac_rx_packet_size) - 64);
+            else
+                packet_byte_count <= cmac_rx_packet_size(13 downto 6) & "000000";
+            end if;
+                
         end if;
     end if;
 end process;
@@ -261,28 +282,33 @@ begin
         if cmac_rx_reset_capture = '1' then
             --wr_page(0)                  <= '0';
             rx_packet_size              <= cmac_rx_packet_size;
-            inc_packet_byte_count       <= "00" & x"040"; 
+            inc_packet_byte_count       <= "00" & x"000"; 
+            timestamp_data_fifo_wr      <= '0';
         else
             -- count whole 64 bytes
             if rx_axis_tlast_int = '1' then
-                inc_packet_byte_count   <= "00" & x"040"; 
+                inc_packet_byte_count   <= "00" & x"000"; 
             elsif rx_axis_tvalid_int = '1' then
                 inc_packet_byte_count   <= std_logic_vector(unsigned(inc_packet_byte_count) + 64);
             end if;
         
-            if rx_packet_size(13 downto 7) = inc_packet_byte_count(13 downto 7) then
+            -- set flag for 2nd last transfer on packet.
+            if packet_byte_count(13 downto 6) = inc_packet_byte_count(13 downto 6) then
                 current_inc_close_to_target <= '1';
             else
                 current_inc_close_to_target <= '0';
             end if;
             
+            timestamp_data_fifo_wr  <= '0';
+            -- if last write for packet and length is good, pass it on.
             if rx_axis_tlast_int_d1(0) = '1' AND calib_done = '1' then
                 if final_byte = rx_axis_tkeep_int_d1 AND current_inc_close_to_target = '1' then
-                    wr_page <= not wr_page;
+                    wr_page                 <= not wr_page;
+                    timestamp_data_fifo_wr  <= '1';
                 end if;
             end if;
             
-            wr_page_d   <= wr_page;
+--            wr_page_d   <= wr_page;
         end if;
     end if;
 end process;
@@ -296,7 +322,7 @@ begin
         if cmac_rx_reset_capture = '1' then
             wr_addr             <= (others => '0');
             capture_timestamp   <= '1';
-            timestamp           <= zero_512;
+            timestamp           <= zero_word & zero_64;
         else
             -- timestamp is provided with the first write, otherwise bus provides zero.
             -- re-enable the capture of timestamp after last write from packet indicated.
@@ -311,7 +337,7 @@ begin
             end if;
             
             -- for back to back packets
-            if rx_axis_tlast_int_d1(1) = '1' then
+            if rx_axis_tlast_int_d1(0) = '1' then
                 wr_addr <= (others => '0');
             elsif rx_axis_tvalid_int_d1 = '1' then
                 wr_addr <= std_logic_vector(unsigned(wr_addr) + 1);
@@ -321,11 +347,10 @@ begin
 end process;
 
 
-rx_buffer_ram_din       <= rx_axis_tdata_int_d1 when rx_axis_tlast_int_d1(1) = '0' else
-                            timestamp;
+rx_buffer_ram_din       <= rx_axis_tdata_int_d1;
                             
-rx_buffer_ram_din_wr    <= rx_axis_tvalid_int_d1 OR rx_axis_tlast_int_d1(1);
-rx_buffer_ram_addr_in   <= wr_page_d & wr_addr;
+rx_buffer_ram_din_wr    <= rx_axis_tvalid_int_d1;
+rx_buffer_ram_addr_in   <= wr_page & wr_addr;
 
 -- assuming dual pages, can expand to 4 with more memory if we go for smaller packets.
 -- while one page is available to write, the other is being drained to the HBM WR FIFO.
@@ -349,6 +374,37 @@ rx_buffer_ram : entity signal_processing_common.memory_dp_wrapper
     );
 
 rx_buffer_ram_addr_out      <= rd_page_active & rd_addr;
+
+
+timestamp_data_fifo_data    <= timestamp;
+
+-- write timestamp if the packet is valid.
+time_stamp_fifo : entity PSR_Packetiser_lib.xpm_fifo_wrapper
+    Generic map (
+        FIFO_DEPTH      => 16,
+        DATA_WIDTH      => 80
+    )
+    Port Map ( 
+        -- WR clk reset
+        fifo_reset      => cmac_reset,
+
+        -- WR        
+        fifo_wr_clk     => i_clk_100GE,
+        fifo_wr         => timestamp_data_fifo_wr,
+        fifo_data       => timestamp_data_fifo_data,
+        fifo_full       => open,
+        fifo_wr_count   => open,
+        
+        -- RD    
+        fifo_rd_clk     => i_clk_300,
+        fifo_rd         => timestamp_data_fifo_rd,
+        fifo_q          => timestamp_data_fifo_q,
+        fifo_q_valid    => open,
+        fifo_empty      => open,
+        fifo_rd_count   => open
+    );
+
+
 ------------------------------------------------------------------------------
 
 packet_ready_cdc : entity signal_processing_common.sync 
@@ -390,6 +446,10 @@ cmac_reset_combined <= cmac_rx_reset_capture OR cmac_reset;
 ------------------------------------------------------------------------------
 -- stream out data to HBM SM
 
+
+timestamp_out(79 downto 0)  <= timestamp_data_fifo_q;
+
+
 config_proc : process(i_clk_300)
 begin
     if rising_edge(i_clk_300) then
@@ -401,21 +461,24 @@ begin
             rd_page_active          <= '0';
             rd_page_cache           <= rd_page(0);
             hold                    <= '0';
+            timestamp_data_fifo_rd  <= '0';
         else
             
             -- add 64 bytes to the byte count to include the time stamp.
-            if i_rx_reset_capture = '1' then
-                words_to_send_to_hbm    <= std_logic_vector(unsigned(i_rx_packet_size(13 downto 6)) + x"01");
-            end if;
+--            if i_rx_reset_capture = '1' then
+--                words_to_send_to_hbm    <= std_logic_vector(unsigned(i_rx_packet_size(13 downto 6)) + x"01");
+--            end if;
             
             rd_page_cache           <= rd_page(0);
-            --words_to_send_to_hbm    <= i_rx_packet_size(13 downto 6);
+            words_to_send_to_hbm    <= i_rx_packet_size(13 downto 6);
             
             case hbm_streaming_sm is
                 when IDLE => 
-                    hold                <= '0';
-                    rd_addr             <= x"00";
-                    data_to_hbm_wr_int  <= '0';
+                    hold                    <= '0';
+                    rd_addr                 <= x"00";
+                    data_to_hbm_wr_int      <= '0';
+                    timestamp_data_fifo_rd  <= '0';
+                    
                     if rd_page_cache /= rd_page(0) then
                         hbm_streaming_sm    <= PREP;
                         rd_page_active      <= rd_page_cache;
@@ -439,14 +502,34 @@ begin
                 when FINISH =>
                     hold <= '1';
                     if hold = '1' then
-                        hbm_streaming_sm        <= IDLE;
+                        hbm_streaming_sm        <= STAMP;
                     end if;
+                    
+                when STAMP => 
+                    hbm_streaming_sm        <= IDLE;
+                    timestamp_data_fifo_rd  <= '1';
+                
                 
                 when OTHERS =>
                     hbm_streaming_sm        <= IDLE;
                  
             end case;
         end if;
+        
+        if (hbm_streaming_sm = IDLE) then
+            data_to_hbm <= timestamp_out;
+        else
+            data_to_hbm <= rx_buffer_ram_dout;
+        end if;
+        
+        data_to_hbm_wr              <= data_to_hbm_wr_int;
+        
+        if data_to_hbm_wr = '1' then
+            debug_count <= debug_count + 1;
+        else
+            debug_count <= x"00";
+        end if;
+
     end if;
 end process;
 
@@ -631,7 +714,7 @@ end process;
     hbm_out_ila : ila_0
     port map (
         clk                     => i_clk_300, 
-        probe0(127 downto 0)    => rx_buffer_ram_dout(127 downto 0),
+        probe0(127 downto 0)    => data_to_hbm(127 downto 0),
         probe0(136 downto 128)  => rx_buffer_ram_addr_out,
         probe0(137)             => data_to_hbm_wr_int, 
         probe0(145 downto 138)  => words_to_send_to_hbm,

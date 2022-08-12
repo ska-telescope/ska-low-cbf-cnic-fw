@@ -172,7 +172,7 @@ begin
                 i_rx_axis_tkeep                 <= x"FFFFFFFFFFFFFFFF";
                 i_rx_axis_tvalid                <= '1';
                
-            elsif testCount_322 >= 83 AND testCount_322 < 120 then
+            elsif testCount_322 >= 83 AND testCount_322 < 113 then
                 streaming_data(127 downto 0)    <= x"99999999" & x"AAAAAAAA" & x"BBBBBBBB" & x"CCCCCCCC";
                 streaming_data(255 downto 128)  <= x"99999999" & x"AAAAAAAA" & x"BBBBBBBB" & x"CCCCCCCC";
                 streaming_data(383 downto 256)  <= x"99999999" & x"AAAAAAAA" & x"BBBBBBBB" & x"CCCCCCCC";
@@ -180,12 +180,12 @@ begin
                 i_rx_axis_tkeep                 <= x"FFFFFFFFFFFFFFFF";
                 i_rx_axis_tvalid                <= '1';
                 
-            elsif testCount_322 = 120 then
+            elsif testCount_322 = 113 then
                 streaming_data(127 downto 0)    <= x"DDDDDDDD" & x"EEEEEEEE" & x"FFFFFFFF" & x"00000000";
                 streaming_data(255 downto 128)  <= x"DDDDDDDD" & x"EEEEEEEE" & x"FFFFFFFF" & x"00000000";
                 streaming_data(383 downto 256)  <= x"DDDDDDDD" & x"EEEEEEEE" & x"FFFFFFFF" & x"00000000";
                 streaming_data(511 downto 384)  <= zero_128;
-                i_rx_axis_tkeep                 <= x"00000FFFFFFFFFFF";
+                i_rx_axis_tkeep                 <= x"000003FFFFFFFFFF";
                 i_rx_axis_tvalid                <= '1';
                 i_rx_axis_tlast                 <= '1'; 
             -- PTP injection
@@ -292,7 +292,7 @@ begin
 
             if testCount_322 = 38 then
                 rx_reset_capture    <= '1';
-                rx_packet_size      <= "00" & x"A2C";      -- 2604            
+                rx_packet_size      <= "00" & x"86A";      -- 2154            
             elsif testCount_322 = 175 then
                 rx_reset_capture    <= '1';
                 rx_packet_size      <= "00" & x"100";      -- 256
