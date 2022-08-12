@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 --
 -- File Name: cnic_top.vhd
--- Contributing Authors: Jason van Aardt, jason.vanaardt@csiro.au
+-- Contributing Authors: Giles Babich - Giles.babich@csiro.au, Jason van Aardt, jason.vanaardt@csiro.au
 -- Type: RTL
 -- Created: 27 October 2021
 --
@@ -10,6 +10,16 @@
 --
 --  Distributed under the terms of the CSIRO Open Source Software Licence Agreement
 --  See the file LICENSE for more info.
+--
+-- Design updated June 2022 by Giles to include
+--      * 4 x 4G HBM buffers (4G limit dictated by XRT limitations)
+--      * Capture and playback from whole HBM
+--      * Timestamping of incoming packets
+--      * Filtering of incoming packets based on byte length
+--      * TX or RX packets base on software configured byte size, only one siz at a time supported.
+--      * control registers renamed and general code tidy up.
+--      * PTP scheduler expanded to stop and start for rx and tx independently.
+--
 -------------------------------------------------------------------------------
 
 LIBRARY IEEE, common_lib, axi4_lib, cmac_s_axi_lib;
@@ -401,6 +411,12 @@ i_HBM_PktController : entity HBM_PktController_lib.HBM_PktController
         o_tx_addr                         => open,
         o_tx_boundary_across_num          => open,
 	    o_axi_rvalid_but_fifo_full        => open,
+	    
+	    o_tx_complete                      => config_ro.tx_complete,
+	    o_tx_packets_to_mac(63 downto 32)  => config_ro.tx_packets_to_mac_hi,
+	    o_tx_packets_to_mac(31 downto 0)   => config_ro.tx_packets_to_mac_lo,
+        o_tx_packet_count(63 downto 32)    => config_ro.tx_packet_count_hi,
+        o_tx_packet_count(31 downto 0)   => config_ro.tx_packet_count_lo,
 	------------------------------------------------------------------------------------
         -- Data output, to the packetizer
             

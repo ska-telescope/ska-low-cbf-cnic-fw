@@ -492,41 +492,41 @@ debug_gen : IF g_DEBUG_ILA GENERATE
 -- DEBUG stats
 -- calculated in the 322.266 MHz domain from the CMAC.
 
-byte_increment <= "00" & x"0000" & meta_data_fifo_q;
+--byte_increment <= "00" & x"0000" & meta_data_fifo_q;
 
-stats_proc : process(i_cmac_clk)
-begin
-    if rising_edge(i_cmac_clk) then
-        if stats_interval = 161133000 then      -- calculate for half second.
-            stats_interval <= 1;
-        else
-            stats_interval <= stats_interval + 1;
-        end if;
+--stats_proc : process(i_cmac_clk)
+--begin
+--    if rising_edge(i_cmac_clk) then
+--        if stats_interval = 161133000 then      -- calculate for half second.
+--            stats_interval <= 1;
+--        else
+--            stats_interval <= stats_interval + 1;
+--        end if;
 
-        if stats_interval = 1 then
-            bytes_transmitted_last_hsec <= x"00000000";
-        elsif (mac_streaming_sm = PREP) then
-            bytes_transmitted_last_hsec <= std_logic_vector(unsigned(bytes_transmitted_last_hsec) + unsigned(byte_increment));
-        end if;
+--        if stats_interval = 1 then
+--            bytes_transmitted_last_hsec <= x"00000000";
+--        elsif (mac_streaming_sm = PREP) then
+--            bytes_transmitted_last_hsec <= std_logic_vector(unsigned(bytes_transmitted_last_hsec) + unsigned(byte_increment));
+--        end if;
         
         
-        if (mac_streaming_sm = IDLE) then
-            time_between_packets        <= std_logic_vector(unsigned(time_between_packets) + x"0001");
-        elsif (mac_streaming_sm = DATA) then
-            time_between_packets        <= x"0000";
-        end if;
+--        if (mac_streaming_sm = IDLE) then
+--            time_between_packets        <= std_logic_vector(unsigned(time_between_packets) + x"0001");
+--        elsif (mac_streaming_sm = DATA) then
+--            time_between_packets        <= x"0000";
+--        end if;
         
         
-        if stats_interval = 1 then
-            time_between_packets_largest <= x"0000";
-        elsif (mac_streaming_sm = PREP) then
-            if time_between_packets_largest < time_between_packets then
-                time_between_packets_largest <= time_between_packets;
-            end if;
-        end if;
+--        if stats_interval = 1 then
+--            time_between_packets_largest <= x"0000";
+--        elsif (mac_streaming_sm = PREP) then
+--            if time_between_packets_largest < time_between_packets then
+--                time_between_packets_largest <= time_between_packets;
+--            end if;
+--        end if;
         
-    end if;
-end process;
+--    end if;
+--end process;
 
 
 
@@ -615,12 +615,12 @@ end process;
     u_cmac_fifo_wr_ila : ila_0
     port map (
         clk => i_clk400,
-        probe0(31 downto 0)         => ethernet_frame_DC_fifo_data(31 downto 0),
-        probe0(63 downto 32)        => (others=>'0'),
+        probe0(63 downto 0)         => ethernet_frame_DC_fifo_data(63 downto 0),
+        --probe0(63 downto 32)        => (others=>'0'),
         probe0(64)                  => ethernet_frame_DC_fifo_wr, 
         probe0(65)                  => ethernet_frame_DC_fifo_full, 
-        probe0(66)                  => ethernet_frame_DC_fifo_empty,
-        probe0(75 downto 67)        => open, 
+        
+        probe0(75 downto 66)        => open, 
         probe0(191 downto 76)       => (others =>'0')
     );
 

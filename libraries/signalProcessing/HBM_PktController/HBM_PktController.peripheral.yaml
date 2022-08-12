@@ -76,7 +76,7 @@ peripherals:
               reset_value       : 0x0
               field_description : "size of the complete packet including ethernet header, spead header etc"
 
-          - - field_name        : tx_total_number_TX_packets #Total_Number_TX_Packets
+          - - field_name        : tx_packet_to_send #Total_Number_TX_Packets
               width             : 32
               access_mode       : RW
               reset_value       : 0x0
