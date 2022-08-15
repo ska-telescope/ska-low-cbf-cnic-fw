@@ -24,6 +24,10 @@ use axi4_lib.axi4_full_pkg.all;
 use std.env.finish;
 
 entity tb_HBM_PktController is
+  generic(
+          g_HBM_bank_size : string  := "4095MB";  
+          g_address_width : integer := 32  
+  ); 
 end tb_HBM_PktController;
 
 architecture Behavioral of tb_HBM_PktController is
@@ -43,7 +47,7 @@ signal    power_up_rst_clock_100   : std_logic_vector(31 downto 0) := X"FFFFFFFF
 
 signal m01_awvalid  : std_logic;
 signal m01_awready  : std_logic;
-signal m01_awaddr   : std_logic_vector(31 downto 0);
+signal m01_awaddr   : std_logic_vector(g_address_width-1 downto 0);
 signal m01_awid     : std_logic_vector(0 downto 0) := "0";
 signal m01_awlen    : std_logic_vector(7 downto 0);
 signal m01_awsize   : std_logic_vector(2 downto 0) := "110";
@@ -64,7 +68,7 @@ signal m01_bresp    : std_logic_vector(1 downto 0);
 signal m01_bid      : std_logic_vector(0 downto 0);
 signal m01_arvalid  : std_logic;
 signal m01_arready  : std_logic;
-signal m01_araddr   : std_logic_vector(31 downto 0);
+signal m01_araddr   : std_logic_vector(g_address_width-1 downto 0);
 signal m01_arid     : std_logic_vector(0 downto 0) := "0";
 signal m01_arlen    : std_logic_vector(7 downto 0);
 signal m01_arsize   : std_logic_vector(2 downto 0) := "110";
@@ -83,7 +87,7 @@ signal m01_rresp    : std_logic_vector(1 downto 0);
 
 signal m02_awvalid  : std_logic;
 signal m02_awready  : std_logic;
-signal m02_awaddr   : std_logic_vector(31 downto 0);
+signal m02_awaddr   : std_logic_vector(g_address_width-1 downto 0);
 signal m02_awid     : std_logic_vector(0 downto 0) := "0";
 signal m02_awlen    : std_logic_vector(7 downto 0);
 signal m02_awsize   : std_logic_vector(2 downto 0) := "110";
@@ -104,7 +108,7 @@ signal m02_bresp    : std_logic_vector(1 downto 0);
 signal m02_bid      : std_logic_vector(0 downto 0);
 signal m02_arvalid  : std_logic;
 signal m02_arready  : std_logic;
-signal m02_araddr   : std_logic_vector(31 downto 0);
+signal m02_araddr   : std_logic_vector(g_address_width-1 downto 0);
 signal m02_arid     : std_logic_vector(0 downto 0) := "0";
 signal m02_arlen    : std_logic_vector(7 downto 0);
 signal m02_arsize   : std_logic_vector(2 downto 0) := "110";
@@ -123,7 +127,7 @@ signal m02_rresp    : std_logic_vector(1 downto 0);
 
 signal m03_awvalid  : std_logic;
 signal m03_awready  : std_logic;
-signal m03_awaddr   : std_logic_vector(31 downto 0);
+signal m03_awaddr   : std_logic_vector(g_address_width-1 downto 0);
 signal m03_awid     : std_logic_vector(0 downto 0) := "0";
 signal m03_awlen    : std_logic_vector(7 downto 0);
 signal m03_awsize   : std_logic_vector(2 downto 0) := "110";
@@ -144,7 +148,7 @@ signal m03_bresp    : std_logic_vector(1 downto 0);
 signal m03_bid      : std_logic_vector(0 downto 0);
 signal m03_arvalid  : std_logic;
 signal m03_arready  : std_logic;
-signal m03_araddr   : std_logic_vector(31 downto 0);
+signal m03_araddr   : std_logic_vector(g_address_width-1 downto 0);
 signal m03_arid     : std_logic_vector(0 downto 0) := "0";
 signal m03_arlen    : std_logic_vector(7 downto 0);
 signal m03_arsize   : std_logic_vector(2 downto 0) := "110";
@@ -163,7 +167,7 @@ signal m03_rresp    : std_logic_vector(1 downto 0);
 
 signal m04_awvalid  : std_logic;
 signal m04_awready  : std_logic;
-signal m04_awaddr   : std_logic_vector(31 downto 0);
+signal m04_awaddr   : std_logic_vector(g_address_width-1 downto 0);
 signal m04_awid     : std_logic_vector(0 downto 0) := "0";
 signal m04_awlen    : std_logic_vector(7 downto 0);
 signal m04_awsize   : std_logic_vector(2 downto 0) := "110";
@@ -184,7 +188,7 @@ signal m04_bresp    : std_logic_vector(1 downto 0);
 signal m04_bid      : std_logic_vector(0 downto 0) := "0";
 signal m04_arvalid  : std_logic;
 signal m04_arready  : std_logic;
-signal m04_araddr   : std_logic_vector(31 downto 0);
+signal m04_araddr   : std_logic_vector(g_address_width-1 downto 0);
 signal m04_arid     : std_logic_vector(0 downto 0);
 signal m04_arlen    : std_logic_vector(7 downto 0);
 signal m04_arsize   : std_logic_vector(2 downto 0) := "110";
@@ -212,13 +216,13 @@ signal s_axi_data                    : std_logic_vector(511 downto 0);
 signal s_axi_data_valid              : std_logic;
 signal i_rx_soft_reset               : std_logic;
 
-signal i_lfaa_bank1_start_addr       : std_logic_vector(31 downto 0) := (others=>'0');
-signal i_lfaa_bank2_start_addr       : std_logic_vector(31 downto 0) := (others=>'0');
-signal i_lfaa_bank3_start_addr       : std_logic_vector(31 downto 0) := (others=>'0');
-signal i_lfaa_bank4_start_addr       : std_logic_vector(31 downto 0) := (others=>'0');
+signal i_lfaa_bank1_start_addr       : std_logic_vector(g_address_width-1 downto 0) := (others=>'0');
+signal i_lfaa_bank2_start_addr       : std_logic_vector(g_address_width-1 downto 0) := (others=>'0');
+signal i_lfaa_bank3_start_addr       : std_logic_vector(g_address_width-1 downto 0) := (others=>'0');
+signal i_lfaa_bank4_start_addr       : std_logic_vector(g_address_width-1 downto 0) := (others=>'0');
 signal update_rx_start_addr          : std_logic := '0';
 signal update_readaddr               : std_logic := '0';
-signal i_readaddr                    : std_logic_vector(31 downto 0) := (others=>'0');
+signal i_readaddr                    : std_logic_vector(g_address_width-1 downto 0) := (others=>'0');
 
 signal start_tx                      : std_logic := '0';
 
@@ -259,6 +263,16 @@ begin
     end if;
   end process;
 
+  g_addr_gen_32 : if g_address_width = 32 generate
+    i_lfaa_bank1_start_addr <= X"FFEF6000";
+    i_readaddr              <= X"FFEF6000";
+  end generate g_addr_gen_32;
+
+  g_addr_gen_31 : if g_address_width = 31 generate
+    i_lfaa_bank1_start_addr <= "111"&X"FEF6000";
+    i_readaddr              <= "111"&X"FEF6000";
+  end generate g_addr_gen_31;
+
 
   process
     file     datafile: text;
@@ -285,8 +299,17 @@ begin
 
     update_rx_start_addr <= '1';
     update_readaddr <= '1';
-    i_lfaa_bank1_start_addr <= X"FFEF6000";
-    i_readaddr              <= X"FFEF6000";
+
+    --g_addr_gen_32 : if g_address_width = 32 generate
+    --  i_lfaa_bank1_start_addr <= X"FFEF6000";
+    --  i_readaddr              <= "0"&X"FFEF6000";
+    --end generate g_addr_gen_32;
+
+    --g_addr_gen_31 : if g_address_width = 31 generate
+    --  i_lfaa_bank1_start_addr <= X"7FEF6000";
+    --  i_readaddr              <= X"7FEF6000";
+    --end generate g_addr_gen_31; 	    
+
 
     FILE_OPEN(datafile,data_file_name,READ_MODE);
 
@@ -353,6 +376,10 @@ begin
   --end process;    
 
   DUT : entity HBM_PktController_lib.HBM_PktController
+  generic map(
+               g_HBM_bank_size               => g_HBM_bank_size,
+	       g_address_width               => g_address_width
+       )  
   port map(
            clk_freerun                       => clock_100,
            -- shared memory interface clock (300 MHz)
@@ -569,7 +596,7 @@ begin
 
   HBM4G_1 : entity HBM_PktController_lib.HBM_axi_tbModel
     generic map (
-        AXI_ADDR_WIDTH => 32, 
+        AXI_ADDR_WIDTH => g_address_width, 
         AXI_ID_WIDTH => 1, 
         AXI_DATA_WIDTH => 512, 
         READ_QUEUE_SIZE => 16, 
@@ -581,7 +608,7 @@ begin
     ) Port map (
         i_clk          => clock_300,
         i_rst_n        => not clock_300_rst, 
-        axi_awaddr     => m01_awaddr(31 downto 0),
+        axi_awaddr     => m01_awaddr(g_address_width-1 downto 0),
         axi_awid       => "0", 
         axi_awlen      => m01_awlen,
         axi_awsize     => "110",
@@ -602,7 +629,7 @@ begin
         axi_bvalid     => open,
         axi_bready     => '1', 
         axi_bid        => open,
-        axi_araddr     => m01_araddr(31 downto 0),
+        axi_araddr     => m01_araddr(g_address_width-1 downto 0),
         axi_arlen      => m01_arlen,
         axi_arsize     => m01_arsize,
         axi_arburst    => m01_arburst,
@@ -624,7 +651,7 @@ begin
 
     HBM4G_2 : entity HBM_PktController_lib.HBM_axi_tbModel
     generic map (
-        AXI_ADDR_WIDTH => 32,
+        AXI_ADDR_WIDTH => g_address_width,
         AXI_ID_WIDTH => 1,
         AXI_DATA_WIDTH => 512,
         READ_QUEUE_SIZE => 16,
@@ -636,7 +663,7 @@ begin
     ) Port map (
         i_clk          => clock_300,
         i_rst_n        => not clock_300_rst,
-        axi_awaddr     => m02_awaddr(31 downto 0),
+        axi_awaddr     => m02_awaddr(g_address_width-1 downto 0),
         axi_awid       => "0",
         axi_awlen      => m02_awlen,
         axi_awsize     => "110",
@@ -657,7 +684,7 @@ begin
         axi_bvalid     => open,
         axi_bready     => '1',
         axi_bid        => open,
-        axi_araddr     => m02_araddr(31 downto 0),
+        axi_araddr     => m02_araddr(g_address_width-1 downto 0),
         axi_arlen      => m02_arlen,
         axi_arsize     => m02_arsize,
         axi_arburst    => m02_arburst,
@@ -679,7 +706,7 @@ begin
 
     HBM4G_3 : entity HBM_PktController_lib.HBM_axi_tbModel
     generic map (
-        AXI_ADDR_WIDTH => 32,
+        AXI_ADDR_WIDTH => g_address_width,
         AXI_ID_WIDTH => 1,
         AXI_DATA_WIDTH => 512,
         READ_QUEUE_SIZE => 16,
@@ -691,7 +718,7 @@ begin
     ) Port map (
         i_clk          => clock_300,
         i_rst_n        => not clock_300_rst,
-        axi_awaddr     => m03_awaddr(31 downto 0),
+        axi_awaddr     => m03_awaddr(g_address_width-1 downto 0),
         axi_awid       => "0",
         axi_awlen      => m03_awlen,
         axi_awsize     => "110",
@@ -712,7 +739,7 @@ begin
         axi_bvalid     => open,
         axi_bready     => '1',
         axi_bid        => open,
-        axi_araddr     => m03_araddr(31 downto 0),
+        axi_araddr     => m03_araddr(g_address_width-1 downto 0),
         axi_arlen      => m03_arlen,
         axi_arsize     => m03_arsize,
         axi_arburst    => m03_arburst,
@@ -734,7 +761,7 @@ begin
 
     HBM4G_4 : entity HBM_PktController_lib.HBM_axi_tbModel
     generic map (
-        AXI_ADDR_WIDTH => 32,
+        AXI_ADDR_WIDTH => g_address_width,
         AXI_ID_WIDTH => 1,
         AXI_DATA_WIDTH => 512,
         READ_QUEUE_SIZE => 16,
@@ -746,7 +773,7 @@ begin
     ) Port map (
         i_clk          => clock_300,
         i_rst_n        => not clock_300_rst,
-        axi_awaddr     => m04_awaddr(31 downto 0),
+        axi_awaddr     => m04_awaddr(g_address_width-1 downto 0),
         axi_awid       => "0",
         axi_awlen      => m04_awlen,
         axi_awsize     => "110",
@@ -767,7 +794,7 @@ begin
         axi_bvalid     => open,
         axi_bready     => '1',
         axi_bid        => open,
-        axi_araddr     => m04_araddr(31 downto 0),
+        axi_araddr     => m04_araddr(g_address_width-1 downto 0),
         axi_arlen      => m04_arlen,
         axi_arsize     => m04_arsize,
         axi_arburst    => m04_arburst,
