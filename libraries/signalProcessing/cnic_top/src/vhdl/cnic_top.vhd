@@ -412,12 +412,17 @@ i_HBM_PktController : entity HBM_PktController_lib.HBM_PktController
         o_tx_boundary_across_num          => open,
 	    o_axi_rvalid_but_fifo_full        => open,
 	    
-	    o_tx_complete                      => config_ro.tx_complete,
-	    o_tx_packets_to_mac(63 downto 32)  => config_ro.tx_packets_to_mac_hi,
-	    o_tx_packets_to_mac(31 downto 0)   => config_ro.tx_packets_to_mac_lo,
-        o_tx_packet_count(63 downto 32)    => config_ro.tx_packet_count_hi,
-        o_tx_packet_count(31 downto 0)   => config_ro.tx_packet_count_lo,
+	    o_tx_complete                       => config_ro.tx_complete,
+	    o_tx_packets_to_mac(63 downto 32)   => config_ro.tx_packets_to_mac_hi,
+	    o_tx_packets_to_mac(31 downto 0)    => config_ro.tx_packets_to_mac_lo,
+        o_tx_packet_count(63 downto 32)     => config_ro.tx_packet_count_hi,
+        o_tx_packet_count(31 downto 0)      => config_ro.tx_packet_count_lo,
 	------------------------------------------------------------------------------------
+	
+        o_rd_fsm_debug                      => config_ro.debug_rd_fsm_debug(3 downto 0),
+        o_output_fsm_debug                  => config_ro.debug_output_fsm_debug(3 downto 0),
+        
+    ------------------------------------------------------------------------------------
         -- Data output, to the packetizer
             
         o_packetiser_data_in_wr         => packetiser_data_in_wr, 

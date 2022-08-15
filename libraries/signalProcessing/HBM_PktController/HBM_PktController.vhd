@@ -126,6 +126,11 @@ entity HBM_PktController is
         o_tx_complete                       : out std_logic;
         o_tx_packets_to_mac                 : out std_logic_vector(63 downto 0);
         o_tx_packet_count                   : out std_logic_vector(63 downto 0);
+    ------------------------------------------------------------------------------------
+        -- debug ports
+        o_rd_fsm_debug                      : out std_logic_vector(3 downto 0);
+        o_output_fsm_debug                  : out std_logic_vector(3 downto 0);
+            
 	------------------------------------------------------------------------------------
         -- Data output, to the packetizer
         -- Add the packetizer records here
@@ -459,6 +464,9 @@ begin
     o_tx_packets_to_mac         <= std_logic_vector(total_pkts_to_mac);
     o_tx_packet_count           <= std_logic_vector(current_pkt_count);
     
+    o_rd_fsm_debug              <= rd_fsm_debug;
+    o_output_fsm_debug          <= output_fsm_debug;
+    
     ---------------------------------------------------------------------------------------------------
     --HBM AXI write transaction part, it is assumed that the recevied packet is always multiple of 64B,
     --i.e no residual AXI trans where less then 64B trans is needed, all the bits of imcoming data is 
@@ -571,121 +579,126 @@ begin
             recv_pkt_counter <= (others => '0');
 	    first_awfifo_wren <= '0';
 	 else 
-         case input_fsm is
-           when idle =>
-             if	update_start_addr_p = '1' then	   
-                LFAAaddr1(31 downto 0) <= i_lfaa_bank1_addr;
-                LFAAaddr2(31 downto 0) <= i_lfaa_bank2_addr;
-                LFAAaddr3(31 downto 0) <= i_lfaa_bank3_addr;
-                LFAAaddr4(31 downto 0) <= i_lfaa_bank4_addr;
-             end if;		
-             num_rx_4k_axi_trans_fsm <= num_rx_4k_axi_trans;
-	     awfifo_wren <= '0';
-	     --if one 4GB bank is full, then move to next bank
-	     --for m04 4GB bank, if when a whole packet is tried to be filled in, it will across the 16GB, then abort this packet
-             if i_valid_rising = '1'    and i_enable_capture = '1' and m03_axi_4G_full = '1' and m04_axi_4G_full = '0' and m04_4095MB_packet_across = '0' then     
-		first_awfifo_wren <= '1';     
-		input_fsm     <= generate_aw4_shadow_addr;	     
-             elsif i_valid_rising = '1' and i_enable_capture = '1' and m02_axi_4G_full = '1' and m04_axi_4G_full = '0' then
-		first_awfifo_wren <= '1';     
- 	        input_fsm     <= generate_aw3_shadow_addr;
-             elsif i_valid_rising = '1' and i_enable_capture = '1' and m01_axi_4G_full = '1' and m04_axi_4G_full = '0' then
-		first_awfifo_wren <= '1';     
-	        input_fsm     <= generate_aw2_shadow_addr;
-	     elsif i_valid_rising = '1' and i_enable_capture = '1' and m04_axi_4G_full = '0' then
-		first_awfifo_wren <= '1';     
-                input_fsm     <= generate_aw1_shadow_addr;
-             end if;
-           when generate_aw1_shadow_addr  => --shadow addr used to detect if a 4GB AXI HBM section is filled
-             if (num_rx_4k_axi_trans_fsm > 0) then --4KB transfer has higher priority
-                LFAAaddr1_shadow(32 downto 12) <= std_logic_vector(unsigned(LFAAaddr1(32 downto 12)) + 1);
-	        LFAAaddr1_shadow(11 downto 0)  <= LFAAaddr1(11 downto 0);
-             elsif (num_rx_4k_axi_trans_fsm = 0 and num_rx_64B_axi_beats /= 0) then
-                LFAAaddr1_shadow(32 downto 6)  <= std_logic_vector(unsigned(LFAAaddr1(32 downto 6)) + resize(num_rx_64B_axi_beats,27));
-	        LFAAaddr1_shadow(5  downto 0)  <= LFAAaddr1(5 downto 0);
-	     end if;
-	     awfifo_wren <= '0';
-	     input_fsm   <= check_aw1_addr_range; 
-           when check_aw1_addr_range => -- state to calculate how many bytes need to be splitted between current 4GB section and next 4GB section
-             if (wr_bank1_boundary_corss = '1') then --first 4GB AXI section is filled to full, need to split the next AXI transaction to two part, 
-		num_rx_bytes_curr_4G         <= wr_bank1_boundary_corss_curr_4G_size;
-		num_rx_bytes_next_4G         <= unsigned(LFAAaddr1_shadow(13 downto 0));    
-	     else
-                num_rx_bytes_curr_4G         <= (others=>'0');
-		num_rx_bytes_next_4G         <= (others=>'0');
-             end if;
-	     input_fsm                       <= generate_aw1;
-           when generate_aw1 =>
-             if (wr_bank1_boundary_corss = '0') then
-		if (num_rx_4k_axi_trans_fsm > 0) then 
-		   --start 4K transaction first, if packet size is more than 4K, write 4k AXI transaction into AW fifo, and decrease the 4k transaction number
-		   --also update the address for next transaction, state go back to generate_aw1_shadow_addr to check through the 4GB buffer limit again  		
-		   awfifo_din(31 downto 0)    <= LFAAaddr1(31 downto 0); --awaddr 
-		   awfifo_din(39 downto 32)   <= "00111111";             --awlen
-		   awfifo_din(41 downto 40)   <= "00";                   --identification for bank1~4
-		   awfifo_din(42)             <= '0';
-		   awlenfifo_din(7 downto 0)  <= "00111111";             --write to awlen fifo at same time, the idea is to let AXI W part to know how long the W  
-		                                                         --should be because AW is totoally separated from W
-		   awlenfifo_din(8)           <= '0';
-		   awfifo_wren                <= '1';                    
-		   num_rx_4k_axi_trans_fsm    <= num_rx_4k_axi_trans_fsm - 1;
-                   LFAAaddr1(32 downto 12)    <= std_logic_vector(unsigned(LFAAaddr1(32 downto 12)) + 1);
-                   input_fsm                  <= generate_aw1_shadow_addr;
-		   if first_awfifo_wren = '1' then
-		      first_awfifo_wren       <= '0';
-	           end if;	      
-                elsif (num_rx_4k_axi_trans_fsm = 0 and num_rx_64B_axi_beats /= 0) then 
-		   --if no 4k transaction for current received packet is needed or if 4k transaction has been sent out and no more 4k transactions left, but still
-		   --less than 4k transaction left, then write the left less than 4k transaction to AW fifo. state go back to idle and update address	
-	           awfifo_din(31 downto 0)    <= LFAAaddr1(31 downto 0);
-                   awfifo_din(39 downto 32)   <= std_logic_vector(num_rx_64B_axi_beats-1);
-                   awfifo_din(41 downto 40)   <= "00";
-		   awfifo_din(42)             <= '0';
-		   awlenfifo_din(7 downto 0)  <= std_logic_vector(num_rx_64B_axi_beats-1);
-		   awlenfifo_din(8)           <= '0';
-                   awfifo_wren                <= '1'; 
-		   recv_pkt_counter           <= recv_pkt_counter + 1;
-                   LFAAaddr1(32 downto 6)     <= std_logic_vector(unsigned(LFAAaddr1(32 downto 6)) + resize(num_rx_64B_axi_beats,27));
-		   if first_awfifo_wren = '1' then
-	              first_awfifo_wren       <= '0';	
-	           end if;	      
-                   input_fsm                  <= idle;
-                elsif (num_rx_4k_axi_trans_fsm = 0 and num_rx_64B_axi_beats = 0) then
-		   recv_pkt_counter           <= recv_pkt_counter + 1;	   
-                   input_fsm                  <= idle; --one packet transaction finished
+        case input_fsm is
+            when idle =>
+                if	update_start_addr_p = '1' then	   
+                    LFAAaddr1(31 downto 0) <= i_lfaa_bank1_addr;
+                    LFAAaddr2(31 downto 0) <= i_lfaa_bank2_addr;
+                    LFAAaddr3(31 downto 0) <= i_lfaa_bank3_addr;
+                    LFAAaddr4(31 downto 0) <= i_lfaa_bank4_addr;
+                end if;		
+                num_rx_4k_axi_trans_fsm <= num_rx_4k_axi_trans;
+                awfifo_wren <= '0';
+                --if one 4GB bank is full, then move to next bank
+                --for m04 4GB bank, if when a whole packet is tried to be filled in, it will across the 16GB, then abort this packet
+                if i_valid_rising = '1'    and i_enable_capture = '1' and m03_axi_4G_full = '1' and m04_axi_4G_full = '0' and m04_4095MB_packet_across = '0' then     
+                    first_awfifo_wren <= '1';     
+                    input_fsm     <= generate_aw4_shadow_addr;	     
+                elsif i_valid_rising = '1' and i_enable_capture = '1' and m02_axi_4G_full = '1' and m04_axi_4G_full = '0' then
+                    first_awfifo_wren <= '1';     
+                    input_fsm     <= generate_aw3_shadow_addr;
+                elsif i_valid_rising = '1' and i_enable_capture = '1' and m01_axi_4G_full = '1' and m04_axi_4G_full = '0' then
+                    first_awfifo_wren <= '1';     
+                    input_fsm     <= generate_aw2_shadow_addr;
+                elsif i_valid_rising = '1' and i_enable_capture = '1' and m04_axi_4G_full = '0' then
+                    first_awfifo_wren <= '1';     
+                    input_fsm     <= generate_aw1_shadow_addr;
                 end if;
-             else
-	       --situation where cross 4GB happens, and issue AXI transactions to fill current 4GB to full, the tx size has been calculated before already
-	       --move state to next 4GB buffer	     
-	       if (num_rx_4k_axi_trans_curr_4G > 0) then
-                  awfifo_din(31 downto 0)     <= LFAAaddr1(31 downto 0);
-                  awfifo_din(39 downto 32)    <= "00111111";
-                  awfifo_din(41 downto 40)    <= "00";
-		  awfifo_din(42)              <= '1';
-                  awlenfifo_din(7 downto 0)   <= "00111111";
-		  awlenfifo_din(8)            <= '1';
-                  awfifo_wren                 <= '1';
-                  if first_awfifo_wren = '1' then
-                     first_awfifo_wren       <= '0';
-                  end if;
-                  LFAAaddr1(32 downto 12)     <= std_logic_vector(unsigned(LFAAaddr1(32 downto 12)) + 1);
-	       elsif (num_rx_64B_axi_beats_curr_4G /= 0) then
-		  awfifo_din(31 downto 0)     <= LFAAaddr1(31 downto 0);
-                  awfifo_din(39 downto 32)    <= std_logic_vector(num_rx_64B_axi_beats_curr_4G-1);
-                  awfifo_din(41 downto 40)    <= "00";
-		  awfifo_din(42)              <= '1';
-		  awlenfifo_din(7 downto 0)   <= std_logic_vector(num_rx_64B_axi_beats_curr_4G-1);
-		  awlenfifo_din(8)            <= '1';
-		  awfifo_wren                 <= '1';
-		  if first_awfifo_wren = '1' then
-                     first_awfifo_wren       <= '0';
-                  end if;
-                  LFAAaddr1(31 downto 0)      <= std_logic_vector(max_space_4095MB);
-               end if;
-	       m01_axi_4G_full                <= '1';
-	       direct_aw2                     <= '1';
-	       input_fsm                      <= generate_aw2;
-             end if;
+        
+            when generate_aw1_shadow_addr  => --shadow addr used to detect if a 4GB AXI HBM section is filled
+                if (num_rx_4k_axi_trans_fsm > 0) then --4KB transfer has higher priority
+                    LFAAaddr1_shadow(32 downto 12) <= std_logic_vector(unsigned(LFAAaddr1(32 downto 12)) + 1);
+                    LFAAaddr1_shadow(11 downto 0)  <= LFAAaddr1(11 downto 0);
+                elsif (num_rx_4k_axi_trans_fsm = 0 and num_rx_64B_axi_beats /= 0) then
+                    LFAAaddr1_shadow(32 downto 6)  <= std_logic_vector(unsigned(LFAAaddr1(32 downto 6)) + resize(num_rx_64B_axi_beats,27));
+                    LFAAaddr1_shadow(5  downto 0)  <= LFAAaddr1(5 downto 0);
+                end if;
+                awfifo_wren <= '0';
+                input_fsm   <= check_aw1_addr_range; 
+
+            when check_aw1_addr_range => -- state to calculate how many bytes need to be splitted between current 4GB section and next 4GB section
+                if (wr_bank1_boundary_corss = '1') then --first 4GB AXI section is filled to full, need to split the next AXI transaction to two part, 
+                    num_rx_bytes_curr_4G         <= wr_bank1_boundary_corss_curr_4G_size;
+                    num_rx_bytes_next_4G         <= unsigned(LFAAaddr1_shadow(13 downto 0));    
+                else
+                    num_rx_bytes_curr_4G         <= (others=>'0');
+                    num_rx_bytes_next_4G         <= (others=>'0');
+                end if;
+                input_fsm                       <= generate_aw1;
+
+
+            when generate_aw1 =>
+                if (wr_bank1_boundary_corss = '0') then
+                    if (num_rx_4k_axi_trans_fsm > 0) then 
+                        --start 4K transaction first, if packet size is more than 4K, write 4k AXI transaction into AW fifo, and decrease the 4k transaction number
+                        --also update the address for next transaction, state go back to generate_aw1_shadow_addr to check through the 4GB buffer limit again  		
+                        awfifo_din(31 downto 0)    <= LFAAaddr1(31 downto 0); --awaddr 
+                        awfifo_din(39 downto 32)   <= "00111111";             --awlen
+                        awfifo_din(41 downto 40)   <= "00";                   --identification for bank1~4
+                        awfifo_din(42)             <= '0';
+                        awlenfifo_din(7 downto 0)  <= "00111111";             --write to awlen fifo at same time, the idea is to let AXI W part to know how long the W  
+                                                             --should be because AW is totoally separated from W
+                        awlenfifo_din(8)           <= '0';
+                        awfifo_wren                <= '1';                    
+                        num_rx_4k_axi_trans_fsm    <= num_rx_4k_axi_trans_fsm - 1;
+                        LFAAaddr1(32 downto 12)    <= std_logic_vector(unsigned(LFAAaddr1(32 downto 12)) + 1);
+                        input_fsm                  <= generate_aw1_shadow_addr;
+                        if first_awfifo_wren = '1' then
+                            first_awfifo_wren       <= '0';
+                        end if;	      
+                    elsif (num_rx_4k_axi_trans_fsm = 0 and num_rx_64B_axi_beats /= 0) then 
+                        --if no 4k transaction for current received packet is needed or if 4k transaction has been sent out and no more 4k transactions left, but still
+                        --less than 4k transaction left, then write the left less than 4k transaction to AW fifo. state go back to idle and update address	
+                        awfifo_din(31 downto 0)    <= LFAAaddr1(31 downto 0);
+                        awfifo_din(39 downto 32)   <= std_logic_vector(num_rx_64B_axi_beats-1);
+                        awfifo_din(41 downto 40)   <= "00";
+                        awfifo_din(42)             <= '0';
+                        awlenfifo_din(7 downto 0)  <= std_logic_vector(num_rx_64B_axi_beats-1);
+                        awlenfifo_din(8)           <= '0';
+                        awfifo_wren                <= '1'; 
+                        recv_pkt_counter           <= recv_pkt_counter + 1;
+                        LFAAaddr1(32 downto 6)     <= std_logic_vector(unsigned(LFAAaddr1(32 downto 6)) + resize(num_rx_64B_axi_beats,27));
+                        if first_awfifo_wren = '1' then
+                            first_awfifo_wren       <= '0';	
+                        end if;	      
+                        input_fsm                  <= idle;
+                    elsif (num_rx_4k_axi_trans_fsm = 0 and num_rx_64B_axi_beats = 0) then
+                        recv_pkt_counter           <= recv_pkt_counter + 1;	   
+                        input_fsm                  <= idle; --one packet transaction finished
+                    end if;
+                else
+                    --situation where cross 4GB happens, and issue AXI transactions to fill current 4GB to full, the tx size has been calculated before already
+                    --move state to next 4GB buffer	     
+                    if (num_rx_4k_axi_trans_curr_4G > 0) then
+                        awfifo_din(31 downto 0)     <= LFAAaddr1(31 downto 0);
+                        awfifo_din(39 downto 32)    <= "00111111";
+                        awfifo_din(41 downto 40)    <= "00";
+                        awfifo_din(42)              <= '1';
+                        awlenfifo_din(7 downto 0)   <= "00111111";
+                        awlenfifo_din(8)            <= '1';
+                        awfifo_wren                 <= '1';
+                        if first_awfifo_wren = '1' then
+                            first_awfifo_wren       <= '0';
+                        end if;
+                        LFAAaddr1(32 downto 12)     <= std_logic_vector(unsigned(LFAAaddr1(32 downto 12)) + 1);
+                    elsif (num_rx_64B_axi_beats_curr_4G /= 0) then
+                        awfifo_din(31 downto 0)     <= LFAAaddr1(31 downto 0);
+                        awfifo_din(39 downto 32)    <= std_logic_vector(num_rx_64B_axi_beats_curr_4G-1);
+                        awfifo_din(41 downto 40)    <= "00";
+                        awfifo_din(42)              <= '1';
+                        awlenfifo_din(7 downto 0)   <= std_logic_vector(num_rx_64B_axi_beats_curr_4G-1);
+                        awlenfifo_din(8)            <= '1';
+                        awfifo_wren                 <= '1';
+                        if first_awfifo_wren = '1' then
+                            first_awfifo_wren       <= '0';
+                        end if;
+                        LFAAaddr1(31 downto 0)      <= std_logic_vector(max_space_4095MB);
+                    end if;
+                m01_axi_4G_full                <= '1';
+                direct_aw2                     <= '1';
+                input_fsm                      <= generate_aw2;
+                end if;
+             
            when generate_aw2_shadow_addr  => --shadow addr used to detect if a 4GB AXI HBM section is filled
              if (num_rx_4k_axi_trans_fsm > 0) then
                 LFAAaddr2_shadow(32 downto 12) <= std_logic_vector(unsigned(LFAAaddr2(32 downto 12)) + 1);
@@ -1932,31 +1945,34 @@ end process;
 
     process(i_shared_clk)
     begin
-      if rising_edge(i_shared_clk) then
-         o_axi_arvalid <= '0';  
-         axi_4k_finished <= '0';
-         case rd_fsm is
-            when idle =>
-                rd_fsm_debug         <= x"0";
-                boundary_across_num  <= (others => '0');
-                readaddr_reg         <= (others => '0');
-                
-                if update_readaddr_p = '1' then
-                    readaddr          <= unsigned(i_readaddr);
-                else
-                    readaddr          <= x"00000000"; 
-                end if;		
-                
-                current_axi_4k_count <= (others =>'0');
-                rd_fsm               <= wait_fifo_reset;
+        if rising_edge(i_shared_clk) then
+            o_axi_arvalid <= '0';  
+            axi_4k_finished <= '0';
+            
+            case rd_fsm is
+                when idle =>
+                    clear_axi_r_num      <= '0';
+                    rd_fsm_debug         <= x"0";
+                    boundary_across_num  <= (others => '0');
+                    readaddr_reg         <= (others => '0');
+                    
+                    if update_readaddr_p = '1' then
+                        readaddr          <= unsigned(i_readaddr);
+                    else
+                        readaddr          <= x"00000000"; 
+                    end if;		
+                    
+                    current_axi_4k_count <= (others =>'0');
+                    rd_fsm               <= wait_fifo_reset;
 
-           when wait_fifo_reset =>
-             rd_fsm_debug <= x"1";
-             if (start_next_loop = '1') then
-                o_axi_arvalid <= '1';
-		          readaddr_reg  <= readaddr;
-                rd_fsm <= wait_arready;
-             end if;
+                when wait_fifo_reset =>
+                    rd_fsm_debug <= x"1";
+                    
+                    if (start_next_loop = '1') then
+                        o_axi_arvalid   <= '1';
+                        readaddr_reg    <= readaddr;
+                        rd_fsm          <= wait_arready;
+                    end if;
 
            when wait_arready =>  -- arvalid is high in this state, wait until arready is high so the transaction is complete.--o_axi_arvalid <= '0';
              rd_fsm_debug        <= x"2";
@@ -1973,13 +1989,15 @@ end process;
                     (current_axi_4k_count = (max_space_4095MB_4kx4_num - resize(readaddr_reg(31 downto 12),22) - 1) and boundary_across_num = 3)) and 
                     (current_axi_4k_count < resize((unsigned(i_expected_total_number_of_4k_axi) - 1),22))                                          and 
                     (resize(unsigned(i_expected_total_number_of_4k_axi),22) > (max_space_4095MB(31 downto 12) - readaddr_reg(31 downto 12) - 1))   then
-                        rd_fsm <= wait_current_bank_finish; 		
-                        elsif (current_axi_4k_count = (unsigned(i_expected_total_number_of_4k_axi) - 1)) then 
-                        rd_fsm <= finished; 
-                        else
-                        rd_fsm <= wait_fifo;
+                    
+                    rd_fsm <= wait_current_bank_finish; 		
+                elsif (current_axi_4k_count = (unsigned(i_expected_total_number_of_4k_axi))) then 
+                    rd_fsm <= finished; 
+                else
+                    rd_fsm <= wait_fifo;
                 end if;
             end if;
+            
             if from_current_bank_finish = '1' then
                 if (readaddr = max_space_4095MB and boundary_across_num /= 3) then
                     readaddr <= X"00000000";
@@ -1989,11 +2007,11 @@ end process;
             end if;		
 	     
            when wait_current_bank_finish =>
-	     rd_fsm_debug <= x"6";	   
-	     if (axi_r_num = current_axi_4k_count) then
-	        rd_fsm <= wait_arready;
-             end if;		
-             from_current_bank_finish <= '1';
+            rd_fsm_debug <= x"6";	   
+                if (axi_r_num = current_axi_4k_count) then
+                    rd_fsm <= wait_arready;
+                end if;		
+            from_current_bank_finish <= '1';
 
            when wait_fifo => --issued read request on bus and now drive arvalid low
              rd_fsm_debug <= x"3";
@@ -2541,12 +2559,13 @@ input_fsm_state_count <=    x"0" when input_fsm = idle else
 
         probe0(146 downto 133)  => i_tx_packet_size,
         
-        probe0(157 downto 147)  => ( others => '0' ),
+        probe0(156 downto 147)  => ( others => '0' ),
         
-        probe0(168 downto 158)  => FIFO_WrDataCount(10 downto 0),
-        probe0(172 downto 169)  => rd_fsm_debug,
-        probe0(176 downto 173)  => output_fsm_debug,
-        probe0(191 downto 177)  => ( others => '0' )
+        probe0(167 downto 157)  => FIFO_WrDataCount(10 downto 0),
+        probe0(171 downto 168)  => rd_fsm_debug,
+        probe0(175 downto 172)  => output_fsm_debug,
+                    
+        probe0(191 downto 176)  => m01_axi_araddr(31 downto 16)
         
     );
 
@@ -2567,7 +2586,9 @@ input_fsm_state_count <=    x"0" when input_fsm = idle else
         
         probe0(137 downto 134)  => rd_fsm_debug,
         probe0(141 downto 138)  => output_fsm_debug,
-        probe0(191 downto 142)  => ( others => '0' )
+        probe0(163 downto 142)  => std_logic_vector(axi_r_num),
+        probe0(185 downto 164)  => std_logic_vector(current_axi_4k_count),
+        probe0(191 downto 186)  => ( others => '0' )
         
     );
 end RTL;
