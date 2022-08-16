@@ -51,7 +51,6 @@ entity CMAC_100G_wrap_w_timeslave is
         gt_refclk_n             : IN STD_LOGIC;
         sys_reset               : IN STD_LOGIC;   -- sys_reset, clocked by dclk.
         i_dclk_100              : IN STD_LOGIC;                     -- stable clock for the core; 300Mhz from kernel -> PLL -> 100 Mhz
-        clk250                  : IN STD_LOGIC;
 
         -- loopback for the GTYs
         -- "000" = normal operation, "001" = near-end PCS loopback, "010" = near-end PMA loopback
@@ -445,7 +444,7 @@ signal PTP_pps_CMAC_clk_int     : std_logic;
 
 signal ARGs_rstn                : std_logic;
 
-signal clk250_resetn            : std_logic;
+signal clk100_resetn            : std_logic;
 
 signal sys_reset_internal       : std_logic;
 signal CMAC_ARGS_reset          : std_logic;
@@ -472,11 +471,11 @@ sync_packet_registers_sig : entity signal_processing_common.sync
     )
     Port Map ( 
         Clock_a                 => i_ARGs_clk,
-        Clock_b                 => clk250,
+        Clock_b                 => i_dclk_100,
         
         data_in(0)              => ARGs_rstn,
 
-        data_out(0)             => clk250_resetn
+        data_out(0)             => clk100_resetn
     );
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -524,7 +523,7 @@ CMAC_RESET_CDC : entity signal_processing_common.sync
         data_out(0) => CMAC_ARGS_reset
     );
     
-sys_reset_internal  <= sys_reset AND CMAC_ARGS_reset;    
+sys_reset_internal  <= sys_reset OR CMAC_ARGS_reset;    
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 TOP_100G : IF U55_TOP_QSFP GENERATE
@@ -622,8 +621,8 @@ TOP_100G : IF U55_TOP_QSFP GENERATE
         gt_ref_clk_n            => gt_refclk_n,
         gt_ref_clk_p            => gt_refclk_p,
         
-        Timeslave_ctrl_slw_clk         => clk250,
-        Timeslave_ctrl_slw_clk_aresetn => clk250_resetn,
+        Timeslave_ctrl_slw_clk         => i_dclk_100,
+        Timeslave_ctrl_slw_clk_aresetn => clk100_resetn,
         
         Timeslave_ctrl_AXI_S_aclk      => i_ARGs_clk,
         Timeslave_ctrl_AXI_S_aresetn   => ARGs_rstn,
@@ -766,8 +765,8 @@ BOTTOM_100G : IF U55_BOTTOM_QSFP GENERATE
         gt_ref_clk_n            => gt_refclk_n,
         gt_ref_clk_p            => gt_refclk_p,
         
-        Timeslave_ctrl_slw_clk         => clk250,
-        Timeslave_ctrl_slw_clk_aresetn => clk250_resetn,
+        Timeslave_ctrl_slw_clk         => i_dclk_100,
+        Timeslave_ctrl_slw_clk_aresetn => clk100_resetn,
         
         Timeslave_ctrl_AXI_S_aclk      => i_ARGs_clk,
         Timeslave_ctrl_AXI_S_aresetn   => ARGs_rstn,

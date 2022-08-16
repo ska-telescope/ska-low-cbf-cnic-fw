@@ -1066,8 +1066,7 @@ u_100G_port_a : entity Timeslave_CMAC_lib.CMAC_100G_wrap_w_timeslave
         gt_refclk_p => gt_refclk_p, -- IN STD_LOGIC;
         gt_refclk_n => gt_refclk_n, -- IN STD_LOGIC;
         sys_reset   => eth100_reset_final,   -- IN STD_LOGIC;   -- sys_reset, clocked by dclk.
-        i_dclk_100  => clk_gt_freerun_use, --  IN STD_LOGIC;   -- stable clock for the core; The frequency is specified in the wizard. See comments above about the actual frequency supplied by the Alveo platform.       
-        clk250      => clk100, 
+        i_dclk_100  => clk_freerun,     --  100MHz supplied by the Alveo platform.       
         
         i_fec_enable    => fec_enable_322m,
         -- All remaining signals are clocked on tx_clk_out
@@ -1291,7 +1290,7 @@ END GENERATE;
     generic map (
         g_DEBUG_ILA                     => g_DEBUG_ILA
     ) port map (
-        clk_freerun => clk_freerun, 
+        clk_freerun         => clk_freerun, 
         -----------------------------------------------------------------------
 
         -- TX
