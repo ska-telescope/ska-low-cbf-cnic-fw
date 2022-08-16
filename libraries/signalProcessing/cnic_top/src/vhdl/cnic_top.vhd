@@ -48,7 +48,7 @@ use xpm.vcomponents.all;
 -------------------------------------------------------------------------------
 entity cnic_top is
     generic (
-        g_DEBUG_ILA                     : BOOLEAN := TRUE;
+        g_DEBUG_ILA                     : BOOLEAN := FALSE;
         g_CODIF_MODIFIER_HEADER_BLOCK   : BOOLEAN := FALSE;
         g_LBUS_CMAC                     : BOOLEAN := FALSE
 

@@ -10,6 +10,7 @@ set_max_delay -datapath_only -from [get_clocks -of_objects [get_cells -hierarchi
 
 ########################################################################################################################
 ## location constraint to help with SLR timing errors.
+add_cells_to_pblock pblock_dynamic_SLR1 [get_cells -hierarchical *i_packet_player]
 
 add_cells_to_pblock pblock_dynamic_SLR0 [get_cells -hierarchical *i_HBM_PktController]
 

@@ -2081,56 +2081,20 @@ end process;
     -- State machine that reads whole packets out of the Fifo and presents to Packet_Player
     -- Input to the fifo comes from the data retrieved from the HBM via the AXI bus
     --------------------------------------------------------------------------------------------
-    o_packetiser_data_in_wr        <= tx_FIFO_rd_en;
-    o_packetiser_data              <= FIFO_dout;
-
-    o_packetiser_bytes_to_transmit <= i_tx_packet_size(13 downto 0);
-
-    --------------------------------------------------------------------------------------------
-    -- Debug: Capture first vector sent to the MAC, so that we can compare later with the start
-    -- of packet for subsequent packets and trigger on corrupt packets.
-    --------------------------------------------------------------------------------------------
-
     process(i_shared_clk)
     begin
-      if rising_edge(i_shared_clk) then
-         if (reset_state = '1') then
-            first_time <= '1';
-         else
-            if (first_time = '1') then
-               if (o_packetiser_data_in_wr = '1') then
-                  first_time <= '0';
-                  first_packet_golden_data <= o_packetiser_data;
-               end if;
-            end if;
-         end if;
-      end if;
+        if rising_edge(i_shared_clk) then
+            o_packetiser_data_in_wr        <= tx_FIFO_rd_en;
+            o_packetiser_data              <= FIFO_dout;
+        
+            o_packetiser_bytes_to_transmit <= i_tx_packet_size(13 downto 0);
+        end if;
     end process;
 
-    process(i_shared_clk)
-    begin
-      if rising_edge(i_shared_clk) then
-         compare_vectors <= '0';
-         vectors_equal <= '0';
-         vectors_not_equal <= '0';
-
-         if (reset_state = '1') then
-            o_packetiser_data_in_wr_prev <= '0';
-         else
-            o_packetiser_data_in_wr_prev <= o_packetiser_data_in_wr;
-            if (first_time = '0') then
-               if (o_packetiser_data_in_wr = '1' and o_packetiser_data_in_wr_prev = '0') then
-                  compare_vectors <= '1';
-                  if (first_packet_golden_data(255 downto 0) = o_packetiser_data(255 downto 0)) then
-                     vectors_equal <= '1';
-                  else
-                     vectors_not_equal <= '1';
-                  end if;
-               end if;
-            end if;
-         end if;
-      end if;
-    end process;
+    --------------------------------------------------------------------------------------------
+    -- Output FSM
+    -- SM to empty FIFO to the packet player.
+    --------------------------------------------------------------------------------------------
 
     process(i_shared_clk)
     begin
@@ -2490,21 +2454,69 @@ end process;
     
 ----------------------------------------------------------------------------------------------------------
 -- debug
+
+debug_gen : IF g_DEBUG_ILAs GENERATE
+
+    --------------------------------------------------------------------------------------------
+    -- Debug: Capture first vector sent to the MAC, so that we can compare later with the start
+    -- of packet for subsequent packets and trigger on corrupt packets.
+    --------------------------------------------------------------------------------------------
+
+    process(i_shared_clk)
+    begin
+      if rising_edge(i_shared_clk) then
+         if (reset_state = '1') then
+            first_time <= '1';
+         else
+            if (first_time = '1') then
+               if (o_packetiser_data_in_wr = '1') then
+                  first_time <= '0';
+                  first_packet_golden_data <= o_packetiser_data;
+               end if;
+            end if;
+         end if;
+      end if;
+    end process;
+
+    process(i_shared_clk)
+    begin
+      if rising_edge(i_shared_clk) then
+         compare_vectors <= '0';
+         vectors_equal <= '0';
+         vectors_not_equal <= '0';
+
+         if (reset_state = '1') then
+            o_packetiser_data_in_wr_prev <= '0';
+         else
+            o_packetiser_data_in_wr_prev <= o_packetiser_data_in_wr;
+            if (first_time = '0') then
+               if (o_packetiser_data_in_wr = '1' and o_packetiser_data_in_wr_prev = '0') then
+                  compare_vectors <= '1';
+                  if (first_packet_golden_data(255 downto 0) = o_packetiser_data(255 downto 0)) then
+                     vectors_equal <= '1';
+                  else
+                     vectors_not_equal <= '1';
+                  end if;
+               end if;
+            end if;
+         end if;
+      end if;
+    end process;
     
-input_fsm_state_count <=    x"0" when input_fsm = idle else 
-                            x"1" when input_fsm = generate_aw1_shadow_addr else
-                            x"2" when input_fsm = check_aw1_addr_range else
-                            x"3" when input_fsm = generate_aw1 else
-                            x"4" when input_fsm = generate_aw2_shadow_addr else
-                            x"5" when input_fsm = check_aw2_addr_range else
-                            x"6" when input_fsm = generate_aw2 else
-                            x"7" when input_fsm = generate_aw3_shadow_addr else
-                            x"8" when input_fsm = check_aw3_addr_range else
-                            x"9" when input_fsm = generate_aw3 else
-                            x"A" when input_fsm = generate_aw4_shadow_addr else
-                            x"B" when input_fsm = check_aw4_addr_range else
-                            x"C" when input_fsm = generate_aw4 else
-                            x"F";
+    input_fsm_state_count <=    x"0" when input_fsm = idle else 
+                                x"1" when input_fsm = generate_aw1_shadow_addr else
+                                x"2" when input_fsm = check_aw1_addr_range else
+                                x"3" when input_fsm = generate_aw1 else
+                                x"4" when input_fsm = generate_aw2_shadow_addr else
+                                x"5" when input_fsm = check_aw2_addr_range else
+                                x"6" when input_fsm = generate_aw2 else
+                                x"7" when input_fsm = generate_aw3_shadow_addr else
+                                x"8" when input_fsm = check_aw3_addr_range else
+                                x"9" when input_fsm = generate_aw3 else
+                                x"A" when input_fsm = generate_aw4_shadow_addr else
+                                x"B" when input_fsm = check_aw4_addr_range else
+                                x"C" when input_fsm = generate_aw4 else
+                                x"F";
 
     hbm_capture_ila : ila_0
     port map (
@@ -2597,4 +2609,8 @@ input_fsm_state_count <=    x"0" when input_fsm = idle else
         probe0(191 downto 186)  => ( others => '0' )
         
     );
+    
+END GENERATE;
+
+    
 end RTL;
