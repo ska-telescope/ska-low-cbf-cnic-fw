@@ -330,7 +330,7 @@ architecture RTL of HBM_PktController is
     signal m01_wr_cnt, m02_wr_cnt, m03_wr_cnt, m04_wr_cnt : unsigned(3 downto 0) := "0000";
 
     signal update_start_addr_del, update_start_addr_p     : std_logic := '0';
-    signal update_readaddr_del,  update_readaddr_p        : std_logic := '0';
+    signal update_readaddr_del,  update_readaddr_del2, update_readaddr_p  : std_logic := '0';
     signal last_trans, last_trans_del, last_aw_trans      : std_logic := '0';
     signal last_trans_falling_edge                        : std_logic;
     signal m04_4095MB_packet_across                       : std_logic;
@@ -565,12 +565,13 @@ begin
     begin	    
       if rising_edge(i_shared_clk) then
          update_start_addr_del <= update_start_addr;
-	 update_readaddr_del  <= update_readaddr;
+	 update_readaddr_del   <= update_readaddr;
+	 update_readaddr_del2  <= update_readaddr_del;
       end if;
     end process;      
 
     update_start_addr_p   <= update_start_addr and (not update_start_addr_del);
-    update_readaddr_p     <= update_readaddr and (not update_readaddr_del);
+    update_readaddr_p     <= update_readaddr_del and (not update_readaddr_del2);
 
     --//AXI AW FSM for m01, m02, m03, m04
     process(i_shared_clk)
@@ -1970,10 +1971,8 @@ end process;
              boundary_across_num  <= (others => '0');
 	     readaddr_reg         <= (others => '0');
 	     from_current_bank_finish <= '0';
-	     if update_readaddr_p = '1' then
+	     if reset_state = '0' then
 		readaddr          <= unsigned(i_readaddr);
-	     else
-                readaddr          <= (others => '0'); 
              end if;		
              current_axi_4k_count <= (others =>'0');
              rd_fsm               <= wait_fifo_reset;
@@ -1991,6 +1990,8 @@ end process;
              o_axi_arvalid       <= '1';
              if i_axi_arready = '1' and from_current_bank_finish = '0' then
                 o_axi_arvalid        <= '0';
+		readaddr             <= readaddr + 4096;
+                current_axi_4k_count <= current_axi_4k_count + 1;
 		--when all the AXI AR 4k transactions for current 4GB has been transfered, then wait for all the pending AXi R transactions finish
 		if ((current_axi_4k_count = (max_space_4k_num   - resize(readaddr_reg(g_address_width-1 downto 12),22) - 1) and boundary_across_num = 0) or
 		    (current_axi_4k_count = (max_space_4kx2_num - resize(readaddr_reg(g_address_width-1 downto 12),22) - 1) and boundary_across_num = 1) or 
@@ -1998,13 +1999,10 @@ end process;
 		    (current_axi_4k_count = (max_space_4kx4_num - resize(readaddr_reg(g_address_width-1 downto 12),22) - 1) and boundary_across_num = 3))   and 
 		   (current_axi_4k_count < resize((unsigned(i_expected_total_number_of_4k_axi) - 1),22))                                                    and 
 		   (resize(unsigned(i_expected_total_number_of_4k_axi),22) > (max_space_4k_num - resize(readaddr_reg(g_address_width-1 downto 12),22) - 1)) then
-	           current_axi_4k_count <= current_axi_4k_count + 1;
 	           rd_fsm <= wait_current_bank_finish; 		
-                elsif (current_axi_4k_count = (unsigned(i_expected_total_number_of_4k_axi) - 1)) then 
+                elsif (current_axi_4k_count = (unsigned(i_expected_total_number_of_4k_axi) - 1)) then
                    rd_fsm <= finished; 
                 else
-	           readaddr             <= readaddr + 4096;
-                   current_axi_4k_count <= current_axi_4k_count + 1;
                    rd_fsm <= wait_fifo;
                 end if;
 	     elsif from_current_bank_finish = '1' then

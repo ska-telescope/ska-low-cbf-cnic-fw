@@ -298,7 +298,7 @@ begin
     wait for 1 us;
 
     update_rx_start_addr <= '1';
-    update_readaddr <= '1';
+    --update_readaddr <= '1';
 
     --g_addr_gen_32 : if g_address_width = 32 generate
     --  i_lfaa_bank1_start_addr <= X"FFEF6000";
@@ -349,6 +349,7 @@ begin
       report "i=" & integer'image(i);
       if i=1 then
 	 start_tx <= '1';
+	 update_readaddr <= '1';
       end if;	 
       if i=2 then
          for j in 1 to 400 loop
