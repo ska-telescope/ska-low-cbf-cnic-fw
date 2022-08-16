@@ -1,8 +1,21 @@
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
+  GITLAB_PROJECT_ID: 37391460
   XPFM: "/opt/xilinx/platforms/xilinx_u55c_gen3x16_xdma_2_202110_1/xilinx_u55c_gen3x16_xdma_2_202110_1.xpfm"
+  #XPFM: "/opt/xilinx/platforms/xilinx_u50lv_gen3x4_xdma_2_202010_1/xilinx_u50lv_gen3x4_xdma_2_202010_1.xpfm"
+  PERSONALITY: "cnic"
   TARGET_ALVEO: "u55"
-  GITLAB_PROJECT_ID: 37073282  # used in manual build (upload)
+  #TARGET_ALVEO: "u50lv"
+  # we escape the $ for BASEDIR to allow evaluation later
+  CREATE_PRJ_SCRIPT_PATH: "$${BASEDIR}/designs/${PERSONALITY}/create_project.tcl"
+  VIVADO_BUILD_BASE_DIR: "./build"
+  PACKAGE_KRNL_SCRIPT_PATH: "$${BASEDIR}/designs/${PERSONALITY}/src/scripts/package_kernel.tcl"
+  GEN_XO_DIRECTORY: "$${BASEDIR}/designs/${PERSONALITY}/src/scripts"
+  GEN_XO_SCRIPT_PATH: "$GEN_XO_DIRECTORY/gen_xo.tcl"
+  #KERNEL_XML_PATH: "$GEN_XO_DIRECTORY/${TARGET_ALVEO}"
+  #KERNEL_XML_PATH: "u50"
+  VPP_SCRIPT_DIR: "designs/${PERSONALITY}/src/scripts/${TARGET_ALVEO}"
+  EXTRA_VPP_ARGS: "$${BASEDIR}/pub-timeslave/hw/cores"
 
 include:
   # Alveo FPGA build common CI configuration
@@ -10,6 +23,7 @@ include:
   # This may not match the copy in our 'common' submodule!
   - project: 'ska-telescope/low-cbf/ska-low-cbf-fw-common'
     file: 'gitlab/build.yml'
+    ref: '0dee7418ef7777037e34f84fb4f0795a5d1ad61e'
 
   # SKA standard includes
   # RAW artefact handling
@@ -35,3 +49,5 @@ raw-build:
   before_script:
     # we check if the build directory exists because v++ doesn't always run
     - if [ -d build ]; then source common/scripts/util.sh; prepare_package_files raw/ska-low-cbf-fw-pst "$BUILD_STRING"; fi;
+
+  

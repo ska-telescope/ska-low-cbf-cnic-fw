@@ -7,7 +7,7 @@
 ## It synthesizes and produces an output bitfile to be programmed
 ## to an Alveo from the source in this git repository
 
-ALLOWED_ALVEO=(u50 u50lv u55) #ALVEO is either U50 or U55 as of Sept 2021
+ALLOWED_ALVEO=(u50lv u55) #ALVEO is either U50 or U55 as of Sept 2021
 PERSONALITIES=(cnic)
 XILINX_PATH=/tools/Xilinx
 VIVADO_VERSION_IN_USE=2021.2
@@ -64,13 +64,13 @@ export CNIC_BOARD=xilinx.com:au55c:part0:1.0
 export CNIC_DEVICE=xcu55c-fsvh2892-2L-e
 export CNIC_TARGET=u55c
 export VITIS_TARGET=u55
-if [ $TARGET_ALVEO = "u50" ]; then
-    export XPFM=/opt/xilinx/platforms/xilinx_u50_gen3x4_xdma_2_202010_1/xilinx_u50_gen3x4_xdma_2_202010_1.xpfm
-    export CNIC_BOARD=xilinx.com:au50:part0:1.0
-    export CNIC_DEVICE=xcu50-fsvh2104-2-e
-    export CNIC_TARGET=u50
-    export VITIS_TARGET=u50
-fi
+# if [ $TARGET_ALVEO = "u50" ]; then
+#     export XPFM=/opt/xilinx/platforms/xilinx_u50_gen3x4_xdma_2_202010_1/xilinx_u50_gen3x4_xdma_2_202010_1.xpfm
+#     export CNIC_BOARD=xilinx.com:au50:part0:1.0
+#     export CNIC_DEVICE=xcu50-fsvh2104-2-e
+#     export CNIC_TARGET=u50
+#     export VITIS_TARGET=u50
+# fi
 if [ $TARGET_ALVEO = "u50lv" ]; then
     export XPFM=/opt/xilinx/platforms/xilinx_u50lv_gen3x4_xdma_2_202010_1/xilinx_u50lv_gen3x4_xdma_2_202010_1.xpfm
     export CNIC_BOARD=xilinx.com:au50lv:part0:1.2
@@ -78,6 +78,9 @@ if [ $TARGET_ALVEO = "u50lv" ]; then
     export CNIC_TARGET=u50lv
     export VITIS_TARGET=u50
 fi
+
+export TARGET_ALVEO=$TARGET_ALVEO
+
 if [ ! -f "$XPFM" ]; then
 	echo "Error: can't find XPFM file $XPFM"
     exit 5

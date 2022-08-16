@@ -1,22 +1,27 @@
-if { $::argc != 1 } {
-   puts "FATAL: Program \"$::argv0\" requires 1 argument!\n"
-   puts "Usage: $::argv0 <PERSONALITY> \n"
-   exit
-}
-  set PERSONALITY    [lindex $::argv 0]
-puts $PERSONALITY
 
 set time_raw [clock seconds];
 set date_string [clock format $time_raw -format "%y%m%d_%H%M%S"]
 
-set proj_dir "$env(RADIOHDL)/build/${PERSONALITY}/${PERSONALITY}_$env(CNIC_TARGET)_build_$date_string"
-set ARGS_PATH "$env(RADIOHDL)/build/ARGS/${PERSONALITY}"
-#set BOARD_PATH "$env(RADIOHDL)/boards/alveo/designs/libraries/board"
-set DESIGN_PATH "$env(RADIOHDL)/designs/${PERSONALITY}"
+if { $env(TARGET_ALVEO) == "u55" } {
+  set DEVICE "xcu55c-fsvh2892-2L-e"
+  set BOARD "xilinx.com:au55c:part0:1.0"
+  set CNIC_TARGET "u55"
+  set VITIS_TARGET "u55"
+}
+
+if { $env(TARGET_ALVEO) == "u50lv" } {
+  set DEVICE "xcu50-fsvh2104-2lv-e"
+  set BOARD "xilinx.com:au50lv:part0:1.2"
+  set CNIC_TARGET "u50lv"
+  set VITIS_TARGET "u50"
+}
+
+set proj_dir "$env(RADIOHDL)/build/$env(PERSONALITY)/$env(PERSONALITY)_${CNIC_TARGET}_build_$date_string"
+set ARGS_PATH "$env(RADIOHDL)/build/ARGS/$env(PERSONALITY)"
+set DESIGN_PATH "$env(RADIOHDL)/designs/$env(PERSONALITY)"
 set RLIBRARIES_PATH "$env(RADIOHDL)/libraries"
 
-set DEVICE "$env(CNIC_DEVICE)"
-set BOARD "$env(CNIC_BOARD)"
+
 
 puts "RADIOHDL directory:"
 puts $env(RADIOHDL)
@@ -31,7 +36,7 @@ puts "Creating build_directory $proj_dir"
 file mkdir $proj_dir
 
 # This script sets the project variables
-puts "Creating new project: ${PERSONALITY}"
+puts "Creating new project: $env(PERSONALITY)"
 cd $proj_dir
 
 set workingDir [pwd]
@@ -40,10 +45,10 @@ puts $workingDir
 
 # WARNING - proj_dir must be relative to workingDir.
 # But cannot be empty because args generates tcl with the directory specified as "$proj_dir/"
-set proj_dir "../${PERSONALITY}_$env(CNIC_TARGET)_build_$date_string"
+set proj_dir "../$env(PERSONALITY)_${CNIC_TARGET}_build_$date_string"
 
 
-create_project $PERSONALITY -part $DEVICE -force
+create_project $env(PERSONALITY) -part $DEVICE -force
 set_property board_part $BOARD [current_project]
 set_property target_language VHDL [current_project]
 set_property target_simulator XSim [current_project]
@@ -60,7 +65,7 @@ set_property XPM_LIBRARIES {XPM_CDC XPM_MEMORY XPM_FIFO} [current_project]
 # This script uses the construct $workingDir/$proj_dir
 # So $proj_dir must be relative to $workingDir
 # 
-source $ARGS_PATH/${PERSONALITY}_bd.tcl
+source $ARGS_PATH/$env(PERSONALITY)_bd.tcl
 
 
 add_files -fileset sources_1 [glob \
@@ -70,7 +75,7 @@ $ARGS_PATH/cnic/system/cnic_system_reg_pkg.vhd \
 $ARGS_PATH/cnic/system/cnic_system_reg.vhd \
 ]
 
-set_property library ${PERSONALITY}_lib [get_files {\
+set_property library $env(PERSONALITY)_lib [get_files {\
 *_bus_pkg.vhd \
 *_bus_top.vhd \
 *_system_reg_pkg.vhd \
@@ -82,11 +87,11 @@ set_property library ${PERSONALITY}_lib [get_files {\
 ############################################################
 
 
-set PERSONALITYCORE $DESIGN_PATH/src/vhdl/${PERSONALITY}Core.vhd
-set PERSONALITYCORE_MATCH src/vhdl/${PERSONALITY}Core.vhd
+set PERSONALITYCORE $DESIGN_PATH/src/vhdl/$env(PERSONALITY)Core.vhd
+set PERSONALITYCORE_MATCH src/vhdl/$env(PERSONALITY)Core.vhd
 
-set PERSONALITY_TB_TOP $DESIGN_PATH/src/vhdl/tb_${PERSONALITY}_top.vhd 
-set PERSONALITY_TB_TOP_MATCH src/vhdl/tb_${PERSONALITY}_top.vhd 
+set PERSONALITY_TB_TOP $DESIGN_PATH/src/vhdl/tb_$env(PERSONALITY)_top.vhd 
+set PERSONALITY_TB_TOP_MATCH src/vhdl/tb_$env(PERSONALITY)_top.vhd 
 
 
 puts $PERSONALITYCORE
@@ -95,7 +100,7 @@ puts $PERSONALITY_TB_TOP
 puts $PERSONALITY_TB_TOP_MATCH
 
 add_files -fileset sources_1 [glob \
-$DESIGN_PATH/src/vhdl/$env(VITIS_TARGET)/cnic.vhd \
+$DESIGN_PATH/src/vhdl/${VITIS_TARGET}/cnic.vhd \
 $DESIGN_PATH/src/vhdl/cnic_core.vhd \
 $DESIGN_PATH/src/vhdl/cdma_wrapper.vhd \
 $DESIGN_PATH/src/vhdl/mac_100g_wrapper.vhd \
@@ -103,8 +108,8 @@ $DESIGN_PATH/src/vhdl/krnl_control_axi.vhd \
 ]
 
 add_files -fileset sim_1 [glob \
-$DESIGN_PATH/src/tb/tb_${PERSONALITY}.vhd \
-$DESIGN_PATH/src/tb/tb_${PERSONALITY}_top.vhd \
+$DESIGN_PATH/src/tb/tb_$env(PERSONALITY).vhd \
+$DESIGN_PATH/src/tb/tb_$env(PERSONALITY)_top.vhd \
 $DESIGN_PATH/src/vhdl/lbus_packet_receive.vhd \
 $DESIGN_PATH/src/vhdl/highLatencyRamModel.vhd \
 $DESIGN_PATH/src/vhdl/HBM_axi_tbModel.vhd \
@@ -112,8 +117,8 @@ $DESIGN_PATH/src/tb/registers_tb.txt \
 $DESIGN_PATH/src/tb/registers.txt \
 ]
 
-set_property library ${PERSONALITY}_lib [get_files {\
-*/src/vhdl/$env(VITIS_TARGET)/cnic.vhd \
+set_property library $env(PERSONALITY)_lib [get_files {\
+*/src/vhdl/${VITIS_TARGET}/cnic.vhd \
 */src/vhdl/cnic_core.vhd \
 */src/tb/tb_cnic.vhd \
 */src/tb/tb_cnic_top.vhd \
@@ -128,7 +133,7 @@ set_property library ${PERSONALITY}_lib [get_files {\
 }]
 set_property file_type {VHDL 2008} [get_files  $DESIGN_PATH/src/vhdl/highLatencyRamModel.vhd]
 set_property file_type {VHDL 2008} [get_files  $DESIGN_PATH/src/vhdl/HBM_axi_tbModel.vhd]
-set_property file_type {VHDL 2008} [get_files  $DESIGN_PATH/src/vhdl/$env(VITIS_TARGET)/cnic.vhd]
+set_property file_type {VHDL 2008} [get_files  $DESIGN_PATH/src/vhdl/${VITIS_TARGET}/cnic.vhd]
 set_property file_type {VHDL 2008} [get_files  $DESIGN_PATH/src/vhdl/cnic_core.vhd]
 
 # top level testbench
@@ -145,20 +150,20 @@ set_property  ip_repo_paths  $timeslave_repo [current_project]
 update_ip_catalog
 
 # only generate this if u55.
-if { $env(VITIS_TARGET) == "u55" } {
+if { ${VITIS_TARGET} == "u55" } {
   # generate_ref design - Instance 1 - U55C TOP PORT.
   source $RLIBRARIES_PATH/ptp/src/genBD_timeslave.tcl
 
-  make_wrapper -files [get_files $workingDir/${PERSONALITY}.srcs/sources_1/bd/ts/ts.bd] -top
-  add_files -norecurse $workingDir/${PERSONALITY}.gen/sources_1/bd/ts/hdl/ts_wrapper.vhd
+  make_wrapper -files [get_files $workingDir/$env(PERSONALITY).srcs/sources_1/bd/ts/ts.bd] -top
+  add_files -norecurse $workingDir/$env(PERSONALITY).gen/sources_1/bd/ts/hdl/ts_wrapper.vhd
 }
 
-if { $env(VITIS_TARGET) == "u50" || $env(VITIS_TARGET) == "u55"} {
+if { ${VITIS_TARGET} == "u50" || ${VITIS_TARGET} == "u55"} {
     # generate_ref design - Instance 2, timeslave_b has equivalent CMAC GTs for U50 and U55C BOTTOM PORT.
     source $RLIBRARIES_PATH/ptp/src/genBD_timeslave_b.tcl
 
-    make_wrapper -files [get_files $workingDir/${PERSONALITY}.srcs/sources_1/bd/ts_b/ts_b.bd] -top
-    add_files -norecurse $workingDir/${PERSONALITY}.gen/sources_1/bd/ts_b/hdl/ts_b_wrapper.vhd
+    make_wrapper -files [get_files $workingDir/$env(PERSONALITY).srcs/sources_1/bd/ts_b/ts_b.bd] -top
+    add_files -norecurse $workingDir/$env(PERSONALITY).gen/sources_1/bd/ts_b/hdl/ts_b_wrapper.vhd
 }
 
 add_files -fileset sources_1 [glob \
@@ -327,25 +332,25 @@ set_property library signal_processing_common [get_files {\
 #############################################################
 # $PERSONALITY Top level
 add_files -fileset sources_1 [glob \
- $RLIBRARIES_PATH/signalProcessing/${PERSONALITY}_top/src/vhdl/${PERSONALITY}_top.vhd \
- $RLIBRARIES_PATH/signalProcessing/${PERSONALITY}_top/src/vhdl/${PERSONALITY}_top_pkg.vhd \
+ $RLIBRARIES_PATH/signalProcessing/$env(PERSONALITY)_top/src/vhdl/$env(PERSONALITY)_top.vhd \
+ $RLIBRARIES_PATH/signalProcessing/$env(PERSONALITY)_top/src/vhdl/$env(PERSONALITY)_top_pkg.vhd \
 ]
-set_property library ${PERSONALITY}_lib [get_files  {\
+set_property library $env(PERSONALITY)_lib [get_files  {\
  *libraries/signalProcessing/cnic_top/src/vhdl/cnic_top.vhd \
  *libraries/signalProcessing/cnic_top/src/vhdl/cnic_top_pkg.vhd \
 }]
 # set_property library $PERSONALITY_top_lib [get_files  {\
-#  *libraries/signalProcessing/${PERSONALITY}_top/src/vhdl/${PERSONALITY}_top.vhd \
-#  *libraries/signalProcessing/${PERSONALITY}_top/src/vhdl/${PERSONALITY}_top_pkg.vhd \
+#  *libraries/signalProcessing/$env(PERSONALITY)_top/src/vhdl/$env(PERSONALITY)_top.vhd \
+#  *libraries/signalProcessing/$env(PERSONALITY)_top/src/vhdl/$env(PERSONALITY)_top_pkg.vhd \
 # }]
 
-set_property file_type {VHDL 2008} [get_files  *libraries/signalProcessing/${PERSONALITY}_top/src/vhdl/${PERSONALITY}_top.vhd]
+set_property file_type {VHDL 2008} [get_files  *libraries/signalProcessing/$env(PERSONALITY)_top/src/vhdl/$env(PERSONALITY)_top.vhd]
 
 
 ##############################################################
 # Set top
-add_files -fileset constrs_1 -norecurse $DESIGN_PATH/src/constraints/cnic_$env(VITIS_TARGET)_constraints.xdc
-set_property PROCESSING_ORDER LATE [get_files cnic_$env(VITIS_TARGET)_constraints.xdc]
+add_files -fileset constrs_1 -norecurse $DESIGN_PATH/src/constraints/cnic_${VITIS_TARGET}_constraints.xdc
+set_property PROCESSING_ORDER LATE [get_files cnic_${VITIS_TARGET}_constraints.xdc]
 
 set_property -name {xsim.compile.xvlog.more_options} -value {-d SIM_SPEED_UP} -objects [get_filesets sim_1]
 set_property top_lib xil_defaultlib [get_filesets sim_1]
