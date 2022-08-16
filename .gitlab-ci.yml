@@ -16,6 +16,9 @@ variables:
   #KERNEL_XML_PATH: "u50"
   VPP_SCRIPT_DIR: "designs/${PERSONALITY}/src/scripts/${TARGET_ALVEO}"
   EXTRA_VPP_ARGS: "$${BASEDIR}/pub-timeslave/hw/cores"
+  EXTRA_XSIM_DIR: ""
+  EXTRA_MODEL_DIR: ""
+  EXTRA_MATLAB_MODEL_DIR: ""
 
 include:
   # Alveo FPGA build common CI configuration
