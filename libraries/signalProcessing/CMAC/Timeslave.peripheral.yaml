@@ -146,7 +146,6 @@ peripherals:
               reset_value       : 0x0
               field_description : "Multi bit control vector that will allow different operations of scheduled hardware actions.
                                    Assumes a valid future time has been set in the schedule_ptp_xxxx fields above.
-                                   This register will be polled and update the operations accordingly, will throttle update operations to every ~0.5 us.
                                    Bit 0 = reset CNIC logic and the Scheduler SM to IDLE.
                                    Bit 1 = Enable TX start time.
                                    Bit 2 = Enable TX stop time.
@@ -165,5 +164,6 @@ peripherals:
                                    Bit 3 = RX start achieved
                                    Bit 4 = RX stop achieved
                                    Bit 5 = error condition, eg time scheduled and real time is already in the future.
-                                   Bit 6 = in reset. "
+                                   Bit 6 = in reset. 
+                                   Bit 7 = SM in complete state."
      
