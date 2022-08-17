@@ -47,6 +47,9 @@ raw-build:
   needs:
     - job: v++
       optional: true  # v++ job doesn't always exist in pipeline
+    - job: u50lv v++  # only upload to CAR if both targets succeed
+      optional: true
+      artifacts: false
   variables:
     BUILD_STRING: "CI CAR Package. Target Alveo: ${TARGET_ALVEO}. Pipeline ${CI_PIPELINE_ID} created at ${CI_PIPELINE_CREATED_AT}. Tag ${CI_COMMIT_TAG}. Commit ${CI_COMMIT_SHORT_SHA}."
   before_script:
@@ -61,26 +64,39 @@ u50lv create project:
 
 u50lv fpga lint:
   extends: fpga lint
+  needs:
+    - u50lv create project
   variables:
     TARGET_ALVEO: "u50lv"
 
 u50lv package kernel:
   extends: package kernel
+  needs:
+    - job: u50lv create project
+      artifacts: true
+    - job: u50lv fpga lint
+      artifacts: false
   variables:
     TARGET_ALVEO: "u50lv"
 
 u50lv generate xo:
   extends: generate xo
+  needs:
+    - u50lv package kernel
   variables:
     TARGET_ALVEO: "u50lv"
 
 u50lv v++:
   extends: v++
+  needs:
+    - u50lv generate xo
   variables:
     TARGET_ALVEO: "u50lv"
 
 u50lv publish dev package:
   extends: publish dev package
+  needs:
+    - u50lv v++
   variables:
     TARGET_ALVEO: "u50lv"
 
