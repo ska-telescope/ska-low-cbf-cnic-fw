@@ -861,7 +861,7 @@ begin
     system_fields_ro.firmware_patch_version	<= g_FIRMWARE_PATCH_VERSION;
     system_fields_ro.firmware_label			<= g_FIRMWARE_LABEL;
     system_fields_ro.firmware_personality	<= g_FIRMWARE_PERSONALITY;
-    system_fields_ro.build_date             <= g_FIRMWARE_BUILD_DATE;
+    system_fields_ro.build_date             <= x"66666666";             -- Now under CI/CD, rely on the ARGs generation
     
    
     -- Uptime counter

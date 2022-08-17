@@ -132,6 +132,7 @@ ARGS_Timeslave_lite : entity Timeslave_CMAC_lib.Timeslave_timeslave_reg
         );
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Do CDC with this arrangement instead of the time from TS core with the ARGs clock due to the timing constraint requirements.
 
 TS_registers_in(0)  <= i_PTP_time_CMAC_clk(31 downto 0);
 TS_registers_in(1)  <= i_PTP_time_CMAC_clk(63 downto 32);
@@ -158,26 +159,22 @@ CDC_time_from_timeslave : FOR i IN 0 TO (TS_registers - 1) GENERATE
 reg_proc : process(i_ARGs_clk)
 begin
     if rising_edge(i_ARGs_clk) then
---        timeslave_ro_registers.current_ptp_sub_seconds      <= i_PTP_time_ARGs_clk(31 downto 0);
---        timeslave_ro_registers.current_ptp_seconds_lower	<= i_PTP_time_ARGs_clk(63 downto 32);
---        timeslave_ro_registers.current_ptp_seconds_upper	<= x"0000" & i_PTP_time_ARGs_clk(79 downto 64);
         timeslave_ro_registers.current_ptp_sub_seconds      <= TS_registers_out(0);
         timeslave_ro_registers.current_ptp_seconds_lower	<= TS_registers_out(1);
         timeslave_ro_registers.current_ptp_seconds_upper	<= TS_registers_out(2);
         
+        current_time_sub_seconds                            <= TS_registers_out(0);
+        current_time_seconds_lower	                        <= TS_registers_out(1);
+        current_time_seconds_upper                          <= TS_registers_out(2)(15 downto 0);
+        
         timeslave_ro_registers.schedule_debug				<= x"000000" & schedule_debug;
 
 
-        start_time_sub_seconds      <= timeslave_rw_registers.schedule_ptp_sub_seconds;
-        start_time_seconds_lower    <= timeslave_rw_registers.schedule_ptp_seconds_lower;
-        start_time_seconds_upper    <= timeslave_rw_registers.schedule_ptp_seconds_upper(15 downto 0);
+        start_time_sub_seconds      <= timeslave_rw_registers.tx_start_ptp_sub_seconds;
+        start_time_seconds_lower    <= timeslave_rw_registers.tx_start_ptp_seconds_lower;
+        start_time_seconds_upper    <= timeslave_rw_registers.tx_start_ptp_seconds_upper(15 downto 0);
         
---        current_time_sub_seconds    <= i_PTP_time_ARGs_clk(31 downto 0);
---        current_time_seconds_lower	<= i_PTP_time_ARGs_clk(63 downto 32);
---        current_time_seconds_upper	<= i_PTP_time_ARGs_clk(79 downto 64);
-        current_time_sub_seconds    <= TS_registers_out(0);
-        current_time_seconds_lower	<= TS_registers_out(1);
-        current_time_seconds_upper	<= TS_registers_out(2)(15 downto 0);
+        
         
         schedule_control_cache      <= timeslave_rw_registers.schedule_control(7 downto 0);
         schedule_control_cache_d    <= schedule_control_cache;

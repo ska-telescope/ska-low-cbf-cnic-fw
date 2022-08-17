@@ -27,6 +27,7 @@ USE technology_lib.technology_select_pkg.all;
 
 USE cnic_lib.cnic_bus_pkg.ALL;
 USE cnic_lib.cnic_system_reg_pkg.ALL;
+use cnic_lib.version_pkg.all;
 USE UNISIM.vcomponents.all;
 Library xpm;
 use xpm.vcomponents.all;
@@ -342,9 +343,7 @@ END cnic;
 
 ARCHITECTURE RTL OF cnic IS
 
-constant c_FIRMWARE_MAJOR_VERSION       : std_logic_vector(15 downto 0) := x"0000";
-constant c_FIRMWARE_MINOR_VERSION       : std_logic_vector(15 downto 0) := x"0001";
-constant c_FIRMWARE_PATCH_VERSION       : std_logic_vector(15 downto 0) := x"0000";
+
 constant c_ALVEO_TARGET                 : integer := 55;
 constant c_ALVEO_U50                    : BOOLEAN := FALSE;
 constant c_ALVEO_U55                    : BOOLEAN := TRUE;

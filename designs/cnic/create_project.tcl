@@ -105,6 +105,7 @@ $DESIGN_PATH/src/vhdl/cnic_core.vhd \
 $DESIGN_PATH/src/vhdl/cdma_wrapper.vhd \
 $DESIGN_PATH/src/vhdl/mac_100g_wrapper.vhd \
 $DESIGN_PATH/src/vhdl/krnl_control_axi.vhd \
+$DESIGN_PATH/src/vhdl/version_pkg.vhd \
 ]
 
 add_files -fileset sim_1 [glob \
@@ -128,6 +129,7 @@ set_property library $env(PERSONALITY)_lib [get_files {\
 */src/vhdl/krnl_control_axi.vhd \
 */src/vhdl/highLatencyRamModel.vhd \
 */src/vhdl/HBM_axi_tbModel.vhd \
+*/src/vhdl/version_pkg.vhd \
 */src/tb/registers_tb.txt \
 */src/tb/registers.txt \
 }]
