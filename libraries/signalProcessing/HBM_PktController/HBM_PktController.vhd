@@ -104,8 +104,8 @@ entity HBM_PktController is
         o_num_packets_received          : out std_logic_vector(31 downto 0);
 
         -- tx
-        i_tx_packet_size                : in  std_logic_vector(13 downto 0);
-        i_start_tx                      : in  std_logic;
+        i_tx_packet_size                    : in  std_logic_vector(13 downto 0);
+        i_start_tx                          : in  std_logic;
       
         i_loop_tx                           : in std_logic; 
         i_expected_total_number_of_4k_axi   : in std_logic_vector(31 downto 0);
@@ -336,6 +336,9 @@ architecture RTL of HBM_PktController is
     signal m04_4095MB_packet_across                       : std_logic;
     signal stop_fifo_wr_en                                : std_logic := '0';
     signal m04_last_trans_asserted                        : std_logic := '0';
+    
+    signal rx_soft_reset_int                              : std_logic := '0';
+    signal enable_capture_int                             : std_logic := '0';
 
     ---------------------------
     --packet TX related signals
@@ -395,7 +398,7 @@ architecture RTL of HBM_PktController is
     signal tx_FIFO_rd_en : std_logic;  
     signal FIFO_rst : std_logic;       
     signal tx_FIFO_wr_en : std_logic;     
-    signal reset_state : std_logic;
+    signal tx_reset_state : std_logic;
     signal ns_burst_timer_std_logic, ns_total_time_std_logic : std_logic_vector(31 downto 0) := (others=>'0');
     signal ns_burst_timer_100Mhz : unsigned(31 downto 0) := (others=>'0');
     signal ns_total_time_100Mhz : unsigned(47 downto 0) := (others=>'0');
@@ -562,7 +565,7 @@ begin
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
-         if i_rx_soft_reset = '1' then
+         if rx_soft_reset_int = '1' then
             input_fsm <= idle;
             num_rx_4k_axi_trans_fsm         <= "00";
             num_rx_bytes_curr_4G            <= (others => '0');
@@ -597,16 +600,16 @@ begin
                 awfifo_wren <= '0';
                 --if one 4GB bank is full, then move to next bank
                 --for m04 4GB bank, if when a whole packet is tried to be filled in, it will across the 16GB, then abort this packet
-                if i_valid_rising = '1'    and i_enable_capture = '1' and m03_axi_4G_full = '1' and m04_axi_4G_full = '0' and m04_4095MB_packet_across = '0' then     
+                if i_valid_rising = '1'    and enable_capture_int = '1' and m03_axi_4G_full = '1' and m04_axi_4G_full = '0' and m04_4095MB_packet_across = '0' then     
                     first_awfifo_wren <= '1';     
                     input_fsm     <= generate_aw4_shadow_addr;	     
-                elsif i_valid_rising = '1' and i_enable_capture = '1' and m02_axi_4G_full = '1' and m04_axi_4G_full = '0' then
+                elsif i_valid_rising = '1' and enable_capture_int = '1' and m02_axi_4G_full = '1' and m04_axi_4G_full = '0' then
                     first_awfifo_wren <= '1';     
                     input_fsm     <= generate_aw3_shadow_addr;
-                elsif i_valid_rising = '1' and i_enable_capture = '1' and m01_axi_4G_full = '1' and m04_axi_4G_full = '0' then
+                elsif i_valid_rising = '1' and enable_capture_int = '1' and m01_axi_4G_full = '1' and m04_axi_4G_full = '0' then
                     first_awfifo_wren <= '1';     
                     input_fsm     <= generate_aw2_shadow_addr;
-                elsif i_valid_rising = '1' and i_enable_capture = '1' and m04_axi_4G_full = '0' then
+                elsif i_valid_rising = '1' and enable_capture_int = '1' and m04_axi_4G_full = '0' then
                     first_awfifo_wren <= '1';     
                     input_fsm     <= generate_aw1_shadow_addr;
                 end if;
@@ -1050,7 +1053,7 @@ begin
       end if;
     end process;
 
-    awfifo_rst <= i_rx_soft_reset or i_shared_rst;
+    awfifo_rst <= rx_soft_reset_int or i_shared_rst;
 
     --awlen fifo, 9 bits width, split from awfifo because AXI AW is totoally separated from AXI W part, AW can lead or behind W, so the length info should be stored
     --and read out when the AXI W start.
@@ -1168,7 +1171,7 @@ begin
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
-         if i_rx_soft_reset = '1' then
+         if rx_soft_reset_int = '1' then
             awfifo_valid_rising_edge_del2_asserted <= '0';		 
          else
             awfifo_valid_rising_edge_del1 <= awfifo_valid_rising_edge;
@@ -1279,7 +1282,7 @@ begin
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
-	 if i_rx_soft_reset = '1' then
+	 if rx_soft_reset_int = '1' then
 	    m01_axi_awvalid <= '0';
             m01_axi_awaddr  <= (others => '0');
             m01_axi_awlen   <= (others => '0');
@@ -1304,7 +1307,7 @@ begin
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
-         if i_rx_soft_reset = '1' then
+         if rx_soft_reset_int = '1' then
             m02_axi_awvalid <= '0';
             m02_axi_awaddr  <= (others => '0');
             m02_axi_awlen   <= (others => '0');
@@ -1329,7 +1332,7 @@ begin
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
-         if i_rx_soft_reset = '1' then
+         if rx_soft_reset_int = '1' then
             m03_axi_awvalid <= '0';
             m03_axi_awaddr  <= (others => '0');
             m03_axi_awlen   <= (others => '0');
@@ -1354,7 +1357,7 @@ begin
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
-         if i_rx_soft_reset = '1' then
+         if rx_soft_reset_int = '1' then
             m04_axi_awvalid <= '0';
             m04_axi_awaddr  <= (others => '0');
             m04_axi_awlen   <= (others => '0');		 
@@ -1382,7 +1385,7 @@ begin
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
-	 if i_rx_soft_reset = '1' then
+	 if rx_soft_reset_int = '1' then
 	    m01_wr          <= '0';
             m02_wr          <= '0';
             m03_wr          <= '0';
@@ -1440,7 +1443,7 @@ begin
     process(i_shared_clk)
     begin
         if rising_edge(i_shared_clk) then
-            if i_rx_soft_reset = '1' then
+            if rx_soft_reset_int = '1' then
                 m01_axi_wvalid <= '0';
                 --m01_axi_wdata  <= (others => '0');
                 m01_axi_wlast  <= '0';
@@ -1465,7 +1468,7 @@ begin
     process(i_shared_clk)
     begin
         if rising_edge(i_shared_clk) then
-            if i_rx_soft_reset = '1' then
+            if rx_soft_reset_int = '1' then
                 m02_axi_wvalid <= '0';
                 --m02_axi_wdata  <= (others => '0');
                 m02_axi_wlast  <= '0';
@@ -1490,7 +1493,7 @@ begin
     process(i_shared_clk)
     begin
         if rising_edge(i_shared_clk) then
-            if i_rx_soft_reset = '1' then
+            if rx_soft_reset_int = '1' then
                 m03_axi_wvalid <= '0';
                 --m03_axi_wdata  <= (others => '0');
                 m03_axi_wlast  <= '0';
@@ -1515,7 +1518,7 @@ begin
     process(i_shared_clk)
     begin
         if rising_edge(i_shared_clk) then
-            if i_rx_soft_reset = '1' then
+            if rx_soft_reset_int = '1' then
                 m04_axi_wvalid <= '0';
                 --m04_axi_wdata       <= (others => '0');
                 m04_axi_wlast  <= '0';
@@ -1555,7 +1558,7 @@ begin
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
-	 if i_rx_soft_reset = '1' then    
+	 if rx_soft_reset_int = '1' then    
             m01_wr_cnt <= (others => '0');
             m02_wr_cnt <= (others => '0');
             m03_wr_cnt <= (others => '0');
@@ -1640,7 +1643,7 @@ begin
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
-	 if i_rx_soft_reset = '1' then
+	 if rx_soft_reset_int = '1' then
             m01_fifo_rd_en  <= '0';
          else
 	    if (((axi_wlast_del2 = '1' and axi_wlast_del = '0' and m01_wr = '1' and size_64B = '0') or m01_wr_p = '1') and m01_wr_cnt /= 0 and axi_wdata_fifo_empty = '0') or (axi_wdata_fifo_empty_falling_edge = '1' and m01_wr = '1') or (size_64B = '1' and awfifo_wren_cond_del = '1' and m01_wr = '1') then
@@ -1655,7 +1658,7 @@ begin
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
-	 if i_rx_soft_reset = '1' then    
+	 if rx_soft_reset_int = '1' then    
             m02_fifo_rd_en  <= '0';
          else	    
             if (((axi_wlast_del2 = '1' and axi_wlast_del = '0' and m02_wr = '1' and size_64B = '0') or m02_wr_p = '1') and m02_wr_cnt /= 0 and m01_fifo_rd_en = '0' and axi_wdata_fifo_empty = '0') or (axi_wdata_fifo_empty_falling_edge = '1' and m02_wr = '1') or (size_64B = '1' and awfifo_wren_cond_del = '1' and m02_wr = '1') then
@@ -1670,7 +1673,7 @@ begin
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
-	 if i_rx_soft_reset = '1' then     
+	 if rx_soft_reset_int = '1' then     
 	    m03_fifo_rd_en  <= '0';
          else   
             if (((axi_wlast_del2 = '1' and axi_wlast_del = '0' and m03_wr = '1' and size_64B = '0') or m03_wr_p = '1') and m03_wr_cnt /= 0  and m02_fifo_rd_en = '0' and axi_wdata_fifo_empty = '0') or (axi_wdata_fifo_empty_falling_edge = '1' and m03_wr = '1') or (size_64B = '1' and awfifo_wren_cond_del = '1' and m03_wr = '1') then
@@ -1685,7 +1688,7 @@ begin
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
-	 if i_rx_soft_reset = '1' then
+	 if rx_soft_reset_int = '1' then
             m04_fifo_rd_en  <= '0';
 	 else
             if ((((axi_wlast_del2 = '1' and axi_wlast_del = '0' and m04_wr = '1' and size_64B = '0') or m04_wr_p = '1') and m04_wr_cnt /= 0 and m03_fifo_rd_en = '0' and axi_wdata_fifo_empty = '0') or (axi_wdata_fifo_empty_falling_edge = '1' and m04_wr = '1') or (size_64B = '1' and awfifo_wren_cond_del = '1' and m04_wr = '1')) and m04_last_trans_asserted = '0' then
@@ -1700,7 +1703,7 @@ begin
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
-         if i_rx_soft_reset = '1' then
+         if rx_soft_reset_int = '1' then
             m04_last_trans_asserted <= '0';
          else 
             if m04_fifo_rd_en = '1' and last_trans = '1' then
@@ -1733,7 +1736,7 @@ begin
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
-	 if i_rx_soft_reset = '1' then
+	 if rx_soft_reset_int = '1' then
 	    stop_fifo_wr_en <= '0';
          else	    
 	   if i_valid_falling = '1' and m04_axi_4G_full = '1' then 
@@ -1745,16 +1748,16 @@ begin
 
     --W data fifo control signals, as long as there is data coming in from cmac
     --the write data to w data fifo
- fifo_wr_en <= i_data_valid_from_cmac and i_enable_capture and (not stop_fifo_wr_en); 
+ fifo_wr_en <= i_data_valid_from_cmac and enable_capture_int and (not stop_fifo_wr_en); 
  fifo_rd_en <= (m01_fifo_rd_en and m01_axi_wready) or (m02_fifo_rd_en and m02_axi_wready) or (m03_fifo_rd_en and m03_axi_wready) or (m04_fifo_rd_en and m04_axi_wready);
  fifo_rd_wready <= (m01_wr and m01_axi_wready) or (m02_wr and m02_axi_wready) or (m03_wr and m03_axi_wready) or (m04_wr and m04_axi_wready); 
- rx_fifo_rst    <= i_rx_soft_reset or i_shared_rst; 
+ rx_fifo_rst    <= rx_soft_reset_int or i_shared_rst; 
 
     --W data fifo read counter, used to be compared with AW length to finish the counter running and W data fifo reading
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
-	 if i_rx_soft_reset = '1' then
+	 if rx_soft_reset_int = '1' then
             fifo_rd_counter <= (others=>'0');
          else
             if (fifo_rd_counter = (unsigned(aw_len)+1)) then 
@@ -1775,7 +1778,7 @@ begin
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
-         if i_rx_soft_reset = '1' then
+         if rx_soft_reset_int = '1' then
             axi_wlast        <= '0';
 	    axi_wlast_del    <= '0';
 	    axi_wlast_del2   <= '0';
@@ -1844,24 +1847,52 @@ begin
 
     --////////////////////////////////////////////////////////////////////////////////////////////////////
     ------------------------------------------------------------------------------------------------------
+    -- Reset mechanisms
+    ------------------------------------------------------------------------------------------------------
+    --////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    reset_proc : process(i_shared_clk)
+    begin
+        if rising_edge(i_shared_clk) then
+        
+        -- master TX reset mechanism
+        tx_reset_state         <= (NOT start_stop_tx) OR i_schedule_action(0) OR i_shared_rst;
+        
+        -- master RX reset mechanism
+        rx_soft_reset_int   <= i_rx_soft_reset OR i_schedule_action(0) OR i_shared_rst;
+            
+        end if;
+    end process;
+    
+    --////////////////////////////////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------------------------------------------------
+    -- Enable mechanisms
+    ------------------------------------------------------------------------------------------------------
+    --////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    process(i_shared_clk)
+    begin
+        if rising_edge(i_shared_clk) then
+        -- TX
+            start_stop_tx       <= i_start_tx OR (i_schedule_action(1) XOR i_schedule_action(2));
+        
+            if (start_stop_tx = '1') then
+                running <= '1';
+            else
+                running <= '0';
+            end if;
+            
+        -- RX
+            enable_capture_int  <= i_enable_capture OR (i_schedule_action(3) XOR i_schedule_action(4));
+        end if;
+    end process;
+    
+    --////////////////////////////////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------------------------------------------------
     --HBM AXI read transaction part
     ------------------------------------------------------------------------------------------------------
     --////////////////////////////////////////////////////////////////////////////////////////////////////
-    process(i_shared_clk)
-    begin
-      if rising_edge(i_shared_clk) then
-         start_stop_tx <= i_start_tx OR i_schedule_action(1);
-         reset_state <= '0';
-         if (start_stop_tx = '1') then
-            running <= '1';
-            reset_state <= '0';
-         else
-            reset_state <= '1';
-            running <= '0';
-         end if;
-      end if;
-    end process;
-
+    
 cache_sel_inc_axi_data : process(i_shared_clk)
 begin
     if rising_edge(i_shared_clk) then
@@ -2049,7 +2080,7 @@ end process;
              rd_fsm <= idle;
          end case; 
 
-         if (reset_state = '1') then
+         if (tx_reset_state = '1') then
             rd_fsm <= idle;
          end if;
       end if;
@@ -2071,7 +2102,7 @@ end process;
             end if;
          end if;
 
-         if (reset_state = '1') then
+         if (tx_reset_state = '1') then
             o_axi_rvalid_but_fifo_full <= '0'; 
          end if;
       end if;
@@ -2261,7 +2292,7 @@ end process;
 
          end case;
           
-         if (reset_state = '1') then
+         if (tx_reset_state = '1') then
             o_reset_packet_player <= '1';
             output_fsm <= initial_state;
         end if;
@@ -2388,7 +2419,7 @@ end process;
         dest_clk        => clk_freerun,   
         dest_out        => reset_state_100Mhz, 
         src_clk         => i_shared_clk,    
-        src_in          => reset_state
+        src_in          => tx_reset_state
     );
 
     xpm_cdc_inst11 : xpm_cdc_single
@@ -2465,7 +2496,7 @@ debug_gen : IF g_DEBUG_ILAs GENERATE
     process(i_shared_clk)
     begin
       if rising_edge(i_shared_clk) then
-         if (reset_state = '1') then
+         if (tx_reset_state = '1') then
             first_time <= '1';
          else
             if (first_time = '1') then
@@ -2485,7 +2516,7 @@ debug_gen : IF g_DEBUG_ILAs GENERATE
          vectors_equal <= '0';
          vectors_not_equal <= '0';
 
-         if (reset_state = '1') then
+         if (tx_reset_state = '1') then
             o_packetiser_data_in_wr_prev <= '0';
          else
             o_packetiser_data_in_wr_prev <= o_packetiser_data_in_wr;
