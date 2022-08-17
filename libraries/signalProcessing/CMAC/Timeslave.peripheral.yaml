@@ -164,5 +164,6 @@ peripherals:
                                    Bit 2 = TX stop achieved
                                    Bit 3 = RX start achieved
                                    Bit 4 = RX stop achieved
-                                   Bit 5 = error condition, eg time scheduled and real time is already in the future."
+                                   Bit 5 = error condition, eg time scheduled and real time is already in the future.
+                                   Bit 6 = in reset. "
      
