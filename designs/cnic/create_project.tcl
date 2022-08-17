@@ -9,10 +9,10 @@ if { $env(TARGET_ALVEO) == "u55" } {
   set VITIS_TARGET "u55"
 }
 
-if { $env(TARGET_ALVEO) == "u50lv" } {
+if { $env(TARGET_ALVEO) == "u50" } {
   set DEVICE "xcu50-fsvh2104-2lv-e"
   set BOARD "xilinx.com:au50lv:part0:1.2"
-  set CNIC_TARGET "u50lv"
+  set CNIC_TARGET "u50"
   set VITIS_TARGET "u50"
 }
 
