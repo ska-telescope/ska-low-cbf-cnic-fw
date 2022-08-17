@@ -53,4 +53,8 @@ raw-build:
     # we check if the build directory exists because v++ doesn't always run
     - if [ -d build ]; then source common/scripts/util.sh; prepare_package_files raw/ska-low-cbf-fw-cnic_${TARGET_ALVEO} "$BUILD_STRING"; fi;
 
-  
+### Repeat the build jobs for the U50 Alveo
+u50 create project:
+  extends: create project
+  variables:
+    TARGET_ALVEO: "u50"
