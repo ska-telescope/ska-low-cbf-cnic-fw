@@ -17,9 +17,9 @@ $(shell echo 'global:\n  annotations:\n    app.gitlab.com/app: $(CI_PROJECT_PATH
 # define private overrides for above variables in here
 -include PrivateRules.mak
 
-## Hook into SKA release logic to sync .release label with our VHDL code
-#post-set-release:
-#	common/scripts/vhdl_set_version.sh "$(VERSION)" "boards/alveo/designs/vitisAccelCore/src/vhdl/version_pkg.vhd"
+# Hook into SKA release logic to sync .release label with our VHDL code
+post-set-release:
+	common/scripts/vhdl_set_version.sh "$(VERSION)" "designs/cnic/src/vhdl/version_pkg.vhd"
 
 # Include the required modules from the SKA makefile submodule
 include .make/release.mk
