@@ -2,10 +2,10 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
   GITLAB_PROJECT_ID: 37391460
   XPFM: "/opt/xilinx/platforms/xilinx_u55c_gen3x16_xdma_2_202110_1/xilinx_u55c_gen3x16_xdma_2_202110_1.xpfm"
-  #XPFM: "/opt/xilinx/platforms/xilinx_u50lv_gen3x4_xdma_2_202010_1/xilinx_u50lv_gen3x4_xdma_2_202010_1.xpfm"
+  #XPFM: "/opt/xilinx/platforms/xilinx_u50lvlv_gen3x4_xdma_2_202010_1/xilinx_u50lv_gen3x4_xdma_2_202010_1.xpfm"
   PERSONALITY: "cnic"
   TARGET_ALVEO: "u55"
-  #TARGET_ALVEO: "u50lv"
+  #TARGET_ALVEO: "u50lvlv"
   # we escape the $ for BASEDIR to allow evaluation later
   CREATE_PRJ_SCRIPT_PATH: "$${BASEDIR}/designs/${PERSONALITY}/create_project.tcl"
   VIVADO_BUILD_BASE_DIR: "./build"
@@ -13,7 +13,7 @@ variables:
   GEN_XO_DIRECTORY: "$${BASEDIR}/designs/${PERSONALITY}/src/scripts"
   GEN_XO_SCRIPT_PATH: "$GEN_XO_DIRECTORY/gen_xo.tcl"
   #KERNEL_XML_PATH: "$GEN_XO_DIRECTORY/${TARGET_ALVEO}"
-  #KERNEL_XML_PATH: "u50"
+  #KERNEL_XML_PATH: "u50lv"
   VPP_SCRIPT_DIR: "designs/${PERSONALITY}/src/scripts/${TARGET_ALVEO}"
   EXTRA_VPP_ARGS: "$${BASEDIR}/pub-timeslave/hw/cores"
   EXTRA_XSIM_DIR: ""
@@ -53,8 +53,34 @@ raw-build:
     # we check if the build directory exists because v++ doesn't always run
     - if [ -d build ]; then source common/scripts/util.sh; prepare_package_files raw/ska-low-cbf-fw-cnic_${TARGET_ALVEO} "$BUILD_STRING"; fi;
 
-### Repeat the build jobs for the U50 Alveo
-u50 create project:
+### Repeat the build jobs for the U50LV Alveo
+u50lv create project:
   extends: create project
   variables:
-    TARGET_ALVEO: "u50"
+    TARGET_ALVEO: "u50lv"
+
+u50lv fpga lint:
+  extends: fpga lint
+  variables:
+    TARGET_ALVEO: "u50lv"
+
+u50lv package kernel:
+  extends: package kernel
+  variables:
+    TARGET_ALVEO: "u50lv"
+
+u50lv generate xo:
+  extends: generate xo
+  variables:
+    TARGET_ALVEO: "u50lv"
+
+u50lv v++:
+  extends: v++
+  variables:
+    TARGET_ALVEO: "u50lv"
+
+u50lv publish dev package:
+  extends: publish dev package
+  variables:
+    TARGET_ALVEO: "u50lv"
+
