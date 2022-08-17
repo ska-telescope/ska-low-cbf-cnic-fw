@@ -622,14 +622,15 @@ END GENERATE;
   
 --        i_clk_100GE_b       : in std_logic;
 --        i_eth100G_locked_b  : in std_logic;
---        o_tx_axis_tdata_b   : OUT STD_LOGIC_VECTOR(511 downto 0);
---        o_tx_axis_tkeep_b   : OUT STD_LOGIC_VECTOR(63 downto 0);
---        o_tx_axis_tvalid_b  : OUT STD_LOGIC;
---        o_tx_axis_tlast_b   : OUT STD_LOGIC;
---        o_tx_axis_tuser_b   : OUT STD_LOGIC;
+-- ZERO THIS OUT FOR THE MOMENT, until second interface is connected up.
+        o_tx_axis_tdata_b   <= zero_512;
+        o_tx_axis_tkeep_b   <= zero_64; 
+        o_tx_axis_tvalid_b  <= '0';
+        o_tx_axis_tlast_b   <= '0';
+        o_tx_axis_tuser_b   <= '0';
 --        i_tx_axis_tready_b  : in STD_LOGIC;
 
-    eth100G_reset_b <= not(i_eth100G_locked_b);
+--    eth100G_reset_b <= not(i_eth100G_locked_b);
         
 --    packet_player_100G_B : entity PSR_Packetiser_lib.packet_player 
 --        Generic Map(
