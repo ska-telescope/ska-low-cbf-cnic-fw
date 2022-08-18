@@ -4,10 +4,25 @@
 -- Contributing Authors:  Jason van Aardt,  David Humphreys, Giles Babich
 -- Template Rev: 1.0
 --
--- Title: Top Level for vitis compatible acceleration core
+-- Title: Top Level for CNIC
 --
 --  Distributed under the terms of the CSIRO Open Source Software Licence Agreement
 --  See the file LICENSE for more info.
+--
+--
+--    This design will be developed to support the various ALVEO cards the group owns.
+--    Currently this is U55C and U50LV
+--
+--    The U50LV has 1 x 100GB port.
+--    The U55C has 2 x 100GB ports.
+--    
+--    The design will dynamically generate these ports based on the CNIC wrapper a level above which is controlled by the project generation script.
+--    
+--    HBM has been setup with a view of 4 x Buffer, where 
+--        U50LV has 8GB, therefore 2GB per buffer
+--        U55C has 16GB, therefore 4095MB per buffer
+--    As of August 2022, there is a XRT (software) limit that will not allow access to buffers equal or greater than 4GB.
+--    
 --
 -------------------------------------------------------------------------------
 
@@ -458,12 +473,18 @@ ARCHITECTURE RTL OF cnic_core IS
     signal fec_enable_reset_count   : integer := 0;
     signal fec_enable_reset         : std_logic := '0';
     
-            -- PTP Data
+    -- PTP Data
     signal PTP_time_CMAC_clk       : std_logic_vector(79 downto 0);
     signal PTP_pps_CMAC_clk        : std_logic;
         
     signal PTP_time_ARGs_clk       : std_logic_vector(79 downto 0);
     signal PTP_pps_ARGs_clk        : std_logic;
+    
+    signal PTP_time_CMAC_clk_b     : std_logic_vector(79 downto 0);
+    signal PTP_pps_CMAC_clk_b      : std_logic;
+        
+    signal PTP_time_ARGs_clk_b     : std_logic_vector(79 downto 0);
+    signal PTP_pps_ARGs_clk_b      : std_logic;
     
     signal tx_axis_tdata            : STD_LOGIC_VECTOR(511 downto 0);
     signal tx_axis_tkeep            : STD_LOGIC_VECTOR(63 downto 0);
@@ -471,13 +492,22 @@ ARCHITECTURE RTL OF cnic_core IS
     signal tx_axis_tlast            : STD_LOGIC;
     signal tx_axis_tuser            : STD_LOGIC;
     signal tx_axis_tready           : STD_LOGIC;
-    
+        
     signal rx_axis_tdata     : STD_LOGIC_VECTOR ( 511 downto 0 );
     signal rx_axis_tkeep     : STD_LOGIC_VECTOR ( 63 downto 0 );
     signal rx_axis_tlast     : STD_LOGIC;
     signal rx_axis_tready    : STD_LOGIC;
     signal rx_axis_tuser     : STD_LOGIC_VECTOR ( 79 downto 0 );
     signal rx_axis_tvalid    : STD_LOGIC;
+    
+    -- 2nd CMAC instance
+    signal eth100G_clk_b, eth100G_locked_b : std_logic;
+    signal tx_axis_tdata_b          : STD_LOGIC_VECTOR(511 downto 0);
+    signal tx_axis_tkeep_b          : STD_LOGIC_VECTOR(63 downto 0);
+    signal tx_axis_tvalid_b         : STD_LOGIC;
+    signal tx_axis_tlast_b          : STD_LOGIC;
+    signal tx_axis_tuser_b          : STD_LOGIC;
+    signal tx_axis_tready_b         : STD_LOGIC;
     
     signal m01_axi_awvalidi  : std_logic;
     signal m01_axi_awreadyi  : std_logic;
@@ -852,7 +882,7 @@ begin
     system_fields_ro.firmware_patch_version	<= g_FIRMWARE_PATCH_VERSION;
     system_fields_ro.firmware_label			<= g_FIRMWARE_LABEL;
     system_fields_ro.firmware_personality	<= g_FIRMWARE_PERSONALITY;
-    system_fields_ro.build_date             <= g_FIRMWARE_BUILD_DATE;
+    system_fields_ro.build_date             <= x"66666666";             -- Now under CI/CD, rely on the ARGs generation
     
    
     -- Uptime counter
@@ -985,12 +1015,6 @@ begin
 
     END GENERATE;
 
-    packetiser_stats(0)         <= x"0000" & time_between_packets_largest;
-    packetiser_stats(1)         <= bytes_transmitted_last_hsec;
-
-
-    system_fields_ro.eth100G_cycles_between_packets     <= packetiser_stats_crossed(0)(15 downto 0);
-    system_fields_ro.eth100G_bytes_transmitted_hsec     <= packetiser_stats_crossed(1); 
     
 
     
@@ -1063,8 +1087,7 @@ u_100G_port_a : entity Timeslave_CMAC_lib.CMAC_100G_wrap_w_timeslave
         gt_refclk_p => gt_refclk_p, -- IN STD_LOGIC;
         gt_refclk_n => gt_refclk_n, -- IN STD_LOGIC;
         sys_reset   => eth100_reset_final,   -- IN STD_LOGIC;   -- sys_reset, clocked by dclk.
-        i_dclk_100  => clk_gt_freerun_use, --  IN STD_LOGIC;   -- stable clock for the core; The frequency is specified in the wizard. See comments above about the actual frequency supplied by the Alveo platform.       
-        clk250      => clk100, 
+        i_dclk_100  => clk_freerun,     --  100MHz supplied by the Alveo platform.       
         
         i_fec_enable    => fec_enable_322m,
         -- All remaining signals are clocked on tx_clk_out
@@ -1118,6 +1141,101 @@ u_100G_port_a : entity Timeslave_CMAC_lib.CMAC_100G_wrap_w_timeslave
         i_Timeslave_Full_axi_mosi   => mc_full_mosi(c_timeslave_full_index),
         o_Timeslave_Full_axi_miso   => mc_full_miso(c_timeslave_full_index)
     );
+    
+-- not used
+    U55_2nd_port : IF g_ALVEO_U55 GENERATE
+        u_100G_port_b : entity Timeslave_CMAC_lib.CMAC_100G_wrap_w_timeslave
+        Generic map (
+            U55_TOP_QSFP        => FALSE,
+            U55_BOTTOM_QSFP     => g_ALVEO_U55         -- THIS CONFIG IS VALID FOR U50 as well.
+        )
+        Port map(
+            gt_rxp_in                   => gt_b_rxp_in, -- in(3:0);
+            gt_rxn_in                   => gt_b_rxn_in, -- in(3:0);
+            gt_txp_out                  => gt_b_txp_out, -- out(3:0);
+            gt_txn_out                  => gt_b_txn_out, -- out(3:0);
+            gt_refclk_p                 => gt_refclk_b_p, -- IN STD_LOGIC;
+            gt_refclk_n                 => gt_refclk_b_n, -- IN STD_LOGIC;
+            sys_reset                   => eth100_reset_final,   -- IN STD_LOGIC;   -- sys_reset, clocked by dclk.
+            i_dclk_100                  => clk_gt_freerun_use, --  IN STD_LOGIC;   -- stable clock for the core; The frequency is specified in the wizard. See comments above about the actual frequency supplied by the Alveo platform.       
+            
+            i_fec_enable                => fec_enable_322m,
+            -- All remaining signals are clocked on tx_clk_out
+            tx_clk_out                  => eth100G_clk_b, -- out std_logic; This is the clock used by the data in and out of the core. 322 MHz.
+            
+            -- User Interface Signals
+            rx_locked                   => eth100G_locked_b, -- out std_logic; 
+    
+            user_rx_reset               => open,
+            user_tx_reset               => open,
+    
+            -- Statistics Interface, on eth100_clk
+            rx_total_packets            => open, -- out(31:0);
+            rx_bad_fcs                  => open,       -- out(31:0);
+            rx_bad_code                 => open,      -- out(31:0);
+            tx_total_packets            => open, -- out(31:0);
+            
+            -----------------------------------------------------------------------
+            -- streaming AXI to CMAC
+            i_tx_axis_tdata     => tx_axis_tdata_b,
+            i_tx_axis_tkeep     => tx_axis_tkeep_b,
+            i_tx_axis_tvalid    => tx_axis_tvalid_b,
+            i_tx_axis_tlast     => tx_axis_tlast_b,
+            i_tx_axis_tuser     => tx_axis_tuser_b,
+            o_tx_axis_tready    => tx_axis_tready_b,
+            
+            -- RX
+            o_rx_axis_tdata     => open,
+            o_rx_axis_tkeep     => open,
+            o_rx_axis_tlast     => open,
+            i_rx_axis_tready    => '1',
+            o_rx_axis_tuser     => open,
+            o_rx_axis_tvalid    => open,
+            
+            -----------------------------------------------------------------------
+            
+            -- PTP Data
+            PTP_time_CMAC_clk           => PTP_time_CMAC_clk_b,
+            PTP_pps_CMAC_clk            => PTP_pps_CMAC_clk_b,
+            
+            PTP_time_ARGs_clk           => PTP_time_ARGs_clk_b,
+            PTP_pps_ARGs_clk            => PTP_pps_ARGs_clk_b,
+            
+            -- ARGs Interface
+            i_ARGs_clk                  => ap_clk, -- in std_logic;
+            i_ARGs_rst                  => ap_rst, -- in std_logic;
+            
+            i_CMAC_Lite_axi_mosi        => mc_lite_mosi(c_cmac_b_lite_index),
+            o_CMAC_Lite_axi_miso        => mc_lite_miso(c_cmac_b_lite_index),
+            
+            i_Timeslave_Full_axi_mosi   => mc_full_mosi(c_timeslave_b_full_index),
+            o_Timeslave_Full_axi_miso   => mc_full_miso(c_timeslave_b_full_index)
+        );
+        
+        TIMESLAVE_COMPARE : entity Timeslave_CMAC_lib.timeslave_stats
+        Port map ( 
+            CMAC_clk_1                  => eth100G_clk,
+            CMAC_clk_2                  => eth100G_clk_b,
+            
+            ARGs_clk                    => ap_clk,
+            
+            cmac_reset                  => '0',
+        
+            -- PTP Data
+            PTP_time_CMAC_clk(0)        => PTP_time_CMAC_clk,
+            PTP_time_CMAC_clk(1)        => PTP_time_CMAC_clk_b,
+            PTP_pps_CMAC_clk(0)         => PTP_pps_CMAC_clk,
+            PTP_pps_CMAC_clk(1)         => PTP_pps_CMAC_clk_b,
+        
+            PTP_time_ARGs_clk(0)        => PTP_time_ARGs_clk,
+            PTP_time_ARGs_clk(1)        => PTP_time_ARGs_clk_b,
+            
+            PTP_pps_ARGs_clk(0)         => PTP_pps_ARGs_clk,
+            PTP_pps_ARGs_clk(1)         => PTP_pps_ARGs_clk_b
+        
+        );
+    END GENERATE;
+    
 
     CMAC_reset_proc : process(eth100G_clk)
     begin
@@ -1129,7 +1247,7 @@ u_100G_port_a : entity Timeslave_CMAC_lib.CMAC_100G_wrap_w_timeslave
 
     PTP_hardware_scheduler : entity Timeslave_CMAC_lib.timeslave_scheduler 
     Generic map (
-        DEBUG_ILA                   => FALSE
+        DEBUG_ILA                   => TRUE
     )
     Port map ( 
         i_CMAC_clk                  => eth100G_clk,
@@ -1151,6 +1269,7 @@ u_100G_port_a : entity Timeslave_CMAC_lib.CMAC_100G_wrap_w_timeslave
         o_Timeslave_Lite_axi_miso   => mc_lite_miso(c_timeslave_lite_index)
     
     );
+
 
 END GENERATE;
 
@@ -1215,7 +1334,7 @@ END GENERATE;
     generic map (
         g_DEBUG_ILA                     => g_DEBUG_ILA
     ) port map (
-        clk_freerun => clk_freerun, 
+        clk_freerun         => clk_freerun, 
         -----------------------------------------------------------------------
 
         -- TX
@@ -1246,7 +1365,15 @@ END GENERATE;
         i_clk_100GE         => eth100G_clk,      -- in std_logic;
         i_eth100G_locked    => eth100G_locked,
         -----------------------------------------------------------------------
-
+        i_clk_100GE_b       => eth100G_clk_b,
+        i_eth100G_locked_b  => eth100G_locked_b,
+         
+        o_tx_axis_tdata_b   => tx_axis_tdata_b,
+        o_tx_axis_tkeep_b   => tx_axis_tkeep_b,
+        o_tx_axis_tvalid_b  => tx_axis_tvalid_b,
+        o_tx_axis_tlast_b   => tx_axis_tlast_b,
+        o_tx_axis_tuser_b   => tx_axis_tuser_b,
+        i_tx_axis_tready_b  => tx_axis_tready_b,
         -----------------------------------------------------------------------
         -- reset of the valid memory is in progress.
         o_validMemRstActive => o_validMemRstActive,
@@ -1259,9 +1386,6 @@ END GENERATE;
         i_HBM_Pktcontroller_Lite_axi_mosi  => mc_lite_mosi(c_hbm_pktcontroller_lite_index),
         o_HBM_Pktcontroller_Lite_axi_miso  => mc_lite_miso(c_hbm_pktcontroller_lite_index),
         
-        -- traffic stats
-        o_time_between_packets_largest  => time_between_packets_largest,
-        o_bytes_transmitted_last_hsec   => bytes_transmitted_last_hsec,
         
         -----------------------------------------------------------------------
         i_schedule_action       => schedule_action,

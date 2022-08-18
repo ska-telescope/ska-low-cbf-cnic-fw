@@ -51,7 +51,7 @@ use UNISIM.VComponents.all;
 
 entity packet_player is
     Generic (
-        g_DEBUG_ILA             : BOOLEAN := TRUE;
+        g_DEBUG_ILA             : BOOLEAN := FALSE;
         LBUS_TO_CMAC_INUSE      : BOOLEAN := TRUE;      -- FUTURE WORK to IMPLEMENT AXI
         PLAYER_CDC_FIFO_DEPTH   : INTEGER := 1024        -- FIFO is 512 Wide, 9KB packets = 73728 bits, 512 * 256 = 131072, 256 depth allows ~1.88 9K packets, we are target packets sizes smaller than this.
     );
@@ -69,10 +69,7 @@ entity packet_player is
         
         o_cmac_ready            : OUT STD_LOGIC;
         
-        -- traffic stats
-        o_time_between_packets_largest  : OUT STD_LOGIC_VECTOR(15 downto 0);
-        o_bytes_transmitted_last_hsec   : OUT STD_LOGIC_VECTOR(31 downto 0);
-    
+   
         -- streaming AXI to CMAC
         o_tx_axis_tdata         : OUT STD_LOGIC_VECTOR(511 downto 0);
         o_tx_axis_tkeep         : OUT STD_LOGIC_VECTOR(63 downto 0);
@@ -495,45 +492,44 @@ debug_gen : IF g_DEBUG_ILA GENERATE
 -- DEBUG stats
 -- calculated in the 322.266 MHz domain from the CMAC.
 
-byte_increment <= "00" & x"0000" & meta_data_fifo_q;
+--byte_increment <= "00" & x"0000" & meta_data_fifo_q;
 
-stats_proc : process(i_cmac_clk)
-begin
-    if rising_edge(i_cmac_clk) then
-        if stats_interval = 161133000 then      -- calculate for half second.
-            stats_interval <= 1;
-        else
-            stats_interval <= stats_interval + 1;
-        end if;
+--stats_proc : process(i_cmac_clk)
+--begin
+--    if rising_edge(i_cmac_clk) then
+--        if stats_interval = 161133000 then      -- calculate for half second.
+--            stats_interval <= 1;
+--        else
+--            stats_interval <= stats_interval + 1;
+--        end if;
 
-        if stats_interval = 1 then
-            bytes_transmitted_last_hsec <= x"00000000";
-        elsif (mac_streaming_sm = PREP) then
-            bytes_transmitted_last_hsec <= std_logic_vector(unsigned(bytes_transmitted_last_hsec) + unsigned(byte_increment));
-        end if;
+--        if stats_interval = 1 then
+--            bytes_transmitted_last_hsec <= x"00000000";
+--        elsif (mac_streaming_sm = PREP) then
+--            bytes_transmitted_last_hsec <= std_logic_vector(unsigned(bytes_transmitted_last_hsec) + unsigned(byte_increment));
+--        end if;
         
         
-        if (mac_streaming_sm = IDLE) then
-            time_between_packets        <= std_logic_vector(unsigned(time_between_packets) + x"0001");
-        elsif (mac_streaming_sm = DATA) then
-            time_between_packets        <= x"0000";
-        end if;
+--        if (mac_streaming_sm = IDLE) then
+--            time_between_packets        <= std_logic_vector(unsigned(time_between_packets) + x"0001");
+--        elsif (mac_streaming_sm = DATA) then
+--            time_between_packets        <= x"0000";
+--        end if;
         
         
-        if stats_interval = 1 then
-            time_between_packets_largest <= x"0000";
-        elsif (mac_streaming_sm = PREP) then
-            if time_between_packets_largest < time_between_packets then
-                time_between_packets_largest <= time_between_packets;
-            end if;
-        end if;
+--        if stats_interval = 1 then
+--            time_between_packets_largest <= x"0000";
+--        elsif (mac_streaming_sm = PREP) then
+--            if time_between_packets_largest < time_between_packets then
+--                time_between_packets_largest <= time_between_packets;
+--            end if;
+--        end if;
         
-    end if;
-end process;
+--    end if;
+--end process;
 
 
-o_time_between_packets_largest  <= time_between_packets_largest;
-o_bytes_transmitted_last_hsec   <= bytes_transmitted_last_hsec;
+
 -----------------------------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------------------
@@ -619,12 +615,12 @@ o_bytes_transmitted_last_hsec   <= bytes_transmitted_last_hsec;
     u_cmac_fifo_wr_ila : ila_0
     port map (
         clk => i_clk400,
-        probe0(31 downto 0)         => ethernet_frame_DC_fifo_data(31 downto 0),
-        probe0(63 downto 32)        => (others=>'0'),
+        probe0(63 downto 0)         => ethernet_frame_DC_fifo_data(63 downto 0),
+        --probe0(63 downto 32)        => (others=>'0'),
         probe0(64)                  => ethernet_frame_DC_fifo_wr, 
         probe0(65)                  => ethernet_frame_DC_fifo_full, 
-        probe0(66)                  => ethernet_frame_DC_fifo_empty,
-        probe0(75 downto 67)        => open, 
+        
+        probe0(75 downto 66)        => open, 
         probe0(191 downto 76)       => (others =>'0')
     );
 

@@ -17,6 +17,18 @@ peripherals:
         dual_clock        : false
         fields            :
          #################################
+          - - field_name        : CMAC_100G_locked
+              width             : 1
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "100G ethernet is up"
+         #################################
+          - - field_name        : CMAC_reset
+              width             : 1
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "Reset CMAC HARD IP and GTs"
+         #################################
           - - field_name        : CMAC_stat_reset
               width             : 8
               access_mode       : RW

@@ -7,7 +7,12 @@
 -- 
 -- 
 -- test bench written to be used in Vivado
+-- not automated, and requires visual inspection to verify.
 -- 
+-- this is a static TB to test desired packet sizes and see if the byte detect will pick this up.
+-- also to test if back to back packets, (ie tlast and the next cycle packet start) coming from the CMAC S_AXI will provoke a problem.
+--
+-- i_rx_axis_tuser time stamp data in 80 bit format coming from TimeSlave IP, this will be zero most of the time and provide the time stamp on first cycle of a packet.
 --
 library IEEE,technology_lib, PSR_Packetiser_lib, signal_processing_common, cmac_s_axi_lib;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -172,7 +177,7 @@ begin
                 i_rx_axis_tkeep                 <= x"FFFFFFFFFFFFFFFF";
                 i_rx_axis_tvalid                <= '1';
                
-            elsif testCount_322 >= 83 AND testCount_322 < 120 then
+            elsif testCount_322 >= 83 AND testCount_322 < 113 then
                 streaming_data(127 downto 0)    <= x"99999999" & x"AAAAAAAA" & x"BBBBBBBB" & x"CCCCCCCC";
                 streaming_data(255 downto 128)  <= x"99999999" & x"AAAAAAAA" & x"BBBBBBBB" & x"CCCCCCCC";
                 streaming_data(383 downto 256)  <= x"99999999" & x"AAAAAAAA" & x"BBBBBBBB" & x"CCCCCCCC";
@@ -180,12 +185,12 @@ begin
                 i_rx_axis_tkeep                 <= x"FFFFFFFFFFFFFFFF";
                 i_rx_axis_tvalid                <= '1';
                 
-            elsif testCount_322 = 120 then
+            elsif testCount_322 = 113 then
                 streaming_data(127 downto 0)    <= x"DDDDDDDD" & x"EEEEEEEE" & x"FFFFFFFF" & x"00000000";
                 streaming_data(255 downto 128)  <= x"DDDDDDDD" & x"EEEEEEEE" & x"FFFFFFFF" & x"00000000";
                 streaming_data(383 downto 256)  <= x"DDDDDDDD" & x"EEEEEEEE" & x"FFFFFFFF" & x"00000000";
                 streaming_data(511 downto 384)  <= zero_128;
-                i_rx_axis_tkeep                 <= x"00000FFFFFFFFFFF";
+                i_rx_axis_tkeep                 <= x"000003FFFFFFFFFF";
                 i_rx_axis_tvalid                <= '1';
                 i_rx_axis_tlast                 <= '1'; 
             -- PTP injection
@@ -220,7 +225,7 @@ begin
                 i_rx_axis_tvalid                <= '1';  
                 i_rx_axis_tlast                 <= '1';
                 
-            elsif testCount_322 = 200 then
+            elsif testCount_322 = 300 then
                 streaming_data(127 downto 0)   <=  ethernet_info.dst_mac & 
                                                 ethernet_info.src_mac & 
                                                 ethernet_info.eth_type & 
@@ -250,7 +255,7 @@ begin
                 i_rx_axis_tkeep                 <= x"FFFFFFFFFFFFFFFF";
                 i_rx_axis_tvalid                <= '1';
                 
-            elsif testCount_322 = 201 then
+            elsif testCount_322 = 301 then
                 streaming_data(127 downto 0)    <= x"11111111" & x"22222222" & x"33333333" & x"44444444";
                 streaming_data(255 downto 128)  <= x"11111111" & x"22222222" & x"33333333" & x"44444444";
                 streaming_data(383 downto 256)  <= x"11111111" & x"22222222" & x"33333333" & x"44444444";
@@ -258,7 +263,7 @@ begin
                 i_rx_axis_tkeep                 <= x"FFFFFFFFFFFFFFFF";
                 i_rx_axis_tvalid                <= '1';
             
-            elsif testCount_322 = 202 then
+            elsif testCount_322 = 302 then
                 streaming_data(127 downto 0)    <= x"55555555" & x"66666666" & x"77777777" & x"88888888";
                 streaming_data(255 downto 128)  <= x"55555555" & x"66666666" & x"77777777" & x"88888888";
                 streaming_data(383 downto 256)  <= x"55555555" & x"66666666" & x"77777777" & x"88888888";
@@ -266,7 +271,7 @@ begin
                 i_rx_axis_tkeep                 <= x"FFFFFFFFFFFFFFFF";
                 i_rx_axis_tvalid                <= '1';
                
-            elsif testCount_322 = 203 then
+            elsif testCount_322 = 303 then
                 streaming_data(127 downto 0)    <= x"99999999" & x"AAAAAAAA" & x"BBBBBBBB" & x"CCCCCCCC";
                 streaming_data(255 downto 128)  <= x"99999999" & x"AAAAAAAA" & x"BBBBBBBB" & x"CCCCCCCC";
                 streaming_data(383 downto 256)  <= x"99999999" & x"AAAAAAAA" & x"BBBBBBBB" & x"CCCCCCCC";
@@ -275,7 +280,7 @@ begin
                 i_rx_axis_tvalid                <= '1';
                 i_rx_axis_tlast                 <= '1';
                 
-            elsif testCount_322 = 204 then
+            elsif testCount_322 = 304 then
                 streaming_data(127 downto 0)    <= x"DDDDDDDD" & x"EEEEEEEE" & x"FFFFFFFF" & x"00000000";
                 streaming_data(255 downto 128)  <= x"DDDDDDDD" & x"EEEEEEEE" & x"FFFFFFFF" & x"00000000";
                 streaming_data(383 downto 256)  <= x"DDDDDDDD" & x"EEEEEEEE" & x"FFFFFFFF" & x"00000000";
@@ -292,7 +297,7 @@ begin
 
             if testCount_322 = 38 then
                 rx_reset_capture    <= '1';
-                rx_packet_size      <= "00" & x"A2C";      -- 2604            
+                rx_packet_size      <= "00" & x"86A";      -- 2154            
             elsif testCount_322 = 175 then
                 rx_reset_capture    <= '1';
                 rx_packet_size      <= "00" & x"100";      -- 256
@@ -308,7 +313,7 @@ end process;
 
 i_rx_axis_tdata        <= streaming_data;
 
-
+i_rx_axis_tuser        <= zero_word & one_dword & zero_dword; 
 
 
 rx_reset_counter        <= '0';

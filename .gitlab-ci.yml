@@ -1,0 +1,102 @@
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+  GITLAB_PROJECT_ID: 37391460
+  XPFM: "/opt/xilinx/platforms/xilinx_u55c_gen3x16_xdma_2_202110_1/xilinx_u55c_gen3x16_xdma_2_202110_1.xpfm"
+  PERSONALITY: "cnic"
+  TARGET_ALVEO: "u55"
+  # we escape the $ for BASEDIR to allow evaluation later
+  CREATE_PRJ_SCRIPT_PATH: "$${BASEDIR}/designs/${PERSONALITY}/create_project.tcl"
+  VIVADO_BUILD_BASE_DIR: "./build"
+  PACKAGE_KRNL_SCRIPT_PATH: "$${BASEDIR}/designs/${PERSONALITY}/src/scripts/package_kernel.tcl"
+  GEN_XO_DIRECTORY: "$${BASEDIR}/designs/${PERSONALITY}/src/scripts"
+  GEN_XO_SCRIPT_PATH: "$GEN_XO_DIRECTORY/gen_xo.tcl"
+  VPP_SCRIPT_DIR: "designs/${PERSONALITY}/src/scripts/${TARGET_ALVEO}"
+  EXTRA_VPP_ARGS: "--user_ip_repo_paths $${BASEDIR}/pub-timeslave/hw/cores"
+  EXTRA_XSIM_DIR: ""
+  EXTRA_MODEL_DIR: ""
+  EXTRA_MATLAB_MODEL_DIR: ""
+
+include:
+  # Alveo FPGA build common CI configuration
+  # Note: GitLab includes always grab the latest.
+  # This may not match the copy in our 'common' submodule!
+  - project: 'ska-telescope/low-cbf/ska-low-cbf-fw-common'
+    file: 'gitlab/build.yml'
+
+  # SKA standard includes
+  # RAW artefact handling
+  - project: 'ska-telescope/templates-repository'
+    file: 'gitlab-ci/includes/raw.gitlab-ci.yml'
+  # Release management
+  - project: 'ska-telescope/templates-repository'
+    file: 'gitlab-ci/includes/release.gitlab-ci.yml'
+  # Docs pages
+  - project: 'ska-telescope/templates-repository'
+    file: 'gitlab-ci/includes/docs.gitlab-ci.yml'
+  # .post step finalisers eg: badges
+  - project: 'ska-telescope/templates-repository'
+    file: 'gitlab-ci/includes/finaliser.gitlab-ci.yml'
+
+raw-build:
+  # note: this is modifying a job imported from templates-repository!
+  needs:
+    - job: v++
+      optional: true  # v++ job doesn't always exist in pipeline
+    - job: u50 v++  # only upload to CAR if both targets succeed
+      optional: true
+      artifacts: false
+  variables:
+    BUILD_STRING: "CI CAR Package. Target Alveo: ${TARGET_ALVEO}. Pipeline ${CI_PIPELINE_ID} created at ${CI_PIPELINE_CREATED_AT}. Tag ${CI_COMMIT_TAG}. Commit ${CI_COMMIT_SHORT_SHA}."
+  before_script:
+    # we check if the build directory exists because v++ doesn't always run
+    - if [ -d build ]; then source common/scripts/util.sh; prepare_package_files raw/ska-low-cbf-fw-cnic_${TARGET_ALVEO} "$BUILD_STRING"; fi;
+
+### Repeat the build jobs for the U50LV Alveo
+u50 create project:
+  extends: create project
+  variables:
+    TARGET_ALVEO: "u50"
+    XPFM: "/opt/xilinx/platforms/xilinx_u50lv_gen3x4_xdma_2_202010_1/xilinx_u50lv_gen3x4_xdma_2_202010_1.xpfm"
+
+u50 fpga lint:
+  extends: fpga lint
+  needs:
+    - u50 create project
+  variables:
+    TARGET_ALVEO: "u50"
+    XPFM: "/opt/xilinx/platforms/xilinx_u50lv_gen3x4_xdma_2_202010_1/xilinx_u50lv_gen3x4_xdma_2_202010_1.xpfm"
+
+u50 package kernel:
+  extends: package kernel
+  needs:
+    - job: u50 create project
+      artifacts: true
+    - job: u50 fpga lint
+      artifacts: false
+  variables:
+    TARGET_ALVEO: "u50"
+    XPFM: "/opt/xilinx/platforms/xilinx_u50lv_gen3x4_xdma_2_202010_1/xilinx_u50lv_gen3x4_xdma_2_202010_1.xpfm"
+
+u50 generate xo:
+  extends: generate xo
+  needs:
+    - u50 package kernel
+  variables:
+    TARGET_ALVEO: "u50"
+    XPFM: "/opt/xilinx/platforms/xilinx_u50lv_gen3x4_xdma_2_202010_1/xilinx_u50lv_gen3x4_xdma_2_202010_1.xpfm"
+
+u50 v++:
+  extends: v++
+  needs:
+    - u50 generate xo
+  variables:
+    TARGET_ALVEO: "u50"
+    XPFM: "/opt/xilinx/platforms/xilinx_u50lv_gen3x4_xdma_2_202010_1/xilinx_u50lv_gen3x4_xdma_2_202010_1.xpfm"
+
+u50 publish dev package:
+  extends: publish dev package
+  needs:
+    - u50 v++
+  variables:
+    TARGET_ALVEO: "u50"
+

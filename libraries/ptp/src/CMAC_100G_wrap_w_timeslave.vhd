@@ -9,17 +9,29 @@
 -- Tool Versions: 2021.2
 -- Description: 
 -- 
---  
 -- 
--- Revision:
--- Revision 0.01 - File Created
--- Streaming AXI byte layout of an Ethernet Frame.
+-- DATA format for Streaming AXI byte layout of an Ethernet Frame.
 --  dst_mac  <= CMAC_rx_axis_tdata(7 downto 0) & CMAC_rx_axis_tdata(15 downto 8) & CMAC_rx_axis_tdata(23 downto 16) & CMAC_rx_axis_tdata(31 downto 24) & CMAC_rx_axis_tdata(39 downto 32) & CMAC_rx_axis_tdata(47 downto 40);
 --  src_mac  <= CMAC_rx_axis_tdata(55 downto 48) & CMAC_rx_axis_tdata(63 downto 56) & CMAC_rx_axis_tdata(71 downto 64) & CMAC_rx_axis_tdata(79 downto 72) & CMAC_rx_axis_tdata(87 downto 80) & CMAC_rx_axis_tdata(95 downto 88);
 --  eth_type <= CMAC_rx_axis_tdata(103 downto 96) & CMAC_rx_axis_tdata(111 downto 104);
 --  ptp_type <= CMAC_rx_axis_tdata(119 downto 112);
 --  ETC ...
 -- 
+--    This wrapper generates the appropriate CMAC and GT arrangement in a Timeslave block design based upon generics.
+--    U50 and U55C share CMAC and GT silicon locations.
+--    
+--    The ts_wrapper is based on the example design that is provided by that IP repo. Heavily modified for use ALVEO kernel.
+--    The wrapper contains the Timeslave IP, CMAC Xilinx IP and AXI clock domain crossing to run the uBlaze in the IP at a slower rate than ARGs.
+--    
+--    Outside of this block there are various statistics counters that take the indicators from the CMAC block to generate counters.
+--    These are provided to ARGs.
+--    
+--    Timeslave IP is controlled by the AXI vectors; 
+--        i_Timeslave_Full_axi_mosi       : in  t_axi4_full_mosi;
+--        o_Timeslave_Full_axi_miso       : out t_axi4_full_miso
+--    the documentation for the various sub timeslave modules available through this address space is in the IP repo.
+--    A more detailed document is also available. 
+--       
 ----------------------------------------------------------------------------------
 
 
@@ -37,7 +49,7 @@ USE Timeslave_CMAC_lib.CMAC_cmac_reg_pkg.ALL;
 
 entity CMAC_100G_wrap_w_timeslave is
     generic (
-        DEBUG_ILA               : BOOLEAN := TRUE;
+        DEBUG_ILA               : BOOLEAN := FALSE;
         U55_TOP_QSFP            : BOOLEAN := FALSE;         --
         U55_BOTTOM_QSFP         : BOOLEAN := FALSE          -- THIS CONFIG IS VALID FOR U50 as well.
     
@@ -51,7 +63,6 @@ entity CMAC_100G_wrap_w_timeslave is
         gt_refclk_n             : IN STD_LOGIC;
         sys_reset               : IN STD_LOGIC;   -- sys_reset, clocked by dclk.
         i_dclk_100              : IN STD_LOGIC;                     -- stable clock for the core; 300Mhz from kernel -> PLL -> 100 Mhz
-        clk250                  : IN STD_LOGIC;
 
         -- loopback for the GTYs
         -- "000" = normal operation, "001" = near-end PCS loopback, "010" = near-end PMA loopback
@@ -445,7 +456,10 @@ signal PTP_pps_CMAC_clk_int     : std_logic;
 
 signal ARGs_rstn                : std_logic;
 
-signal clk250_resetn            : std_logic;
+signal clk100_resetn            : std_logic;
+
+signal sys_reset_internal       : std_logic;
+signal CMAC_ARGS_reset          : std_logic;
 
 begin
 
@@ -453,9 +467,6 @@ begin
 -- mappings
 tx_clk_out              <= CMAC_Clk;
 rx_locked               <= CMAC_rx_locked;
-
-CMAC_ctl_rx_enable      <= '1';
-CMAC_ctl_tx_enable      <= '1';
 
 PTP_time_CMAC_clk       <= PTP_time_CMAC_clk_int;
 PTP_pps_CMAC_clk        <= PTP_pps_CMAC_clk_int;
@@ -472,11 +483,11 @@ sync_packet_registers_sig : entity signal_processing_common.sync
     )
     Port Map ( 
         Clock_a                 => i_ARGs_clk,
-        Clock_b                 => clk250,
+        Clock_b                 => i_dclk_100,
         
         data_in(0)              => ARGs_rstn,
 
-        data_out(0)             => clk250_resetn
+        data_out(0)             => clk100_resetn
     );
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -497,11 +508,40 @@ ARGS_CMAC_lite : entity Timeslave_CMAC_lib.CMAC_cmac_reg
         );
         
 ------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Control Registers
+CMAC_locked_cdc : entity signal_processing_common.sync 
+    generic map (
+        DEST_SYNC_FF    => 2,
+        WIDTH           => 1
+    )
+    port map ( 
+        Clock_a     => CMAC_Clk,
+        Clock_b     => i_ARGs_clk,
+        data_in(0)  => CMAC_rx_locked,
+        
+        data_out(0) => cmac_stats_ro_registers.cmac_100g_locked
+    );
+
+CMAC_RESET_CDC : entity signal_processing_common.sync 
+    generic map (
+        DEST_SYNC_FF    => 2,
+        WIDTH           => 1
+    )
+    port map ( 
+        Clock_a     => i_ARGs_clk,
+        Clock_b     => i_dclk_100,
+        data_in(0)  => cmac_stats_rw_registers.cmac_reset,
+        
+        data_out(0) => CMAC_ARGS_reset
+    );
+    
+sys_reset_internal  <= sys_reset OR CMAC_ARGS_reset;    
+------------------------------------------------------------------------------------------------------------------------------------------------------
 
 TOP_100G : IF U55_TOP_QSFP GENERATE
     ptp_BD : ts_wrapper port map (
         clk_100MHz              => i_dclk_100,
-        clk_100_reset           => sys_reset,
+        clk_100_reset           => sys_reset_internal,
         
         CMAC_Clk                => CMAC_Clk,
         
@@ -574,7 +614,7 @@ TOP_100G : IF U55_TOP_QSFP GENERATE
         CMAC_rx_ptp_stamp       => CMAC_rx_ptp_stamp,
         CMAC_tx_ptp_stamp       => CMAC_tx_ptp_stamp,
         
-        CMAC_Master_reset       => sys_reset,
+        CMAC_Master_reset       => sys_reset_internal,
         
         gt_loopback_in          => x"000",
     
@@ -593,8 +633,8 @@ TOP_100G : IF U55_TOP_QSFP GENERATE
         gt_ref_clk_n            => gt_refclk_n,
         gt_ref_clk_p            => gt_refclk_p,
         
-        Timeslave_ctrl_slw_clk         => clk250,
-        Timeslave_ctrl_slw_clk_aresetn => clk250_resetn,
+        Timeslave_ctrl_slw_clk         => i_dclk_100,
+        Timeslave_ctrl_slw_clk_aresetn => clk100_resetn,
         
         Timeslave_ctrl_AXI_S_aclk      => i_ARGs_clk,
         Timeslave_ctrl_AXI_S_aresetn   => ARGs_rstn,
@@ -645,7 +685,7 @@ END GENERATE;
 BOTTOM_100G : IF U55_BOTTOM_QSFP GENERATE
     ptp_BD : ts_b_wrapper port map (
         clk_100MHz              => i_dclk_100,
-        clk_100_reset           => sys_reset,
+        clk_100_reset           => sys_reset_internal,
         
         CMAC_Clk                => CMAC_Clk,
         
@@ -718,7 +758,7 @@ BOTTOM_100G : IF U55_BOTTOM_QSFP GENERATE
         CMAC_rx_ptp_stamp       => CMAC_rx_ptp_stamp,
         CMAC_tx_ptp_stamp       => CMAC_tx_ptp_stamp,
         
-        CMAC_Master_reset       => sys_reset,
+        CMAC_Master_reset       => sys_reset_internal,
         
         gt_loopback_in          => x"000",
     
@@ -737,8 +777,8 @@ BOTTOM_100G : IF U55_BOTTOM_QSFP GENERATE
         gt_ref_clk_n            => gt_refclk_n,
         gt_ref_clk_p            => gt_refclk_p,
         
-        Timeslave_ctrl_slw_clk         => clk250,
-        Timeslave_ctrl_slw_clk_aresetn => clk250_resetn,
+        Timeslave_ctrl_slw_clk         => i_dclk_100,
+        Timeslave_ctrl_slw_clk_aresetn => clk100_resetn,
         
         Timeslave_ctrl_AXI_S_aclk      => i_ARGs_clk,
         Timeslave_ctrl_AXI_S_aresetn   => ARGs_rstn,

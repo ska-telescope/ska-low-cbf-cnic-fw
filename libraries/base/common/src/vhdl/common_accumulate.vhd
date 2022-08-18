@@ -34,15 +34,20 @@ ENTITY common_accumulate IS
   GENERIC (
     g_representation  : STRING  := "SIGNED"  -- or "UNSIGNED"
   );
-  PORT (
-    rst     : IN  STD_LOGIC := '0';
-    clk     : IN  STD_LOGIC;
-    clken   : IN  STD_LOGIC := '1';
-    sload   : IN  STD_LOGIC;
-    in_val  : IN  STD_LOGIC := '1';
-    in_dat  : IN  STD_LOGIC_VECTOR;
-    out_dat : OUT STD_LOGIC_VECTOR
-  );
+    PORT (
+        rst     : IN  STD_LOGIC := '0';
+        clk     : IN  STD_LOGIC;
+        clken   : IN  STD_LOGIC := '1';
+        sload   : IN  STD_LOGIC;
+        in_val  : IN  STD_LOGIC := '1';
+        in_dat  : IN  STD_LOGIC_VECTOR;
+        out_dat : OUT STD_LOGIC_VECTOR
+    );
+
+    -- prevent optimisation 
+    attribute keep_hierarchy : string;
+    attribute keep_hierarchy of common_accumulate : entity is "yes";
+    
 END common_accumulate;
 
 
@@ -50,7 +55,8 @@ ARCHITECTURE rtl OF common_accumulate IS
 
  CONSTANT c_acc_w : NATURAL := out_dat'LENGTH;
  
- SIGNAL result : STD_LOGIC_VECTOR(c_acc_w-1 DOWNTO 0);
+ SIGNAL result  : STD_LOGIC_VECTOR(c_acc_w-1 DOWNTO 0);
+ SIGNAL data    : STD_LOGIC_VECTOR(2 downto 0);
 
 BEGIN
 
@@ -64,22 +70,28 @@ BEGIN
           result <= (OTHERS =>'0');
           IF in_val='1' THEN
             IF g_representation="SIGNED" THEN
-              result <= RESIZE_SVEC(in_dat, c_acc_w);
+              result <= RESIZE_SVEC(data, c_acc_w);
             ELSE
-              result <= RESIZE_UVEC(in_dat, c_acc_w);
+              result <= RESIZE_UVEC(data, c_acc_w);
             END IF;
           END IF;
         ELSIF in_val='1' THEN
           IF g_representation="SIGNED" THEN
-            result <= STD_LOGIC_VECTOR(  SIGNED(result) +   SIGNED(RESIZE_SVEC(in_dat, c_acc_w)));
+            result <= STD_LOGIC_VECTOR(  SIGNED(result) +   SIGNED(RESIZE_SVEC(data, c_acc_w)));
           ELSE
-            result <= STD_LOGIC_VECTOR(UNSIGNED(result) + UNSIGNED(RESIZE_UVEC(in_dat, c_acc_w)));
+            result <= STD_LOGIC_VECTOR(UNSIGNED(result) + UNSIGNED(RESIZE_UVEC(data, c_acc_w)));
           END IF;
         END IF;
       END IF;
     END IF;
   END PROCESS;
 
-  out_dat <= result;
+register_output_proc : PROCESS(rst, clk)
+begin
+    if rising_edge(clk) then    
+        data    <= in_dat;
+        out_dat <= result;
+    end if;
+end process;        
 
 END rtl;

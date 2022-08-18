@@ -7,13 +7,13 @@
 -- Module Name: timeslave_stats
 -- Dependencies: Timeslave 
 -- 
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
+-- 
+-- 
+-- Small module to tie together PPS and Time vector from two Timeslave instances to a single ILA for real-time comparisons.
 -- 
 ----------------------------------------------------------------------------------
 
-library IEEE, axi4_lib, technology_lib, common_lib, signal_processing_common, DRP_lib;
+library IEEE, axi4_lib, technology_lib, common_lib, signal_processing_common, Timeslave_CMAC_lib;
 use IEEE.STD_LOGIC_1164.ALL;
 USE axi4_lib.axi4_stream_pkg.ALL;
 USE technology_lib.tech_mac_100g_pkg.ALL;
@@ -22,7 +22,7 @@ use IEEE.NUMERIC_STD.ALL;
 
 use axi4_lib.axi4_lite_pkg.ALL;
 USE axi4_lib.axi4_full_pkg.ALL;
-USE DRP_lib.CMAC_cmac_reg_pkg.ALL;
+USE Timeslave_CMAC_lib.CMAC_cmac_reg_pkg.ALL;
 
 entity timeslave_stats is
     Generic (

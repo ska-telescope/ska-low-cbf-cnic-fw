@@ -13,3 +13,5 @@ peripherals:
   - peripheral_name        : DRP/DRP
   - peripheral_name        : CMAC/CMAC
   - peripheral_name        : Timeslave/Timeslave
+  - peripheral_name        : CMAC_B/CMAC_B
+  - peripheral_name        : Timeslave_B/Timeslave_B  
