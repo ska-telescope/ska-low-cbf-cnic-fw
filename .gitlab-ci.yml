@@ -22,7 +22,6 @@ include:
   # This may not match the copy in our 'common' submodule!
   - project: 'ska-telescope/low-cbf/ska-low-cbf-fw-common'
     file: 'gitlab/build.yml'
-    ref: '0dee7418ef7777037e34f84fb4f0795a5d1ad61e'
 
   # SKA standard includes
   # RAW artefact handling
