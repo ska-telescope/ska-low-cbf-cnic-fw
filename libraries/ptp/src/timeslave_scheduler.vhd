@@ -130,10 +130,6 @@ signal Stop_run                         : std_logic;
 signal o_schedule_int                   : std_logic_vector(7 downto 0);
 signal schedule_debug                   : std_logic_vector(7 downto 0);
 
-constant TS_registers                   : integer := 3;
-
-signal TS_registers_in                  : t_slv_32_arr(0 to (TS_registers-1));
-signal TS_registers_out                 : t_slv_32_arr(0 to (TS_registers-1));
     
 begin
 
@@ -158,28 +154,6 @@ ARGS_Timeslave_lite : entity Timeslave_CMAC_lib.Timeslave_timeslave_reg
         
         );
 
-------------------------------------------------------------------------------------------------------------------------------------------------------
--- Do CDC with this arrangement instead of the time from TS core with the ARGs clock due to the timing constraint requirements.
-
-TS_registers_in(0)  <= i_PTP_time_CMAC_clk(31 downto 0);
-TS_registers_in(1)  <= i_PTP_time_CMAC_clk(63 downto 32);
-TS_registers_in(2)  <= x"0000" & i_PTP_time_CMAC_clk(79 downto 64);
-
-CDC_time_from_timeslave : FOR i IN 0 TO (TS_registers - 1) GENERATE
-        stats_crossing : entity signal_processing_common.sync_vector
-            generic map (
-                WIDTH => 32
-            )
-            Port Map ( 
-                clock_a_rst => i_cmac_reset,
-                Clock_a     => i_CMAC_clk,
-                data_in     => TS_registers_in(i),
-                
-                Clock_b     => i_ARGs_clk,
-                data_out    => TS_registers_out(i)
-            );  
-
-    END GENERATE;
         
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 -- provide feedback to host using the following logic.
@@ -240,13 +214,13 @@ actions <= o_schedule_int;
 control_proc : process(i_ARGs_clk)
 begin
     if rising_edge(i_ARGs_clk) then
-        timeslave_ro_registers.current_ptp_sub_seconds      <= TS_registers_out(0);
-        timeslave_ro_registers.current_ptp_seconds_lower	<= TS_registers_out(1);
-        timeslave_ro_registers.current_ptp_seconds_upper	<= TS_registers_out(2);
+        timeslave_ro_registers.current_ptp_sub_seconds      <= i_PTP_time_CMAC_clk(31 downto 0);
+        timeslave_ro_registers.current_ptp_seconds_lower	<= i_PTP_time_CMAC_clk(63 downto 32);
+        timeslave_ro_registers.current_ptp_seconds_upper	<= x"0000" & i_PTP_time_CMAC_clk(79 downto 64);
         
-        current_time_sub_seconds                            <= TS_registers_out(0);
-        current_time_seconds_lower	                        <= TS_registers_out(1);
-        current_time_seconds_upper                          <= TS_registers_out(2)(15 downto 0);
+        current_time_sub_seconds                            <= i_PTP_time_CMAC_clk(31 downto 0);
+        current_time_seconds_lower	                        <= i_PTP_time_CMAC_clk(63 downto 32);
+        current_time_seconds_upper                          <= i_PTP_time_CMAC_clk(79 downto 64);
         
 --        Bit 0 = reset CNIC logic and the Scheduler SM to IDLE.
 --        Bit 1 = Enable TX start time.

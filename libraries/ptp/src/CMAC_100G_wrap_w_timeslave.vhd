@@ -461,6 +461,11 @@ signal clk100_resetn            : std_logic;
 signal sys_reset_internal       : std_logic;
 signal CMAC_ARGS_reset          : std_logic;
 
+constant TS_registers                   : integer := 3;
+
+signal TS_registers_in                  : t_slv_32_arr(0 to (TS_registers-1));
+signal TS_registers_out                 : t_slv_32_arr(0 to (TS_registers-1));
+
 begin
 
 -----------------------------------------
@@ -473,6 +478,48 @@ PTP_pps_CMAC_clk        <= PTP_pps_CMAC_clk_int;
 
 
 ARGs_rstn               <= NOT i_ARGs_rst;
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Timeslave output CDC.
+-- Do CDC with this arrangement instead of the time from TS core with the ARGs clock due to the timing constraint requirements.
+
+TS_registers_in(0)  <= PTP_time_CMAC_clk_int(31 downto 0);
+TS_registers_in(1)  <= PTP_time_CMAC_clk_int(63 downto 32);
+TS_registers_in(2)  <= x"0000" & PTP_time_CMAC_clk_int(79 downto 64);
+
+CDC_time_from_timeslave : FOR i IN 0 TO (TS_registers - 1) GENERATE
+        stats_crossing : entity signal_processing_common.sync_vector
+            generic map (
+                WIDTH => 32
+            )
+            Port Map ( 
+                clock_a_rst => tx_rx_counter_reset,
+                Clock_a     => CMAC_Clk,
+                data_in     => TS_registers_in(i),
+                
+                Clock_b     => i_ARGs_clk,
+                data_out    => TS_registers_out(i)
+            );  
+
+    END GENERATE;
+
+PTP_time_ARGs_clk(31 downto 0)  <= TS_registers_out(0);
+PTP_time_ARGs_clk(63 downto 32) <= TS_registers_out(1);
+PTP_time_ARGs_clk(79 downto 64) <= TS_registers_out(2)(15 downto 0);
+
+timeslave_cdc_PPS : entity signal_processing_common.sync
+    Generic Map (
+        USE_XPM     => true,
+        WIDTH       => 1
+    )
+    Port Map ( 
+        Clock_a                 => CMAC_Clk,     
+        data_in(0)              => PTP_pps_CMAC_clk_int,
+
+        Clock_b                 => i_ARGs_clk,
+        data_out(0)             => PTP_pps_ARGs_clk
+    );
+
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -860,11 +907,11 @@ END GENERATE;
 -- These are final tallies to logic mappings.
 -- Some duplicates as some go to system ARGs and to CMAC ARGs interface
 -- System ARGs
-rx_total_packets    <= stats_count(0);
-rx_bad_fcs          <= stats_count(2);
-rx_bad_code         <= stats_count(24);
+rx_total_packets    <= stats_to_host_data_out(0);
+rx_bad_fcs          <= stats_to_host_data_out(2);
+rx_bad_code         <= stats_to_host_data_out(24);
 
-tx_total_packets    <= stats_count(27); 
+tx_total_packets    <= stats_to_host_data_out(27); 
 
 -- CMAC ARGs
 cmac_stats_ro_registers.cmac_stat_tx_total_packets			   <= stats_to_host_data_out(27); 
@@ -988,18 +1035,6 @@ sync_stats_to_Host: FOR i IN 0 TO (STAT_REGISTERS-1) GENERATE
 END GENERATE;
 
 ---------------------------------------------------------------------------
--- reset proc
---reset_timing_proc : process(i_ARGs_clk)
---begin
---    if rising_edge(i_ARGs_clk) then
---        cmac_stat_reset_cache <= cmac_drp_rw_registers.cmac_stat_reset(0);
-
-
---        if cmac_stat_reset_cache = 
-
---    end if;
---end process;
-
 -- reset stats
 sync_cmac_stat_reset : entity signal_processing_common.sync_vector
     generic map (

@@ -86,6 +86,42 @@ peripherals:
               reset_value       : 0x0
               field_description : "Number of seconds since programming"
           #################################
+          - - field_name        : eth100G_ptp_nano_seconds
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "nanoseconds value range o to 999,999,999"
+          #################################
+          - - field_name        : eth100G_ptp_lower_seconds
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "lower 32-bits of 48 bit second time vector"
+          #################################
+          - - field_name        : eth100G_ptp_upper_seconds
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "upper 16-bits of 48 bit second time vector"
+          #################################
+          - - field_name        : eth100G_b_ptp_nano_seconds
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "nanoseconds value range o to 999,999,999"
+          #################################
+          - - field_name        : eth100G_b_ptp_lower_seconds
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "lower 32-bits of 48 bit second time vector"
+          #################################
+          - - field_name        : eth100G_b_ptp_upper_seconds
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "upper 16-bits of 48 bit second time vector"
+          #################################
           - - field_name        : eth100G_locked
               width             : 1
               access_mode       : RO
@@ -116,11 +152,41 @@ peripherals:
               reset_value       : 0x0
               field_description : "Total packets sent on the 100G ethernet since it was reset"
           #################################
-          - - field_name        : eth100G_FEC_enable
+          - - field_name        : eth100G_b_locked
+              width             : 1
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "2nd (U55C lower port) 100G ethernet is up"
+          #################################
+          - - field_name        : eth100G_b_rx_total_packets
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Total packets received on the 2nd (U55C lower port) 100G ethernet since it was reset"
+          #################################
+          - - field_name        : eth100G_b_rx_bad_fcs
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Total packets received on the 2nd (U55C lower port) 100G ethernet with bad FCS since it was reset"
+          #################################
+          - - field_name        : eth100G_b_rx_bad_code
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Total packets received on the 2nd (U55C lower port) 100G ethernet with 64B/66B code violations"
+          #################################
+          - - field_name        : eth100G_b_tx_total_packets
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Total packets sent on the 2nd (U55C lower port) 100G ethernet since it was reset"
+          #################################
+          - - field_name        : eth100g_fec_enable
               width             : 1
               access_mode       : RW
               reset_value       : 0x0
-              field_description : "Set to 1 to enable FEC, 0 to disable"
+              field_description : "Enable FEC on 100G interfaces."
 
 
   - peripheral_name        : vitis_shared
