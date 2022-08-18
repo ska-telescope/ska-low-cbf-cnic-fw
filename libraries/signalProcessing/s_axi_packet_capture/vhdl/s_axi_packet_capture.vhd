@@ -7,11 +7,15 @@
 --
 --
 -- Description: 
---      The intent of this block is to capture Streaming packets from the CMAC on 322 MHz clock domain. 
+--      This block is to capture Streaming packets from the CMAC on 322 MHz clock domain. 
 --      Check if the received packet is the desired length.
 --      Capture to a dual page ram, flip page at the end of a packet, if the packet just received matches the expected byte length.
+--      At packet start, capture the time stamp data from the tuser bus.
 --
---      CDC from 322 to 300
+--      CDC from 322 to 300.
+--      There is an almost saw tooth write patten based on the 64/66 gearboxing on the 322 MHz clock domain into the paged ram.
+--      Reading out is continous and shorter than the write cycle for a packet.
+--      Timestamp will be added to the RD stream after the final 64 byte write.
 --
 --      Write to HBM as a single block.
 --      WR signal will be continuously high and fall at end of packet.
@@ -19,6 +23,8 @@
 --      i_rx_packet_size provides the specific length of the expected packet and this comes from the configuration software.
 --      The HBM manager will implement a ceil modulo64 of the i_rx_packet_size.
 -- 
+--      HBM takes in LEndian formatted data, the S_AXI stream from the CMAC, shown below, already has this format.
+--      Any other data sent, like a timestamp, needs to be appropriately byte swapped instead of doing this in software.
 -- 
 -- Behaviour of S_AXI from CMAC.
 --      Due to the gearboxing in the CMAC, a packet sent at line speed will present on the S_AXI interface with tvalid toggling.
@@ -232,16 +238,15 @@ begin
         rx_axis_tuser_int_d1    <= rx_axis_tuser_int;
         rx_axis_tvalid_int_d1   <= rx_axis_tvalid_int;
         
-        -- lengthen last signal to insert the timestamp immediately after packet end.
-        -- the second bit is only relevant for end of packet due the cyclic nature of 64/66 writing from CMAC.
-
-        --rx_axis_tlast_int_d1(1) <= rx_axis_tlast_int_d1(0);
-
 
     end if;
 end process;
 
 ------------------------------------------------------------------------------
+-- calculate how many bytes will be valid on the final 64 byte write
+-- use this to validate incoming data as a desired packet.
+
+
 calibrate_byte_enables : process(i_clk_100GE)
 begin
     if rising_edge(i_clk_100GE) then
@@ -275,6 +280,9 @@ begin
     end if;
 end process;
     
+-- use this to count incoming data and evaulate if it is a desired packet.
+-- if so, flip the write page which will trigger a send to HBM on the 300 clock domain, 
+-- and capture the timestamp to the CDC FIFO.
 
 byte_check_proc : process(i_clk_100GE)
 begin
@@ -308,14 +316,13 @@ begin
                 end if;
             end if;
             
---            wr_page_d   <= wr_page;
         end if;
     end if;
 end process;
 
 
 ------------------------------------------------------------------------------
-
+-- capture timestamp
 write_rx_data_proc : process(i_clk_100GE)
 begin
     if rising_edge(i_clk_100GE) then
@@ -445,7 +452,8 @@ cmac_reset_combined <= cmac_rx_reset_capture OR cmac_reset;
 
 ------------------------------------------------------------------------------
 -- stream out data to HBM SM
-
+-- trigger based on the page flip and cache that while streaming.
+-- The STAMP state is there to lengthen the packet write sequence and slip in the timestamp at the end.
 
 timestamp_out(79 downto 0)  <= timestamp_data_fifo_q;
 
@@ -463,12 +471,7 @@ begin
             hold                    <= '0';
             timestamp_data_fifo_rd  <= '0';
         else
-            
-            -- add 64 bytes to the byte count to include the time stamp.
---            if i_rx_reset_capture = '1' then
---                words_to_send_to_hbm    <= std_logic_vector(unsigned(i_rx_packet_size(13 downto 6)) + x"01");
---            end if;
-            
+                        
             rd_page_cache           <= rd_page(0);
             words_to_send_to_hbm    <= i_rx_packet_size(13 downto 6);
             
@@ -522,7 +525,7 @@ begin
             data_to_hbm <= rx_buffer_ram_dout;
         end if;
         
-        data_to_hbm_wr              <= data_to_hbm_wr_int;
+        data_to_hbm_wr  <= data_to_hbm_wr_int;
         
         if data_to_hbm_wr = '1' then
             debug_count <= debug_count + 1;
@@ -534,6 +537,8 @@ begin
 end process;
 
 ------------------------------------------------------------------------------
+-- calculate stats for various type of packets detected.
+-- useful when we have multipacket traffic in the system.
 
 b0 <= byte_en_to_integer_count(rx_axis_tkeep_int_d1(15 downto 0));
 b1 <= byte_en_to_integer_count(rx_axis_tkeep_int_d1(31 downto 16));
@@ -677,16 +682,14 @@ o_PSR_PST_count         <= stats_to_host_data_out(3);
 o_LFAA_spead_count      <= stats_to_host_data_out(4);
 
 ------------------------------------------------------------------------------
-
+-- DEBUG LOGIC AND ILA
         
 debug_packet_capture_in : IF g_DEBUG_ILA GENERATE
 
 debug_ila_cmac_proc : process(i_clk_100GE)
 begin
     if rising_edge(i_clk_100GE) then
-        
---        ila_data_in_r <= rx_axis_tdata_int_d1(127 downto 0);
-        
+
         ptp_seconds <= rx_axis_tuser_int_d1(79 downto 32);
         ptp_sub_sec <= rx_axis_tuser_int_d1(31 downto 0);
 

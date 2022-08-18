@@ -7,9 +7,9 @@
 -- Module Name: timeslave_stats
 -- Dependencies: Timeslave 
 -- 
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
+-- 
+-- 
+-- Small module to tie together PPS and Time vector from two Timeslave instances to a single ILA for real-time comparisons.
 -- 
 ----------------------------------------------------------------------------------
 

@@ -48,6 +48,22 @@
 --  For AXI write part, it's an AW and W totally separated structure, AW might be finished earlier or later than the correspoding W depnding
 --  on the awready signal from HBM. Using this structure is to support the packet with large packet size with minimum 4 clock cycles gap 
 --  between packets continusly
+--
+--  -------------------------------------------------------------------------------
+--
+--HBM memory layout for RX 
+--    Packet stored modulo 64 bytes, ie 6330 is rounded up to 6336 and those final 6 byte are discarded at the software level.
+--    Timestamp is the next address, the lower 10 bytes are a timestamp with the remaining 70 for future meta data.
+--    
+--    Software dumps out the HBM buffer, based on the rx_packet_size, it will demux the memory space to correct packet size and append the timestamp.
+--
+--HBM memory layout for TX
+--    Packets from a PCAP are packed into HBM modulo 64 bytes, discarding the rest of the vector when packet size is not modulo 64.
+--    This is byte swapped and this matches the data format required by the CMAC hard ip.
+--    
+--
+-- 
+-------------------------------------------------------------------------------
 
 library IEEE, common_lib, xpm;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -485,22 +501,26 @@ begin
     --following is the AXI transaction parameter calculation
     --num_rx_4k_axi_trans  is number of AXI 4k transactions for one packet
     --num_rx_64B_axi_beats is number of beats of AXI transaction after number of 4k minused out for one packet
-    num_rx_64B_axi_beats                   <= num_residual_bytes_after_4k(13 downto 6); -- 64 bytes multiple beat transaction
-    num_rx_4k_axi_trans                    <= "10" when (unsigned(i_rx_packet_size(13 downto 0)) >= 8192) else
-	   			              "01" when (unsigned(i_rx_packet_size(13 downto 0)) >= 4096) else
-				              "00";
-    num_residual_bytes_after_4k            <= (unsigned(i_rx_packet_size(13 downto 0)) - 8192) when (unsigned(i_rx_packet_size(13 downto 0)) >= 8192) else 
-				              (unsigned(i_rx_packet_size(13 downto 0)) - 4096) when (unsigned(i_rx_packet_size(13 downto 0)) >= 4096) else
-				               unsigned(i_rx_packet_size(13 downto 0));
+    num_rx_64B_axi_beats                   <=   num_residual_bytes_after_4k(13 downto 6); -- 64 bytes multiple beat transaction
+    
+    num_rx_4k_axi_trans                    <=   "10" when (unsigned(i_rx_packet_size(13 downto 0)) >= 8192) else
+	   			                                "01" when (unsigned(i_rx_packet_size(13 downto 0)) >= 4096) else
+				                                "00";
+				                                
+    num_residual_bytes_after_4k            <=   (unsigned(i_rx_packet_size(13 downto 0)) - 8192) when (unsigned(i_rx_packet_size(13 downto 0)) >= 8192) else 
+				                                (unsigned(i_rx_packet_size(13 downto 0)) - 4096) when (unsigned(i_rx_packet_size(13 downto 0)) >= 4096) else
+				                                unsigned(i_rx_packet_size(13 downto 0));
 
     --first part of split AXI transaction at the 4GB boundary, fit to the current 4GB section 
-    num_rx_64B_axi_beats_curr_4G           <= num_residual_bytes_after_4k_curr_4G(13 downto 6);
-    num_rx_4k_axi_trans_curr_4G            <= "10" when num_rx_bytes_curr_4G >= 8192 else
-                                              "01" when num_rx_bytes_curr_4G >= 4096 else
-                                              "00";
-    num_residual_bytes_after_4k_curr_4G    <= (num_rx_bytes_curr_4G - 8192) when num_rx_bytes_curr_4G >= 8192 else
-					      (num_rx_bytes_curr_4G - 4096) when num_rx_bytes_curr_4G >= 4096 else
-					       num_rx_bytes_curr_4G;
+    num_rx_64B_axi_beats_curr_4G           <=   num_residual_bytes_after_4k_curr_4G(13 downto 6);
+    
+    num_rx_4k_axi_trans_curr_4G            <=   "10" when num_rx_bytes_curr_4G >= 8192 else
+                                                "01" when num_rx_bytes_curr_4G >= 4096 else
+                                                "00";
+                                                
+    num_residual_bytes_after_4k_curr_4G    <=   (num_rx_bytes_curr_4G - 8192) when num_rx_bytes_curr_4G >= 8192 else
+					                            (num_rx_bytes_curr_4G - 4096) when num_rx_bytes_curr_4G >= 4096 else
+					                            num_rx_bytes_curr_4G;
 
     --second part of split AXI transaction at the 4GB boundary, fit to the next 4GB section
     num_rx_64B_axi_beats_next_4G           <= num_residual_bytes_after_4k_next_4G(13 downto 6);
@@ -520,7 +540,7 @@ begin
     --choice
     g_4095MB_condition : if g_HBM_bank_size="4095MB" generate
       wr_bank1_boundary_corss                 <= '1' when (LFAAaddr1_shadow(31 downto 16) = X"FFF0") else '0';
-      wr_bank2_boundary_corss		      <= '1' when (LFAAaddr2_shadow(31 downto 16) = X"FFF0") else '0';
+      wr_bank2_boundary_corss		          <= '1' when (LFAAaddr2_shadow(31 downto 16) = X"FFF0") else '0';
       wr_bank3_boundary_corss                 <= '1' when (LFAAaddr3_shadow(31 downto 16) = X"FFF0") else '0';
       wr_bank4_boundary_corss                 <= '1' when (LFAAaddr4_shadow(31 downto 16) = X"FFF0") else '0'; 
       wr_bank1_boundary_corss_curr_4G_size    <= resize((max_space_4095MB - unsigned(LFAAaddr1(31 downto 0))), 14);
@@ -1281,27 +1301,27 @@ begin
     --and then assign to AW, which is controlled by awfifo_rden_reg
     process(i_shared_clk)
     begin
-      if rising_edge(i_shared_clk) then
-	 if rx_soft_reset_int = '1' then
-	    m01_axi_awvalid <= '0';
-            m01_axi_awaddr  <= (others => '0');
-            m01_axi_awlen   <= (others => '0');
-         else	    
-	    if (m01_axi_awready = '1' and m01_axi_awvalid = '1') then
-               m01_axi_awvalid <= '0';
-	       m01_axi_awaddr  <= (others => '0');
-	       m01_axi_awlen   <= (others => '0');
-            elsif (awfifo_rden = '1'     and awfifo_valid = '1'     and awfifo_dout(41 downto 40) = "00") then 
-               m01_axi_awvalid <= '1';
-               m01_axi_awaddr  <= awfifo_dout(31 downto 0);
-               m01_axi_awlen   <= awfifo_dout(39 downto 32);
-            elsif (awfifo_rden_reg = '1' and awfifo_valid_reg = '1' and awfifo_dout_reg(41 downto 40) = "00") then
-	       m01_axi_awvalid <= '1';
-               m01_axi_awaddr  <= awfifo_dout_reg(31 downto 0);
-               m01_axi_awlen   <= awfifo_dout_reg(39 downto 32);
-            end if; 	  
-         end if;   
-      end if;
+        if rising_edge(i_shared_clk) then
+            if rx_soft_reset_int = '1' then
+                m01_axi_awvalid <= '0';
+                m01_axi_awaddr  <= (others => '0');
+                m01_axi_awlen   <= (others => '0');
+            else	    
+                if (m01_axi_awready = '1' and m01_axi_awvalid = '1') then
+                    m01_axi_awvalid <= '0';
+                    m01_axi_awaddr  <= (others => '0');
+                    m01_axi_awlen   <= (others => '0');
+                elsif (awfifo_rden = '1'     and awfifo_valid = '1'     and awfifo_dout(41 downto 40) = "00") then 
+                    m01_axi_awvalid <= '1';
+                    m01_axi_awaddr  <= awfifo_dout(31 downto 0);
+                    m01_axi_awlen   <= awfifo_dout(39 downto 32);
+                elsif (awfifo_rden_reg = '1' and awfifo_valid_reg = '1' and awfifo_dout_reg(41 downto 40) = "00") then
+                    m01_axi_awvalid <= '1';
+                    m01_axi_awaddr  <= awfifo_dout_reg(31 downto 0);
+                    m01_axi_awlen   <= awfifo_dout_reg(39 downto 32);
+                end if; 	  
+            end if;   
+        end if;
     end process; 
 
     process(i_shared_clk)
@@ -1384,42 +1404,42 @@ begin
     --if all the fifos are empty and no packet is incoming, then deassert all the indication signals  
     process(i_shared_clk)
     begin
-      if rising_edge(i_shared_clk) then
-	 if rx_soft_reset_int = '1' then
-	    m01_wr          <= '0';
-            m02_wr          <= '0';
-            m03_wr          <= '0';
-            m04_wr          <= '0';
-         else	    
-            if (m01_axi_awready = '1' and m01_axi_awvalid = '1') then
-               m01_wr          <= '1';
-               m02_wr          <= '0';
-               m03_wr          <= '0';
-               m04_wr          <= '0';
-            elsif (m02_axi_awready = '1' and m02_axi_awvalid = '1') then	   
-               m01_wr          <= '0';
-               m02_wr          <= '1';
-               m03_wr          <= '0';
-               m04_wr          <= '0';
-            elsif (m03_axi_awready = '1' and m03_axi_awvalid = '1') then
-               m01_wr          <= '0';
-               m02_wr          <= '0';
-               m03_wr          <= '1';
-               m04_wr          <= '0';
-            elsif (m04_axi_awready = '1' and m04_axi_awvalid = '1') then
-               m01_wr          <= '0';
-               m02_wr          <= '0';
-               m03_wr          <= '0';
-               m04_wr          <= '1';
-            elsif (awfifo_empty = '1' and awlenfifo_empty = '1' and axi_wdata_fifo_empty = '1' and i_data_valid_from_cmac = '0') or 
-	          (last_trans   = '1' and awlenfifo_rden = '1') then  
-               m01_wr          <= '0';
-               m02_wr          <= '0';
-               m03_wr          <= '0';
-               m04_wr          <= '0';		 
-            end if;   
-	 end if;
-      end if;
+        if rising_edge(i_shared_clk) then
+             if rx_soft_reset_int = '1' then
+                    m01_wr          <= '0';
+                    m02_wr          <= '0';
+                    m03_wr          <= '0';
+                    m04_wr          <= '0';
+                 else	    
+                    if (m01_axi_awready = '1' and m01_axi_awvalid = '1') then
+                       m01_wr          <= '1';
+                       m02_wr          <= '0';
+                       m03_wr          <= '0';
+                       m04_wr          <= '0';
+                    elsif (m02_axi_awready = '1' and m02_axi_awvalid = '1') then	   
+                       m01_wr          <= '0';
+                       m02_wr          <= '1';
+                       m03_wr          <= '0';
+                       m04_wr          <= '0';
+                    elsif (m03_axi_awready = '1' and m03_axi_awvalid = '1') then
+                       m01_wr          <= '0';
+                       m02_wr          <= '0';
+                       m03_wr          <= '1';
+                       m04_wr          <= '0';
+                    elsif (m04_axi_awready = '1' and m04_axi_awvalid = '1') then
+                       m01_wr          <= '0';
+                       m02_wr          <= '0';
+                       m03_wr          <= '0';
+                       m04_wr          <= '1';
+                    elsif (awfifo_empty = '1' and awlenfifo_empty = '1' and axi_wdata_fifo_empty = '1' and i_data_valid_from_cmac = '0') or 
+                      (last_trans   = '1' and awlenfifo_rden = '1') then  
+                       m01_wr          <= '0';
+                       m02_wr          <= '0';
+                       m03_wr          <= '0';
+                       m04_wr          <= '0';		 
+                    end if;   
+             end if;
+        end if;
     end process; 
 
     process(i_shared_clk)

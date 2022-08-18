@@ -7,7 +7,12 @@
 -- 
 -- 
 -- test bench written to be used in Vivado
+-- not automated, and requires visual inspection to verify.
 -- 
+-- this is a static TB to test desired packet sizes and see if the byte detect will pick this up.
+-- also to test if back to back packets, (ie tlast and the next cycle packet start) coming from the CMAC S_AXI will provoke a problem.
+--
+-- i_rx_axis_tuser time stamp data in 80 bit format coming from TimeSlave IP, this will be zero most of the time and provide the time stamp on first cycle of a packet.
 --
 library IEEE,technology_lib, PSR_Packetiser_lib, signal_processing_common, cmac_s_axi_lib;
 use IEEE.STD_LOGIC_1164.ALL;

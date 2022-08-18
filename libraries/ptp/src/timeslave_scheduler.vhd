@@ -11,6 +11,24 @@
 -- Revision 0.01 - File Created
 -- Additional Comments:
 -- 
+--
+--    This module will take in four time vectors (80 bits) for the following, Start TX, Stop TX, Start RX, Stop RX.
+--    
+--    These vectors will be connected into the HBM controller to start and stop packet playback and capture.
+--    
+--    Initially this will only support TX or RX at time.
+--    
+--    The statemachine below will trigger based on schedule_control and detect error in settings.
+--    
+--    Time vectors should be loaded first.
+--    The enable the relevant vectors via schedule_control.
+--    
+--    The State machine will load the start time vector and evaluate this against time from Timeslave IP.
+--    Once time has been reached, the start bit will be set.
+--    If a stop time is also set, a second loop will occur to evalute that time.
+--    Once time has been reached, the stop bit will be set.
+--    State machine will settle in a COMPLETE state and a reset will need to be issued to setup another trigger time.
+--
 --  ################################# 
 --  - - field_name        : schedule_control
 --      width             : 32
@@ -164,6 +182,9 @@ CDC_time_from_timeslave : FOR i IN 0 TO (TS_registers - 1) GENERATE
     END GENERATE;
         
 ------------------------------------------------------------------------------------------------------------------------------------------------------
+-- provide feedback to host using the following logic.
+-- initally it is an error condition to RX and TX at the same time.
+
 p_scheduler_feedback : process(i_ARGs_clk)
 begin
     if rising_edge(i_ARGs_clk) then
@@ -214,8 +235,9 @@ end process;
 actions <= o_schedule_int;
 
 -------------------------------------------------------------------------------------------------------------------------------------------
+-- 
 
-reg_proc : process(i_ARGs_clk)
+control_proc : process(i_ARGs_clk)
 begin
     if rising_edge(i_ARGs_clk) then
         timeslave_ro_registers.current_ptp_sub_seconds      <= TS_registers_out(0);

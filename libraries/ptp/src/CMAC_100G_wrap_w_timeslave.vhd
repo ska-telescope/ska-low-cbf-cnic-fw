@@ -9,17 +9,29 @@
 -- Tool Versions: 2021.2
 -- Description: 
 -- 
---  
 -- 
--- Revision:
--- Revision 0.01 - File Created
--- Streaming AXI byte layout of an Ethernet Frame.
+-- DATA format for Streaming AXI byte layout of an Ethernet Frame.
 --  dst_mac  <= CMAC_rx_axis_tdata(7 downto 0) & CMAC_rx_axis_tdata(15 downto 8) & CMAC_rx_axis_tdata(23 downto 16) & CMAC_rx_axis_tdata(31 downto 24) & CMAC_rx_axis_tdata(39 downto 32) & CMAC_rx_axis_tdata(47 downto 40);
 --  src_mac  <= CMAC_rx_axis_tdata(55 downto 48) & CMAC_rx_axis_tdata(63 downto 56) & CMAC_rx_axis_tdata(71 downto 64) & CMAC_rx_axis_tdata(79 downto 72) & CMAC_rx_axis_tdata(87 downto 80) & CMAC_rx_axis_tdata(95 downto 88);
 --  eth_type <= CMAC_rx_axis_tdata(103 downto 96) & CMAC_rx_axis_tdata(111 downto 104);
 --  ptp_type <= CMAC_rx_axis_tdata(119 downto 112);
 --  ETC ...
 -- 
+--    This wrapper generates the appropriate CMAC and GT arrangement in a Timeslave block design based upon generics.
+--    U50 and U55C share CMAC and GT silicon locations.
+--    
+--    The ts_wrapper is based on the example design that is provided by that IP repo. Heavily modified for use ALVEO kernel.
+--    The wrapper contains the Timeslave IP, CMAC Xilinx IP and AXI clock domain crossing to run the uBlaze in the IP at a slower rate than ARGs.
+--    
+--    Outside of this block there are various statistics counters that take the indicators from the CMAC block to generate counters.
+--    These are provided to ARGs.
+--    
+--    Timeslave IP is controlled by the AXI vectors; 
+--        i_Timeslave_Full_axi_mosi       : in  t_axi4_full_mosi;
+--        o_Timeslave_Full_axi_miso       : out t_axi4_full_miso
+--    the documentation for the various sub timeslave modules available through this address space is in the IP repo.
+--    A more detailed document is also available. 
+--       
 ----------------------------------------------------------------------------------
 
 

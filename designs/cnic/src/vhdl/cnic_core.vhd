@@ -4,10 +4,25 @@
 -- Contributing Authors:  Jason van Aardt,  David Humphreys, Giles Babich
 -- Template Rev: 1.0
 --
--- Title: Top Level for vitis compatible acceleration core
+-- Title: Top Level for CNIC
 --
 --  Distributed under the terms of the CSIRO Open Source Software Licence Agreement
 --  See the file LICENSE for more info.
+--
+--
+--    This design will be developed to support the various ALVEO cards the group owns.
+--    Currently this is U55C and U50LV
+--
+--    The U50LV has 1 x 100GB port.
+--    The U55C has 2 x 100GB ports.
+--    
+--    The design will dynamically generate these ports based on the CNIC wrapper a level above which is controlled by the project generation script.
+--    
+--    HBM has been setup with a view of 4 x Buffer, where 
+--        U50LV has 8GB, therefore 2GB per buffer
+--        U55C has 16GB, therefore 4095MB per buffer
+--    As of August 2022, there is a XRT (software) limit that will not allow access to buffers equal or greater than 4GB.
+--    
 --
 -------------------------------------------------------------------------------
 
