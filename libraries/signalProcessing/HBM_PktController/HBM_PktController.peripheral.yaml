@@ -51,19 +51,32 @@ peripherals:
               access_mode       : RO
               reset_value       : 0x0
               field_description : "Current status (number) of the loop counter"
-
+         ##################################################################    
           - - field_name        : tx_header_update #Inplace_Header_Update
               width             : 8
               access_mode       : RW
               reset_value       : 0x0
-              field_description : "0 : HBM to 100G, 1 : HBM to CODIF update logic, 2+ : TBD)"
-
-          - - field_name        : tx_header_inc_frame #Increase_Header_Frame_Number
-              width             : 1
+              field_description : "Select the data path post HBM playout, 0 : HBM -> 100G, 1 : HBM -> CODIF update logic -> 100G)
+                                   Set this before setting tx_enable to 1."
+         ##################################################################    
+          - - field_name        : tx_codif_header_packets_per_frame
+              width             : 32
               access_mode       : RW
               reset_value       : 0x0
-              field_description : "1 : Increase Frame Number"
-
+              field_description : "For updating the counters this is (number of jimbles * channels) parameter"
+         ##################################################################    
+          - - field_name        : tx_codif_header_packets_epoch_offset
+              width             : 32
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "For example, set to 27 for CODIF"
+         ##################################################################    
+          - - field_name        : tx_codif_header_frame_initial_value
+              width             : 32
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "frame_initial_value"
+         ##################################################################    
           - - field_name        : tx_packet_type #Packet_Type  .... NOT USED
               width             : 4
               access_mode       : RW

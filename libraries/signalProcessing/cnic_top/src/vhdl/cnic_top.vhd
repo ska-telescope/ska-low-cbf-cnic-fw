@@ -251,11 +251,14 @@ ARCHITECTURE structure OF cnic_top IS
     
     signal packetiser_data_to_player_rdy_b      : std_logic;
     signal packetiser_data_to_player_rdy_combo  : std_logic;
-    
-    
+       
     signal header_modifier_data_in_wr           : std_logic;
     signal header_modifier_data                 : std_logic_vector(511 downto 0);
     signal header_modifier_bytes_to_transmit    : std_logic_vector(13 downto 0);
+
+    signal to_packetiser_data_in_wr             : std_logic;
+    signal to_packetiser_data                   : std_logic_vector(511 downto 0);
+    signal to_packetiser_bytes_to_transmit      : std_logic_vector(13 downto 0);
    
     signal beamData : std_logic_vector(63 downto 0);
     signal beamPacketCount : std_logic_vector(36 downto 0);
@@ -554,36 +557,55 @@ STREAMING_AXI_VECTOR_GEN : IF (NOT g_LBUS_CMAC) GENERATE
 
 
 END GENERATE;    
+
 -----------------------------------------------------------------------------------------    
 -- Intercept UDP packet and modifier logic
-gen_mod : IF g_CODIF_MODIFIER_HEADER_BLOCK GENERATE    
-    header_mod : entity PSR_Packetiser_lib.CODIF_header_modifier
-    Port Map( 
-        i_clk                   => i_MACE_clk,
-        i_reset                 => i_reset_packet_player,
+-----------------------------------------------------------------------------------------   
+
+data_mux_to_packetiser_proc : process(i_MACE_clk)
+begin
+    if rising_edge(i_MACE_clk) then
+
+        if config_rw.tx_header_update(0) = '0' then
+            to_packetiser_bytes_to_transmit     <= packetiser_bytes_to_transmit;
+            to_packetiser_data                  <= swapped_packetiser_data;
+            to_packetiser_data_in_wr            <= packetiser_data_in_wr;
+        else
+            to_packetiser_bytes_to_transmit     <= header_modifier_bytes_to_transmit;
+            to_packetiser_data                  <= header_modifier_data;
+            to_packetiser_data_in_wr            <= header_modifier_data_in_wr;
+        end if;
+
+    end if;
+end process;
     
+header_mod : entity PSR_Packetiser_lib.CODIF_header_modifier
+    Port Map( 
+        i_clk                               => i_MACE_clk,
+        i_reset                             => i_reset_packet_player,
+        
+        ----------------------------
+        -- Math offsets for header incremeting
+        i_codif_header_packets_per_frame	=> config_rw.tx_codif_header_packets_per_frame,
+        i_codif_header_packets_epoch_offset => config_rw.tx_codif_header_packets_epoch_offset,
+        i_codif_header_frame_initial_value	=> config_rw.tx_codif_header_frame_initial_value,
+        
         -- FROM THE HBM_packet_controller 
-        i_bytes_to_transmit     => packetiser_bytes_to_transmit,
-        i_data_to_player        => swapped_packetiser_data,
-        i_data_to_player_wr     => packetiser_data_in_wr,
+        i_bytes_to_transmit                 => packetiser_bytes_to_transmit,
+        i_data_to_player                    => swapped_packetiser_data,
+        i_data_to_player_wr                 => packetiser_data_in_wr,
         
         -- TO THE Packet_player for CMAC
-        o_bytes_to_transmit     => header_modifier_bytes_to_transmit,
-        o_data_to_player        => header_modifier_data,
-        o_data_to_player_wr     => header_modifier_data_in_wr      
+        o_bytes_to_transmit                 => header_modifier_bytes_to_transmit,
+        o_data_to_player                    => header_modifier_data,
+        o_data_to_player_wr                 => header_modifier_data_in_wr      
     
     );
     
-END GENERATE;
 
-not_gen_mod : IF (NOT g_CODIF_MODIFIER_HEADER_BLOCK) GENERATE
-
-    header_modifier_bytes_to_transmit   <= packetiser_bytes_to_transmit;
-    header_modifier_data                <= swapped_packetiser_data;
-    header_modifier_data_in_wr          <= packetiser_data_in_wr;
-    
-END GENERATE;    
 -----------------------------------------------------------------------------------------    
+-- Packetiser
+-----------------------------------------------------------------------------------------  
 
     eth100G_reset <= not(i_eth100G_locked);
 
@@ -600,9 +622,9 @@ END GENERATE;
             i_cmac_clk              => i_clk_100GE,
             i_cmac_clk_rst          => eth100G_reset,
             
-            i_bytes_to_transmit     => header_modifier_bytes_to_transmit,   --packetiser_bytes_to_transmit,    -- 
-            i_data_to_player        => header_modifier_data,                --swapped_packetiser_data, 
-            i_data_to_player_wr     => header_modifier_data_in_wr,          --packetiser_data_in_wr,
+            i_bytes_to_transmit     => to_packetiser_bytes_to_transmit,   --packetiser_bytes_to_transmit,    -- 
+            i_data_to_player        => to_packetiser_data,                --swapped_packetiser_data, 
+            i_data_to_player_wr     => to_packetiser_data_in_wr,          --packetiser_data_in_wr,
             o_data_to_player_rdy    => packetiser_data_to_player_rdy,
             
             o_cmac_ready            => cmac_ready,

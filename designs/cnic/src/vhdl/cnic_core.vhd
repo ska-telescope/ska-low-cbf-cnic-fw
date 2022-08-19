@@ -26,7 +26,9 @@
 --
 -------------------------------------------------------------------------------
 
-LIBRARY IEEE, UNISIM, common_lib, axi4_lib, technology_lib, util_lib, dsp_top_lib, cnic_lib, signal_processing_common, Timeslave_CMAC_lib, DRP_lib;
+LIBRARY IEEE, UNISIM, common_lib, axi4_lib, technology_lib, util_lib, dsp_top_lib;
+LIBRARY cnic_lib, signal_processing_common, Timeslave_CMAC_lib, PSR_Packetiser_lib;
+
 USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.NUMERIC_STD.ALL;
 USE common_lib.common_pkg.ALL;
@@ -37,7 +39,7 @@ USE axi4_lib.axi4_full_pkg.ALL;
 USE technology_lib.tech_mac_100g_pkg.ALL;
 USE technology_lib.technology_pkg.ALL;
 USE technology_lib.technology_select_pkg.all;
-
+use PSR_Packetiser_lib.ethernet_pkg.ALL;
 USE work.cnic_bus_pkg.ALL;
 USE work.cnic_system_reg_pkg.ALL;
 USE UNISIM.vcomponents.all;
@@ -436,14 +438,20 @@ ARCHITECTURE RTL OF cnic_core IS
     signal eth100G_status_eth_clk : std_logic_vector(128 downto 0);
     signal eth100G_send, eth100G_rcv, eth100G_clk, eth100G_locked : std_logic;
     
-    signal eth100G_rx_total_packets : std_logic_vector(31 downto 0);
-    signal eth100G_rx_bad_fcs : std_logic_vector(31 downto 0);
-    signal eth100G_rx_bad_code : std_logic_vector(31 downto 0);
-    signal eth100G_tx_total_packets : std_logic_vector(31 downto 0);
+    signal eth100G_rx_total_packets     : std_logic_vector(31 downto 0);
+    signal eth100G_rx_bad_fcs           : std_logic_vector(31 downto 0);
+    signal eth100G_rx_bad_code          : std_logic_vector(31 downto 0);
+    signal eth100G_tx_total_packets     : std_logic_vector(31 downto 0);
+    
     signal eth100G_rx_reset : std_logic;
     signal eth100G_tx_reset : std_logic;
     
     signal eth100G_reset    : std_logic;
+    
+    signal eth100G_b_rx_total_packets   : std_logic_vector(31 downto 0);
+    signal eth100G_b_rx_bad_fcs         : std_logic_vector(31 downto 0);
+    signal eth100G_b_rx_bad_code        : std_logic_vector(31 downto 0);
+    signal eth100G_b_tx_total_packets   : std_logic_vector(31 downto 0);
     
     signal ap_clk_count : std_logic_vector(31 downto 0) := (others => '0');
     
@@ -501,7 +509,7 @@ ARCHITECTURE RTL OF cnic_core IS
     signal rx_axis_tvalid    : STD_LOGIC;
     
     -- 2nd CMAC instance
-    signal eth100G_clk_b, eth100G_locked_b : std_logic;
+    signal eth100G_b_clk, eth100G_b_locked : std_logic;
     signal tx_axis_tdata_b          : STD_LOGIC_VECTOR(511 downto 0);
     signal tx_axis_tkeep_b          : STD_LOGIC_VECTOR(63 downto 0);
     signal tx_axis_tvalid_b         : STD_LOGIC;
@@ -947,74 +955,68 @@ begin
         src_in => system_fields_rw.eth100g_fec_enable     -- 1-bit input: Input signal to be synchronized to dest_clk domain.
     );
     
-    --  From eth100G_clk -> ap_clk
-    --    eth100G_locked, eth100G_rx_total_packets, eth100G_rx_bad_fcs, eth100G_rx_bad_code, eth100G_tx_total_packets
-    xpm_cdc_handshake_inst : xpm_cdc_handshake
+
+--------------------------------------------------------------------------------------------------
+-- 100G PORT A or Upper for U55C
+    locked_100G_port_a : xpm_cdc_single
     generic map (
-        DEST_EXT_HSK => 0,   -- DECIMAL; 0=internal handshake, 1=external handshake
-        DEST_SYNC_FF => 2,   -- DECIMAL; range: 2-10
-        INIT_SYNC_FF => 0,   -- DECIMAL; 0=disable simulation init values, 1=enable simulation init values
-        SIM_ASSERT_CHK => 0, -- DECIMAL; 0=disable simulation messages, 1=enable simulation messages
-        SRC_SYNC_FF => 2,    -- DECIMAL; range: 2-10
-        WIDTH => 129         -- DECIMAL; range: 1-1024
+        DEST_SYNC_FF    => 2,   
+        INIT_SYNC_FF    => 0,   
+        SIM_ASSERT_CHK  => 0, 
+        SRC_INPUT_REG   => 1   
     )
     port map (
-        dest_out => eth100G_status_ap_clk, -- WIDTH-bit output: Input bus (src_in) synchronized to destination clock domain. This output is registered.
-        dest_req => dest_req, -- 1-bit output: '1' indicates that new dest_out data is valid, will pulse high if DEST_EXT_HSK = 0 
-        src_rcv => eth100G_rcv,   -- 1-bit output: Acknowledgement from destination logic that src_in has been received. This signal will be deasserted once destination handshake has fully completed
-        dest_ack => '1', -- 1-bit input: optional; required when DEST_EXT_HSK = 1
-        dest_clk => ap_clk,     -- 1-bit input: Destination clock.
-        src_clk  => eth100G_clk, -- 1-bit input: Source clock.
-        src_in => eth100G_status_eth_clk,     -- WIDTH-bit input: Input bus that will be synchronized to the destination clock domain.
-        src_send => eth100G_send  -- 1-bit input: Assertion of this signal allows the src_in bus to be synchronized to the destination clock domain. 
+        dest_out    => system_fields_ro.eth100G_locked,
+        dest_clk    => ap_clk,
+        src_clk     => eth100G_clk,   
+        src_in      => eth100G_locked 
     );
-
-    process(ap_clk)
-    begin
-        if rising_edge(ap_clk) then
-            if dest_req = '1' then
-                system_fields_ro.eth100G_locked <= eth100G_status_ap_clk(128);
-                system_fields_ro.eth100G_rx_total_packets <= eth100G_status_ap_clk(127 downto 96);
-                system_fields_ro.eth100G_rx_bad_fcs <= eth100G_status_ap_clk(95 downto 64);  
-                system_fields_ro.eth100G_rx_bad_code <= eth100G_status_ap_clk(63 downto 32);
-                system_fields_ro.eth100G_tx_total_packets <= eth100G_status_ap_clk(31 downto 0);
-            end if;
-        end if;
-    end process;
     
-    process(eth100G_clk)
-    begin
-        if rising_edge(eth100G_clk) then
-            eth100G_status_eth_clk(128) <= eth100G_locked;
-            eth100G_status_eth_clk(127 downto 96) <= eth100G_rx_total_packets;
-            eth100G_status_eth_clk(95 downto 64) <= eth100G_rx_bad_fcs;
-            eth100G_status_eth_clk(63 downto 32) <= eth100G_rx_bad_code;
-            eth100G_status_eth_clk(31 downto 0) <= eth100G_tx_total_packets;
-            if eth100G_rcv = '0' then
-                eth100G_send <= '1'; -- just send across the clock domain whenever the clock crossing module is ready.
-            else
-                eth100G_send <= '0';
-            end if;
-        end if;
-    end process;
-    
-    
-    sync_stats_to_Host: FOR i IN 0 TO (packetiser_CDC_paths - 1) GENERATE
-        stats_crossing : entity signal_processing_common.sync_vector
-            generic map (
-                WIDTH => 32
-            )
-            Port Map ( 
-                clock_a_rst => NOT eth100G_locked,
-                Clock_a     => eth100G_clk,
-                data_in     => packetiser_stats(i),
-                
-                Clock_b     => ap_clk,
-                data_out    => packetiser_stats_crossed(i)
-            );  
+    system_fields_ro.eth100G_rx_total_packets       <= eth100G_rx_total_packets;
+    system_fields_ro.eth100G_rx_bad_fcs             <= eth100G_rx_bad_fcs;
+    system_fields_ro.eth100G_rx_bad_code            <= eth100G_rx_bad_code;
+    system_fields_ro.eth100G_tx_total_packets       <= eth100G_tx_total_packets;
+    system_fields_ro.eth100g_ptp_nano_seconds       <= PTP_time_ARGs_clk(31 downto 0);
+    system_fields_ro.eth100g_ptp_lower_seconds      <= PTP_time_ARGs_clk(63 downto 32);
+    system_fields_ro.eth100g_ptp_upper_seconds      <= zero_word & PTP_time_ARGs_clk(79 downto 64);
+--------------------------------------------------------------------------------------------------
+-- zero out if no 2nd port.
+zero_args_no_synth : IF (NOT g_ALVEO_U55) GENERATE
+    system_fields_ro.eth100G_b_locked               <= '0';
+    system_fields_ro.eth100G_b_rx_total_packets     <= zero_dword;
+    system_fields_ro.eth100G_b_rx_bad_fcs           <= zero_dword;
+    system_fields_ro.eth100G_b_rx_bad_code          <= zero_dword;
+    system_fields_ro.eth100G_b_tx_total_packets     <= zero_dword;
+    system_fields_ro.eth100g_b_ptp_nano_seconds     <= zero_dword;
+    system_fields_ro.eth100g_b_ptp_lower_seconds    <= zero_dword;
+    system_fields_ro.eth100g_b_ptp_upper_seconds    <= zero_dword;
+END GENERATE;
 
-    END GENERATE;
+U55_2nd_port_stats : IF g_ALVEO_U55 GENERATE
+    -- 100G PORT B or Lower for U55C
+    locked_100G_port_b : xpm_cdc_single
+    generic map (
+        DEST_SYNC_FF    => 2,   
+        INIT_SYNC_FF    => 0,   
+        SIM_ASSERT_CHK  => 0, 
+        SRC_INPUT_REG   => 1   
+    )
+    port map (
+        dest_out    => system_fields_ro.eth100G_b_locked,
+        dest_clk    => ap_clk,
+        src_clk     => eth100G_b_clk,   
+        src_in      => eth100G_b_locked 
+    );
+    
+    system_fields_ro.eth100G_b_rx_total_packets     <= eth100G_b_rx_total_packets;
+    system_fields_ro.eth100G_b_rx_bad_fcs           <= eth100G_b_rx_bad_fcs;
+    system_fields_ro.eth100G_b_rx_bad_code          <= eth100G_b_rx_bad_code;
+    system_fields_ro.eth100G_b_tx_total_packets     <= eth100G_b_tx_total_packets;
+    system_fields_ro.eth100g_b_ptp_nano_seconds     <= PTP_time_ARGs_clk_b(31 downto 0);
+    system_fields_ro.eth100g_b_ptp_lower_seconds	<= PTP_time_ARGs_clk_b(63 downto 32);
+    system_fields_ro.eth100g_b_ptp_upper_seconds	<= zero_word & PTP_time_ARGs_clk_b(79 downto 64);
 
+END GENERATE;
     
 
     
@@ -1100,10 +1102,10 @@ u_100G_port_a : entity Timeslave_CMAC_lib.CMAC_100G_wrap_w_timeslave
         user_tx_reset               => open,
 
         -- Statistics Interface, on eth100_clk
-        rx_total_packets => eth100G_rx_total_packets, -- out(31:0);
-        rx_bad_fcs       => eth100G_rx_bad_fcs,       -- out(31:0);
-        rx_bad_code      => eth100G_rx_bad_code,      -- out(31:0);
-        tx_total_packets => eth100G_tx_total_packets, -- out(31:0);
+        rx_total_packets            => eth100G_rx_total_packets, -- out(31:0);
+        rx_bad_fcs                  => eth100G_rx_bad_fcs,       -- out(31:0);
+        rx_bad_code                 => eth100G_rx_bad_code,      -- out(31:0);
+        tx_total_packets            => eth100G_tx_total_packets, -- out(31:0);
         
         -----------------------------------------------------------------------
         -- streaming AXI to CMAC
@@ -1161,19 +1163,19 @@ u_100G_port_a : entity Timeslave_CMAC_lib.CMAC_100G_wrap_w_timeslave
             
             i_fec_enable                => fec_enable_322m,
             -- All remaining signals are clocked on tx_clk_out
-            tx_clk_out                  => eth100G_clk_b, -- out std_logic; This is the clock used by the data in and out of the core. 322 MHz.
+            tx_clk_out                  => eth100G_b_clk, -- out std_logic; This is the clock used by the data in and out of the core. 322 MHz.
             
             -- User Interface Signals
-            rx_locked                   => eth100G_locked_b, -- out std_logic; 
+            rx_locked                   => eth100G_b_locked, -- out std_logic; 
     
             user_rx_reset               => open,
             user_tx_reset               => open,
     
             -- Statistics Interface, on eth100_clk
-            rx_total_packets            => open, -- out(31:0);
-            rx_bad_fcs                  => open,       -- out(31:0);
-            rx_bad_code                 => open,      -- out(31:0);
-            tx_total_packets            => open, -- out(31:0);
+            rx_total_packets            => eth100G_b_rx_total_packets,
+            rx_bad_fcs                  => eth100G_b_rx_bad_fcs,      
+            rx_bad_code                 => eth100G_b_rx_bad_code,     
+            tx_total_packets            => eth100G_b_tx_total_packets,
             
             -----------------------------------------------------------------------
             -- streaming AXI to CMAC
@@ -1215,7 +1217,7 @@ u_100G_port_a : entity Timeslave_CMAC_lib.CMAC_100G_wrap_w_timeslave
         TIMESLAVE_COMPARE : entity Timeslave_CMAC_lib.timeslave_stats
         Port map ( 
             CMAC_clk_1                  => eth100G_clk,
-            CMAC_clk_2                  => eth100G_clk_b,
+            CMAC_clk_2                  => eth100G_b_clk,
             
             ARGs_clk                    => ap_clk,
             
@@ -1365,8 +1367,8 @@ END GENERATE;
         i_clk_100GE         => eth100G_clk,      -- in std_logic;
         i_eth100G_locked    => eth100G_locked,
         -----------------------------------------------------------------------
-        i_clk_100GE_b       => eth100G_clk_b,
-        i_eth100G_locked_b  => eth100G_locked_b,
+        i_clk_100GE_b       => eth100G_b_clk,
+        i_eth100G_locked_b  => eth100G_b_locked,
          
         o_tx_axis_tdata_b   => tx_axis_tdata_b,
         o_tx_axis_tkeep_b   => tx_axis_tkeep_b,

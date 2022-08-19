@@ -37,11 +37,11 @@ entity timeslave_stats is
         cmac_reset                  : in std_logic;
     
         -- PTP Data
-        PTP_time_CMAC_clk           : t_slv_80_arr(0 to (CMAC_INSTANCES-1));
-        PTP_pps_CMAC_clk            : std_logic_vector((CMAC_INSTANCES-1) downto 0);
+        PTP_time_CMAC_clk           : in t_slv_80_arr(0 to (CMAC_INSTANCES-1));
+        PTP_pps_CMAC_clk            : in std_logic_vector((CMAC_INSTANCES-1) downto 0);
     
-        PTP_time_ARGs_clk           : t_slv_80_arr(0 to (CMAC_INSTANCES-1));
-        PTP_pps_ARGs_clk            : std_logic_vector((CMAC_INSTANCES-1) downto 0)
+        PTP_time_ARGs_clk           : in t_slv_80_arr(0 to (CMAC_INSTANCES-1));
+        PTP_pps_ARGs_clk            : in std_logic_vector((CMAC_INSTANCES-1) downto 0)
     
     
     );

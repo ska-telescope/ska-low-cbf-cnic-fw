@@ -122,7 +122,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 use xpm.vcomponents.all;
 USE common_lib.common_pkg.ALL;
---use PSR_Packetiser_lib.codifheader_pkg.all;
+use PSR_Packetiser_lib.ethernet_pkg.all;
 
 library UNISIM;
 use UNISIM.VComponents.all;
@@ -138,6 +138,12 @@ entity CODIF_header_modifier is
     Port ( 
         i_clk                   : IN STD_LOGIC;     -- clock domain going to the packet player.
         i_reset                 : IN STD_LOGIC;     -- single pulse, will reset values being modified.
+        
+        ----------------------------
+        -- Math offsets for header incremeting
+        i_codif_header_packets_per_frame	: in std_logic_vector(31 downto 0);
+        i_codif_header_packets_epoch_offset : in std_logic_vector(31 downto 0);
+        i_codif_header_frame_initial_value	: in std_logic_vector(31 downto 0);
     
         -- FROM THE HBM_packet_controller 
         i_bytes_to_transmit     : IN STD_LOGIC_VECTOR(13 downto 0);     -- 
@@ -165,7 +171,7 @@ constant C_DELAY_STEPS  : integer := 6;
 signal data_delay_line  : t_slv_512_arr((C_DELAY_STEPS-1) downto 0);
 signal wr_delay_line    : std_logic_vector((C_DELAY_STEPS-1) downto 0);
 
-signal CODIF_Data_frame_count           : integer := 0;
+signal CODIF_Data_frame_count           : unsigned(31 downto 0);
 signal CODIF_Data_frame_counter         : std_logic_vector(31 downto 0);
 signal CODIF_Data_frame_counter_LE      : std_logic_vector(31 downto 0);
 
@@ -173,11 +179,15 @@ signal Epoch_offset_pickup              : std_logic_vector(31 downto 0);
 signal Epoch_offset_reorder             : std_logic_vector(31 downto 0);
 signal CODIF_epoch_offset_LE            : std_logic_vector(31 downto 0);
 
-signal Thread_count     : integer := 1;
+signal Thread_count                     : unsigned(31 downto 0);
 
 signal output_vector    : std_logic_vector(511 downto 0);
 
 signal first_run        : std_logic := '0';
+
+signal codif_header_packets_per_frame       : unsigned(31 downto 0);
+signal codif_header_packets_epoch_offset    : unsigned(31 downto 0);
+signal codif_header_frame_initial_value     : unsigned(31 downto 0);
 
 begin
 ----------------------------------------------------------------
@@ -189,6 +199,12 @@ wr_delay_line(0)        <= i_data_to_player_wr;
 
 o_data_to_player        <= output_vector; 
 o_data_to_player_wr     <= wr_delay_line(C_DELAY_STEPS-1);
+
+
+codif_header_packets_per_frame      <= unsigned(i_codif_header_packets_per_frame);      -- number of jimbles * channels param.
+codif_header_packets_epoch_offset   <= unsigned(i_codif_header_packets_epoch_offset);   -- set to 27 for CODIF.
+codif_header_frame_initial_value    <= unsigned(i_codif_header_frame_initial_value);    -- initial value for frame.
+
 
 ----------------------------------------------------------------
 -- delay line.
@@ -226,7 +242,7 @@ begin
     end if;
 end process;
 
-CODIF_Data_frame_counter        <= std_logic_vector(to_unsigned(CODIF_Data_frame_count,32));
+CODIF_Data_frame_counter        <= std_logic_vector(CODIF_Data_frame_count);
 
 counter_process : process(i_clk)
 begin
@@ -234,10 +250,10 @@ begin
         if i_reset = '1' then
             Epoch_offset_pickup         <= x"00000000";
             CODIF_Data_frame_counter_LE <= x"00000000";
-            CODIF_Data_frame_count      <= g_CODIF_frame_init;
+            CODIF_Data_frame_count      <= codif_header_frame_initial_value;
             first_run                   <= '1';
             setup_sm                    <= IDLE;
-            Thread_count                <= 1;
+            Thread_count                <= unsigned(one_dword);
             counter_sm                  <= PREP;
         else
 
@@ -258,17 +274,17 @@ begin
                 when COUNT_1 =>
                     counter_sm <= COUNT_2;
                     -- Do we increment Data_frame_counter
-                    if Thread_count = g_Packets_per_frame_inc then --192 then
+                    if Thread_count = codif_header_packets_per_frame then --192 then
                         CODIF_Data_frame_count      <= CODIF_Data_frame_count + 1;
-                        Thread_count                <= 1;
+                        Thread_count                <= unsigned(one_dword);
                     else
                         Thread_count                <= Thread_count + 1;
                     end if;
                 
                 when COUNT_2 =>
                     if CODIF_Data_frame_count = 800000 then
-                        CODIF_Data_frame_count <= 0;
-                        Epoch_offset_reorder    <= std_logic_vector(unsigned(Epoch_offset_reorder) + unsigned(g_EPOCH_OFFSET_INC));
+                        CODIF_Data_frame_count  <= unsigned(zero_dword);
+                        Epoch_offset_reorder    <= std_logic_vector(unsigned(Epoch_offset_reorder) + codif_header_packets_epoch_offset);
                     end if;
                     counter_sm <= IDLE;
                                 
