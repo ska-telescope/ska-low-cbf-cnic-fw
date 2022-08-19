@@ -7,7 +7,7 @@
 ## It synthesizes and produces an output bitfile to be programmed
 ## to an Alveo from the source in this git repository
 
-ALLOWED_ALVEO=(u50lv u55) #ALVEO is either U50 or U55 as of Sept 2021
+ALLOWED_ALVEO=(u50 u55) #ALVEO is either U50 or U55 as of Sept 2021
 KERNELS_TO_GEN=(cnic)
 XILINX_PATH=/tools/Xilinx
 VIVADO_VERSION_IN_USE=2021.2
@@ -62,7 +62,7 @@ fi
 export XPFM=/opt/xilinx/platforms/xilinx_u55c_gen3x16_xdma_2_202110_1/xilinx_u55c_gen3x16_xdma_2_202110_1.xpfm
 export VITIS_TARGET=u55
 
-if [ $TARGET_ALVEO = "u50lv" ]; then
+if [ $TARGET_ALVEO = "u50" ]; then
     export XPFM=/opt/xilinx/platforms/xilinx_u50lv_gen3x4_xdma_2_202010_1/xilinx_u50lv_gen3x4_xdma_2_202010_1.xpfm
     export VITIS_TARGET=u50
 fi
