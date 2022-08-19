@@ -162,7 +162,15 @@ ARGS_Timeslave_lite : entity Timeslave_CMAC_lib.Timeslave_timeslave_reg
 p_scheduler_feedback : process(i_ARGs_clk)
 begin
     if rising_edge(i_ARGs_clk) then
-        timeslave_ro_registers.schedule_debug				<= x"000000" & schedule_debug;
+        --timeslave_ro_registers.schedule_debug				<= x"000000" & schedule_debug;
+        timeslave_ro_registers.schedule_debug_running       <= schedule_debug(0);
+        timeslave_ro_registers.schedule_debug_tx_start      <= schedule_debug(1);
+        timeslave_ro_registers.schedule_debug_tx_stop       <= schedule_debug(2);
+        timeslave_ro_registers.schedule_debug_rx_start      <= schedule_debug(3);
+        timeslave_ro_registers.schedule_debug_rx_stop       <= schedule_debug(4);
+        timeslave_ro_registers.schedule_debug_error         <= schedule_debug(5);
+        timeslave_ro_registers.schedule_debug_reset         <= schedule_debug(6);
+        timeslave_ro_registers.schedule_debug_complete      <= schedule_debug(7);
 
 --        Bit 0 = Running state, 1 - running ... 0 - stopped , ie waiting for time
 --        Bit 1 = TX start achieved
@@ -183,8 +191,8 @@ begin
         ---------------------------------------------------
 --        Current CNIC can only TX or RX at a time.
 --        Therefore if TX and RX is configured, error condition.
-        tx_actions              <= timeslave_rw_registers.schedule_control(2) OR timeslave_rw_registers.schedule_control(1);
-        rx_actions              <= timeslave_rw_registers.schedule_control(4) OR timeslave_rw_registers.schedule_control(3); 
+        tx_actions              <= timeslave_rw_registers.schedule_control_tx_start_time OR timeslave_rw_registers.schedule_control_tx_stop_time;
+        rx_actions              <= timeslave_rw_registers.schedule_control_rx_start_time OR timeslave_rw_registers.schedule_control_rx_stop_time; 
         
         if time_trigger_sm = ERROR then 
             schedule_debug(5)   <= '1';
@@ -227,7 +235,11 @@ begin
 --        Bit 2 = Enable TX stop time.
 --        Bit 3 = Enable RX start time.
 --        Bit 4 = Enable RX stop time.
-        schedule_control_cache                              <= timeslave_rw_registers.schedule_control(7 downto 0);
+        schedule_control_cache(0)                           <= timeslave_rw_registers.schedule_control_reset;
+        schedule_control_cache(1)                           <= timeslave_rw_registers.schedule_control_tx_start_time;
+        schedule_control_cache(2)                           <= timeslave_rw_registers.schedule_control_tx_stop_time;
+        schedule_control_cache(3)                           <= timeslave_rw_registers.schedule_control_rx_start_time;
+        schedule_control_cache(4)                           <= timeslave_rw_registers.schedule_control_rx_stop_time;
 
         o_schedule_int(0)   <= schedule_control_cache(0);
 

@@ -139,31 +139,82 @@ peripherals:
               reset_value       : 0x0
               field_description : "Target start time
                                    0x0000 & bits 79 -> 64 ... Upper 16 bits of 80 bit time vector, upper section of seconds."
-          ################################# 
-          - - field_name        : schedule_control
-              width             : 32
+          #################################
+          - - field_name        : schedule_control_reset
+              width             : 1
               access_mode       : RW
               reset_value       : 0x0
-              field_description : "Multi bit control vector that will allow different operations of scheduled hardware actions.
-                                   Assumes a valid future time has been set in the schedule_ptp_xxxx fields above.
-                                   Bit 0 = reset CNIC logic and the Scheduler SM to IDLE.
-                                   Bit 1 = Enable TX start time.
-                                   Bit 2 = Enable TX stop time.
-                                   Bit 3 = Enable RX start time.
-                                   Bit 4 = Enable RX stop time.
-                                   "
+              field_description : "Reset the scheduler"
           #################################
-          - - field_name        : schedule_debug
-              width             : 32
+          - - field_name        : schedule_control_tx_start_time
+              width             : 1
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "Enable TX start time"
+          #################################
+          - - field_name        : schedule_control_tx_stop_time
+              width             : 1
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "Enable TX stop time"
+          #################################
+          - - field_name        : schedule_control_rx_start_time
+              width             : 1
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "Enable RX start time"
+          #################################
+          - - field_name        : schedule_control_rx_stop_time
+              width             : 1
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "Enable RX stop time"
+          #################################
+          - - field_name        : schedule_debug_running
+              width             : 1
               access_mode       : RO
               reset_value       : 0x0
-              field_description : "Feedback from hardware..
-                                   Bit 0 = Running state, 1 - running ... 0 - stopped , ie waiting for time
-                                   Bit 1 = TX start achieved
-                                   Bit 2 = TX stop achieved
-                                   Bit 3 = RX start achieved
-                                   Bit 4 = RX stop achieved
-                                   Bit 5 = error condition, eg time scheduled and real time is already in the future.
-                                   Bit 6 = in reset. 
-                                   Bit 7 = SM in complete state."
+              field_description : "Running state, 1 - running ... 0 - stopped , ie waiting for time"
+          #################################
+          - - field_name        : schedule_debug_tx_start
+              width             : 1
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "TX start achieved"              
+          #################################
+          - - field_name        : schedule_debug_tx_stop
+              width             : 1
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "TX stop achieved"                            
+          #################################
+          - - field_name        : schedule_debug_rx_start
+              width             : 1
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "RX start achieved"              
+          #################################
+          - - field_name        : schedule_debug_rx_stop
+              width             : 1
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "RX stop achieved"                            
+          #################################
+          - - field_name        : schedule_debug_error
+              width             : 1
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "error condition, eg time scheduled and real time is already in the future."              
+          #################################
+          - - field_name        : schedule_debug_reset
+              width             : 1
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "in reset state"                            
+          #################################
+          - - field_name        : schedule_debug_complete
+              width             : 1
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "SM in complete state."
      
