@@ -89,7 +89,7 @@ entity CMAC_100G_wrap_w_timeslave is
         tx_total_packets        : out std_logic_vector(31 downto 0);
 
         -----------------------------------------------------------------------
-        -- streaming AXI to CMAC
+        -- streaming AXI to CMAC, Timeslave in between
         -- TX
         i_tx_axis_tdata         : IN STD_LOGIC_VECTOR(511 downto 0);
         i_tx_axis_tkeep         : IN STD_LOGIC_VECTOR(63 downto 0);
@@ -106,6 +106,12 @@ entity CMAC_100G_wrap_w_timeslave is
         o_rx_axis_tuser         : out STD_LOGIC_VECTOR ( 79 downto 0 );
         o_rx_axis_tvalid        : out STD_LOGIC;
         
+        -- streaming AXI to CMAC, Pre_timeslave
+        CMAC_rx_axis_tdata      : out STD_LOGIC_VECTOR ( 511 downto 0 );
+        CMAC_rx_axis_tkeep      : out STD_LOGIC_VECTOR ( 63 downto 0 );
+        CMAC_rx_axis_tlast      : out STD_LOGIC;
+        CMAC_rx_axis_tuser      : out STD_LOGIC;
+        CMAC_rx_axis_tvalid     : out STD_LOGIC;
         -----------------------------------------------------------------------
         
         -- PTP Data
@@ -442,11 +448,11 @@ signal stat_reset                   : std_logic;
 
 signal CMAC_ARGS_rx_locked       : STD_LOGIC;
 
-signal CMAC_rx_axis_tdata   : STD_LOGIC_VECTOR ( 511 downto 0 );
-signal CMAC_rx_axis_tkeep   : STD_LOGIC_VECTOR ( 63 downto 0 );
-signal CMAC_rx_axis_tlast   : STD_LOGIC;
-signal CMAC_rx_axis_tuser   : STD_LOGIC;
-signal CMAC_rx_axis_tvalid  : STD_LOGIC;
+--signal CMAC_rx_axis_tdata   : STD_LOGIC_VECTOR ( 511 downto 0 );
+--signal CMAC_rx_axis_tkeep   : STD_LOGIC_VECTOR ( 63 downto 0 );
+--signal CMAC_rx_axis_tlast   : STD_LOGIC;
+--signal CMAC_rx_axis_tuser   : STD_LOGIC;
+--signal CMAC_rx_axis_tvalid  : STD_LOGIC;
 
 signal CMAC_rx_ptp_stamp        : std_logic_vector(79 downto 0);
 signal CMAC_tx_ptp_stamp        : std_logic_vector(79 downto 0);

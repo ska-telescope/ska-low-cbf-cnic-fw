@@ -217,4 +217,10 @@ peripherals:
               access_mode       : RO
               reset_value       : 0x0
               field_description : "SM in complete state."
+          #################################
+          - - field_name        : ptp_source_select
+              width             : 1
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "SM in complete state."
      

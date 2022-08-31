@@ -77,10 +77,15 @@ entity timeslave_scheduler is
         i_CMAC_clk                  : in std_logic;
         i_cmac_reset                : in std_logic;
         
+        i_CMAC_b_clk                : in std_logic;
+        i_cmac_b_reset              : in std_logic;
+        
         i_ARGs_clk                  : in std_logic;
         i_ARGs_rst                  : in std_logic;
         
         o_schedule                  : out std_logic_vector(7 downto 0);
+        
+        o_ptp_source_select         : out std_logic;
         
         -- PTP Data
         i_PTP_time_CMAC_clk         : in std_logic_vector(79 downto 0);
@@ -88,6 +93,9 @@ entity timeslave_scheduler is
     
         i_PTP_time_ARGs_clk         : in std_logic_vector(79 downto 0);
         i_PTP_pps_ARGs_clk          : in std_logic;
+        
+        i_PTP_time_ARGs_clk_b       : in std_logic_vector(79 downto 0);
+        i_PTP_pps_ARGs_clk_b        : in std_logic;
         
         i_Timeslave_Lite_axi_mosi   : in t_axi4_lite_mosi; 
         o_Timeslave_Lite_axi_miso   : out t_axi4_lite_miso
@@ -130,12 +138,16 @@ signal Stop_run                         : std_logic;
 signal o_schedule_int                   : std_logic_vector(7 downto 0);
 signal schedule_debug                   : std_logic_vector(7 downto 0);
 
-    
+signal ptp_time_internal                : std_logic_vector(79 downto 0);
+signal ptp_source_select                : std_logic;
+
 begin
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-o_schedule  <= o_schedule_int;
+o_schedule          <= o_schedule_int;
+
+o_ptp_source_select <= ptp_source_select;
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 ARGS_Timeslave_lite : entity Timeslave_CMAC_lib.Timeslave_timeslave_reg 
@@ -154,6 +166,11 @@ ARGS_Timeslave_lite : entity Timeslave_CMAC_lib.Timeslave_timeslave_reg
         
         );
 
+------------------------------------------------------------------------------------------------------------------------------------------------------
+-- choose PTP source to use.
+
+ptp_time_internal <=    i_PTP_time_ARGs_clk when ptp_source_select = '0' else
+                        i_PTP_time_ARGs_clk_b;
         
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 -- provide feedback to host using the following logic.
@@ -162,6 +179,8 @@ ARGS_Timeslave_lite : entity Timeslave_CMAC_lib.Timeslave_timeslave_reg
 p_scheduler_feedback : process(i_ARGs_clk)
 begin
     if rising_edge(i_ARGs_clk) then
+        ptp_source_select   <= timeslave_rw_registers.ptp_source_select;
+    
         --timeslave_ro_registers.schedule_debug				<= x"000000" & schedule_debug;
         timeslave_ro_registers.schedule_debug_running       <= schedule_debug(0);
         timeslave_ro_registers.schedule_debug_tx_start      <= schedule_debug(1);
@@ -222,13 +241,13 @@ actions <= o_schedule_int;
 control_proc : process(i_ARGs_clk)
 begin
     if rising_edge(i_ARGs_clk) then
-        timeslave_ro_registers.current_ptp_sub_seconds      <= i_PTP_time_CMAC_clk(31 downto 0);
-        timeslave_ro_registers.current_ptp_seconds_lower	<= i_PTP_time_CMAC_clk(63 downto 32);
-        timeslave_ro_registers.current_ptp_seconds_upper	<= x"0000" & i_PTP_time_CMAC_clk(79 downto 64);
+        timeslave_ro_registers.current_ptp_sub_seconds      <= ptp_time_internal(31 downto 0);
+        timeslave_ro_registers.current_ptp_seconds_lower	<= ptp_time_internal(63 downto 32);
+        timeslave_ro_registers.current_ptp_seconds_upper	<= x"0000" & ptp_time_internal(79 downto 64);
         
-        current_time_sub_seconds                            <= i_PTP_time_CMAC_clk(31 downto 0);
-        current_time_seconds_lower	                        <= i_PTP_time_CMAC_clk(63 downto 32);
-        current_time_seconds_upper                          <= i_PTP_time_CMAC_clk(79 downto 64);
+        current_time_sub_seconds                            <= ptp_time_internal(31 downto 0);
+        current_time_seconds_lower	                        <= ptp_time_internal(63 downto 32);
+        current_time_seconds_upper                          <= ptp_time_internal(79 downto 64);
         
 --        Bit 0 = reset CNIC logic and the Scheduler SM to IDLE.
 --        Bit 1 = Enable TX start time.

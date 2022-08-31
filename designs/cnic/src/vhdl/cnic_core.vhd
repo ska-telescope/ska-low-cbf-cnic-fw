@@ -494,6 +494,10 @@ ARCHITECTURE RTL OF cnic_core IS
     signal PTP_time_ARGs_clk_b     : std_logic_vector(79 downto 0);
     signal PTP_pps_ARGs_clk_b      : std_logic;
     
+    signal PTP_time_CMAC_B_in_A_clk : std_logic_vector(79 downto 0);
+    
+    signal timestamp_to_use         : std_logic_vector(79 downto 0);
+    
     signal tx_axis_tdata            : STD_LOGIC_VECTOR(511 downto 0);
     signal tx_axis_tkeep            : STD_LOGIC_VECTOR(63 downto 0);
     signal tx_axis_tvalid           : STD_LOGIC;
@@ -509,7 +513,7 @@ ARCHITECTURE RTL OF cnic_core IS
     signal rx_axis_tvalid    : STD_LOGIC;
     
     -- 2nd CMAC instance
-    signal eth100G_b_clk, eth100G_b_locked : std_logic;
+    signal eth100G_b_clk, eth100G_b_locked, eth100G_b_reset : std_logic;
     signal tx_axis_tdata_b          : STD_LOGIC_VECTOR(511 downto 0);
     signal tx_axis_tkeep_b          : STD_LOGIC_VECTOR(63 downto 0);
     signal tx_axis_tvalid_b         : STD_LOGIC;
@@ -700,6 +704,15 @@ ARCHITECTURE RTL OF cnic_core IS
     signal      packetiser_stats            : t_slv_32_arr(0 to (packetiser_CDC_paths-1));
     
     signal schedule_action                  : std_logic_vector(7 downto 0);
+    
+    -- streaming AXI to CMAC, Pre_timeslave
+    signal CMAC_rx_axis_tdata      : STD_LOGIC_VECTOR ( 511 downto 0 );
+    signal CMAC_rx_axis_tkeep      : STD_LOGIC_VECTOR ( 63 downto 0 );
+    signal CMAC_rx_axis_tlast      : STD_LOGIC;
+    signal CMAC_rx_axis_tuser      : STD_LOGIC;
+    signal CMAC_rx_axis_tvalid     : STD_LOGIC;
+    
+    signal ptp_source_select       : STD_LOGIC;
     
 begin
 
@@ -1124,6 +1137,12 @@ u_100G_port_a : entity Timeslave_CMAC_lib.CMAC_100G_wrap_w_timeslave
         o_rx_axis_tuser     => rx_axis_tuser,
         o_rx_axis_tvalid    => rx_axis_tvalid,
         
+        -- streaming AXI to CMAC, Pre_timeslave
+        CMAC_rx_axis_tdata  => CMAC_rx_axis_tdata,
+        CMAC_rx_axis_tkeep  => CMAC_rx_axis_tkeep,
+        CMAC_rx_axis_tlast  => CMAC_rx_axis_tlast,
+        CMAC_rx_axis_tuser  => CMAC_rx_axis_tuser,
+        CMAC_rx_axis_tvalid => CMAC_rx_axis_tvalid, 
         -----------------------------------------------------------------------
         
         -- PTP Data
@@ -1194,6 +1213,12 @@ u_100G_port_a : entity Timeslave_CMAC_lib.CMAC_100G_wrap_w_timeslave
             o_rx_axis_tuser     => open,
             o_rx_axis_tvalid    => open,
             
+            -- streaming AXI to CMAC, Pre_timeslave
+            CMAC_rx_axis_tdata  => open,
+            CMAC_rx_axis_tkeep  => open,
+            CMAC_rx_axis_tlast  => open,
+            CMAC_rx_axis_tuser  => open,
+            CMAC_rx_axis_tvalid => open, 
             -----------------------------------------------------------------------
             
             -- PTP Data
@@ -1226,6 +1251,7 @@ u_100G_port_a : entity Timeslave_CMAC_lib.CMAC_100G_wrap_w_timeslave
             -- PTP Data
             PTP_time_CMAC_clk(0)        => PTP_time_CMAC_clk,
             PTP_time_CMAC_clk(1)        => PTP_time_CMAC_clk_b,
+            
             PTP_pps_CMAC_clk(0)         => PTP_pps_CMAC_clk,
             PTP_pps_CMAC_clk(1)         => PTP_pps_CMAC_clk_b,
         
@@ -1238,6 +1264,19 @@ u_100G_port_a : entity Timeslave_CMAC_lib.CMAC_100G_wrap_w_timeslave
         );
     END GENERATE;
     
+    PTP_B_crossing : entity signal_processing_common.sync_vector
+    generic map (
+        WIDTH => 80
+    )
+    Port Map ( 
+        clock_a_rst => eth100G_b_reset,
+        Clock_a     => eth100G_b_clk,
+        data_in     => PTP_time_CMAC_clk_b,
+        
+        Clock_b     => eth100G_clk,
+        data_out    => PTP_time_CMAC_B_in_A_clk
+    );  
+
 
     CMAC_reset_proc : process(eth100G_clk)
     begin
@@ -1247,6 +1286,14 @@ u_100G_port_a : entity Timeslave_CMAC_lib.CMAC_100G_wrap_w_timeslave
         end if;
     end process;
 
+    CMAC_b_reset_proc : process(eth100G_b_clk)
+    begin
+        if rising_edge(eth100G_b_clk) then
+            eth100G_b_reset <= NOT eth100G_b_locked;
+    
+        end if;
+    end process;
+    
     PTP_hardware_scheduler : entity Timeslave_CMAC_lib.timeslave_scheduler 
     Generic map (
         DEBUG_ILA                   => TRUE
@@ -1255,10 +1302,15 @@ u_100G_port_a : entity Timeslave_CMAC_lib.CMAC_100G_wrap_w_timeslave
         i_CMAC_clk                  => eth100G_clk,
         i_cmac_reset                => eth100G_reset,
         
+        i_CMAC_b_clk                => eth100G_b_clk,
+        i_cmac_b_reset              => eth100G_b_reset,
+        
         i_ARGs_clk                  => ap_clk,
         i_ARGs_rst                  => ap_rst,
         
         o_schedule                  => schedule_action, 
+        
+        o_ptp_source_select         => ptp_source_select,
         
         -- PTP Data
         i_PTP_time_CMAC_clk         => PTP_time_CMAC_clk,
@@ -1267,11 +1319,27 @@ u_100G_port_a : entity Timeslave_CMAC_lib.CMAC_100G_wrap_w_timeslave
         i_PTP_time_ARGs_clk         => PTP_time_ARGs_clk,
         i_PTP_pps_ARGs_clk          => PTP_pps_ARGs_clk,
         
+        i_PTP_time_ARGs_clk_b       => PTP_time_ARGs_clk_b,
+        i_PTP_pps_ARGs_clk_b        => PTP_pps_ARGs_clk_b,
+        
         i_Timeslave_Lite_axi_mosi   => mc_lite_mosi(c_timeslave_lite_index), 
         o_Timeslave_Lite_axi_miso   => mc_lite_miso(c_timeslave_lite_index)
     
     );
 
+debug_ILA_Timeslave_latency : ila_0
+    PORT MAP (
+   	    clk                     => eth100G_clk,
+   	    probe0(63 downto 0)     => rx_axis_tdata(63 downto 0),
+        probe0(127 downto 64)   => CMAC_rx_axis_tdata(63 downto 0),
+        probe0(186 downto 128)  => rx_axis_tuser(58 downto 0),
+        probe0(187)             => rx_axis_tlast,
+        probe0(188)             => rx_axis_tvalid,
+        probe0(189)             => CMAC_rx_axis_tlast,
+        probe0(190)             => CMAC_rx_axis_tuser,
+        probe0(191)             => CMAC_rx_axis_tvalid
+    );
+   	    
 
 END GENERATE;
 
@@ -1330,7 +1398,16 @@ END GENERATE;
         end if;
     end process;
 
+----------------------------------------------------------------------------------------------------------------------
+-- Timestamp source select.
+-- If time stamp is selected from B interface then it will ~10ns late due to CDC.
+--
 
+timestamp_to_use    <=  rx_axis_tuser when ptp_source_select = '0' else 
+                        PTP_time_CMAC_B_in_A_clk;
+
+
+----------------------------------------------------------------------------------------------------------------------
 
     i_cnic_top : entity cnic_lib.cnic_top
     generic map (
@@ -1360,7 +1437,7 @@ END GENERATE;
         i_rx_axis_tkeep     => rx_axis_tkeep,
         i_rx_axis_tlast     => rx_axis_tlast,
         o_rx_axis_tready    => rx_axis_tready,
-        i_rx_axis_tuser     => rx_axis_tuser,
+        i_rx_axis_tuser     => timestamp_to_use, --rx_axis_tuser,
         i_rx_axis_tvalid    => rx_axis_tvalid,
         
         
