@@ -1296,7 +1296,7 @@ u_100G_port_a : entity Timeslave_CMAC_lib.CMAC_100G_wrap_w_timeslave
     
     PTP_hardware_scheduler : entity Timeslave_CMAC_lib.timeslave_scheduler 
     Generic map (
-        DEBUG_ILA                   => TRUE
+        DEBUG_ILA                   => FALSE
     )
     Port map ( 
         i_CMAC_clk                  => eth100G_clk,
@@ -1327,19 +1327,20 @@ u_100G_port_a : entity Timeslave_CMAC_lib.CMAC_100G_wrap_w_timeslave
     
     );
 
-debug_ILA_Timeslave_latency : ila_0
-    PORT MAP (
-   	    clk                     => eth100G_clk,
-   	    probe0(63 downto 0)     => rx_axis_tdata(63 downto 0),
-        probe0(127 downto 64)   => CMAC_rx_axis_tdata(63 downto 0),
-        probe0(186 downto 128)  => rx_axis_tuser(58 downto 0),
-        probe0(187)             => rx_axis_tlast,
-        probe0(188)             => rx_axis_tvalid,
-        probe0(189)             => CMAC_rx_axis_tlast,
-        probe0(190)             => CMAC_rx_axis_tuser,
-        probe0(191)             => CMAC_rx_axis_tvalid
-    );
-   	    
+    timeslave_latency_debug : IF g_DEBUG_ILA GENERATE
+        debug_ILA_Timeslave_latency : ila_0
+            PORT MAP (
+                clk                     => eth100G_clk,
+                probe0(63 downto 0)     => rx_axis_tdata(63 downto 0),
+                probe0(127 downto 64)   => CMAC_rx_axis_tdata(63 downto 0),
+                probe0(186 downto 128)  => rx_axis_tuser(58 downto 0),
+                probe0(187)             => rx_axis_tlast,
+                probe0(188)             => rx_axis_tvalid,
+                probe0(189)             => CMAC_rx_axis_tlast,
+                probe0(190)             => CMAC_rx_axis_tuser,
+                probe0(191)             => CMAC_rx_axis_tvalid
+            );
+    END GENERATE;   	    
 
 END GENERATE;
 

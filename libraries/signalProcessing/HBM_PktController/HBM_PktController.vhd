@@ -83,7 +83,7 @@ use axi4_lib.axi4_full_pkg.all;
 
 entity HBM_PktController is
    generic (
-      g_DEBUG_ILAs             : BOOLEAN := TRUE;
+      g_DEBUG_ILAs             : BOOLEAN := FALSE;
       g_HBM_bank_size          : string  := "4095MB"
    );
    Port (
@@ -386,6 +386,7 @@ architecture RTL of HBM_PktController is
     type output_fsm_type is (initial_state, output_first_run0, output_first_run1 ,output_first_idle, output_idle, output_next_burst, output_next_packet, output_wait_burst_counter, read_full_packet, output_packet_finished, output_tx_complete, output_loopit, output_thats_all_folks, output_check_burst_count);
     signal output_fsm       : output_fsm_type := initial_state;
     
+    signal n_fifo_cache_in_reset : std_logic;
     signal packetizer_wr    : std_logic;
     signal packetizer_dout  :  std_logic_vector(511 downto 0);
     signal from_current_bank_finish : std_logic := '0';
@@ -417,16 +418,18 @@ architecture RTL of HBM_PktController is
     signal FIFO_WrDataCount : std_logic_vector(((ceil_log2(SYNC_FIFO_DEPTH))) downto 0);
     signal FIFO_din : std_logic_vector(511 downto 0);      
     signal tx_FIFO_rd_en : std_logic;  
-    signal FIFO_rst : std_logic;       
+    signal FIFO_rst : std_logic;    
+    signal tx_fifo_cache_reset : std_logic;    
     signal tx_FIFO_wr_en : std_logic;     
     signal tx_reset_state : std_logic;
     signal ns_burst_timer_std_logic, ns_total_time_std_logic : std_logic_vector(31 downto 0) := (others=>'0');
     signal ns_burst_timer_100Mhz : unsigned(31 downto 0) := (others=>'0');
     signal ns_total_time_100Mhz : unsigned(47 downto 0) := (others=>'0');
 
-    signal target_time_100Mhz, target_time : unsigned(47 downto 0) := (others=>'0');
-    signal target_packets_100Mhz, target_packets : unsigned(63 downto 0) := (others=>'0');
-    signal target_packets_std_logic : std_logic_vector(63 downto 0) := (others=>'0');
+    signal target_time_100Mhz, target_time         : unsigned(47 downto 0) := (others=>'0');
+    signal time_between_packets_100Mhz             : unsigned(47 downto 0) := (others=>'0');
+    signal target_packets_100Mhz, target_packets   : unsigned(63 downto 0) := (others=>'0');
+    signal target_packets_std_logic                : std_logic_vector(63 downto 0) := (others=>'0');
 
     signal time_between_bursts_ns_100Mhz : std_logic_vector(31 downto 0) := (others=>'0');
 
@@ -1876,18 +1879,20 @@ begin
     ------------------------------------------------------------------------------------------------------
     --////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    reset_proc : process(i_shared_clk)
-    begin
-        if rising_edge(i_shared_clk) then
-        
-        -- master TX reset mechanism
-        tx_reset_state     <= i_reset_tx OR i_schedule_action(0) OR i_shared_rst;
-        
-        -- master RX reset mechanism
-        rx_soft_reset_int  <= i_rx_soft_reset OR i_schedule_action(0) OR i_shared_rst;
-            
-        end if;
-    end process;
+   tx_fifo_cache_reset  <= tx_reset_state OR FIFO_rst;
+
+   reset_proc : process(i_shared_clk)
+   begin
+      if rising_edge(i_shared_clk) then
+      
+      -- master TX reset mechanism
+      tx_reset_state     <= i_reset_tx OR i_shared_rst; -- OR i_schedule_action(0);
+      
+      -- master RX reset mechanism
+      rx_soft_reset_int  <= i_rx_soft_reset OR i_shared_rst; -- OR i_schedule_action(0);
+         
+      end if;
+   end process;
     
     --////////////////////////////////////////////////////////////////////////////////////////////////////
     ------------------------------------------------------------------------------------------------------
@@ -1895,13 +1900,13 @@ begin
     ------------------------------------------------------------------------------------------------------
     --////////////////////////////////////////////////////////////////////////////////////////////////////
     
-    
+    n_fifo_cache_in_reset <= '1' when (rd_rst_busy = '0' and wr_rst_busy = '0') else '0';
 
     process(i_shared_clk)
     begin
         if rising_edge(i_shared_clk) then
         -- TX
-            start_stop_tx        <= i_start_tx OR (i_schedule_action(1) XOR i_schedule_action(2));
+            start_stop_tx        <= (i_start_tx OR (i_schedule_action(1) XOR i_schedule_action(2))) AND n_fifo_cache_in_reset;
     
             running              <= start_stop_tx;   -- Used as a reset for packet timing logic.
             -- if (start_stop_tx = '1') then
@@ -2279,7 +2284,7 @@ end process;
                output_fsm_debug <= x"8";
                if (target_packets > total_pkts_to_mac) then
                   output_fsm                  <= output_next_burst;
-                  --burst_count                 <= burst_count +1;
+                  --burst_count               <= burst_count +1;
                end if;
 
             when output_tx_complete =>
@@ -2338,18 +2343,20 @@ end process;
    ns_counter : process(clk_freerun)
    begin
       if rising_edge(clk_freerun) then
-         start_next_burst_100Mhz <= '0';
+         start_next_burst_100Mhz       <= '0';
+         time_between_packets_100Mhz   <= resize(unsigned(time_between_bursts_ns_100Mhz), target_time_100Mhz'length);
+         
          if (reset_state_100Mhz = '0') then
             ns_burst_timer_100Mhz   <= (others => '0');
             ns_total_time_100Mhz    <= (others => '0');
             start_next_burst_100Mhz <= '0';
             target_packets_100Mhz   <= to_unsigned(1,target_packets_100Mhz'length);
-            target_time_100Mhz      <= resize(unsigned(time_between_bursts_ns_100Mhz), target_time_100Mhz'length);
+            target_time_100Mhz      <= time_between_packets_100Mhz;
          elsif (run_timing_100Mhz = '1') then                
             -- calculate how many packets we should have sent by now
             ns_total_time_100Mhz    <= ns_total_time_100Mhz + to_unsigned(10,ns_total_time_100Mhz'length);
             if (ns_total_time_100Mhz >= target_time_100Mhz) then
-               target_time_100Mhz   <= target_time_100Mhz + resize(unsigned(time_between_bursts_ns_100Mhz), target_time_100Mhz'length);
+               target_time_100Mhz   <= target_time_100Mhz + time_between_packets_100Mhz;
                target_packets_100Mhz <= target_packets_100Mhz + 1;
             end if;
          end if;
@@ -2402,7 +2409,7 @@ end process;
         injectdbiterr => '0',     -- 1-bit input: Double Bit Error Injection
         injectsbiterr => '0',     -- 1-bit input: Single Bit Error Injection:
         rd_en => tx_FIFO_rd_en, -- 1-bit input: Read Enable: If the FIFO is not empty, asserting this signal causes data (on dout) to be read from the FIFO.
-        rst => FIFO_rst,        -- 1-bit input: Reset: Must be synchronous to wr_clk.
+        rst => tx_fifo_cache_reset,        -- 1-bit input: Reset: Must be synchronous to wr_clk.
         sleep => '0',             -- 1-bit input: Dynamic power saving- If sleep is High, the memory/fifo block is in power saving mode.
         wr_clk => i_shared_clk,   -- 1-bit input: Write clock: Used for write operation. wr_clk must be a free running clock.
         wr_en => tx_FIFO_wr_en      -- 1-bit input: Write Enable:
@@ -2582,48 +2589,48 @@ debug_gen : IF g_DEBUG_ILAs GENERATE
                                 x"C" when input_fsm = generate_aw4 else
                                 x"F";
 
-hbm_capture_ila : ila_0
-   port map (
-      clk                     => i_shared_clk, 
-      probe0(28 downto 0)     => m01_axi_wdata(28 downto 0),
-      probe0(29)              => last_aw_trans,
-      probe0(30)              => m02_wr,
-      probe0(31)              => m01_wr,
+--hbm_capture_ila : ila_0
+--   port map (
+--      clk                     => i_shared_clk, 
+--      probe0(28 downto 0)     => m01_axi_wdata(28 downto 0),
+--      probe0(29)              => last_aw_trans,
+--      probe0(30)              => m02_wr,
+--      probe0(31)              => m01_wr,
       
 
-      probe0(63 downto 32)    => axi_wdata(31 downto 0),
-      probe0(95 downto 64)    => m02_axi_awaddr,
-      probe0(96)              => m02_axi_wvalid, 
+--      probe0(63 downto 32)    => axi_wdata(31 downto 0),
+--      probe0(95 downto 64)    => m02_axi_awaddr,
+--      probe0(96)              => m02_axi_wvalid, 
       
-      probe0(97)              => m02_axi_awvalid,
-      probe0(98)              => m02_axi_awready,
-      probe0(99)              => m02_axi_wlast,
-      probe0(100)             => m02_axi_wready,
-      probe0(108 downto 101)  => m02_axi_awlen,
-      probe0(109)             => m02_fifo_rd_en,
-      probe0(125 downto 110)  => m02_axi_wdata(15 downto 0),
-      probe0(126)             => last_trans,
-      --probe0(126 downto 64)   => i_data_from_cmac(62 downto 0),
-      probe0(127)             => m01_axi_4G_full,
-      probe0(159 downto 128)  => m01_axi_awaddr,
-      probe0(160)             => m01_axi_wvalid, 
+--      probe0(97)              => m02_axi_awvalid,
+--      probe0(98)              => m02_axi_awready,
+--      probe0(99)              => m02_axi_wlast,
+--      probe0(100)             => m02_axi_wready,
+--      probe0(108 downto 101)  => m02_axi_awlen,
+--      probe0(109)             => m02_fifo_rd_en,
+--      probe0(125 downto 110)  => m02_axi_wdata(15 downto 0),
+--      probe0(126)             => last_trans,
+--      --probe0(126 downto 64)   => i_data_from_cmac(62 downto 0),
+--      probe0(127)             => m01_axi_4G_full,
+--      probe0(159 downto 128)  => m01_axi_awaddr,
+--      probe0(160)             => m01_axi_wvalid, 
       
-      probe0(161)             => m01_axi_awvalid,
-      probe0(162)             => m01_axi_awready,
-      probe0(163)             => m01_axi_wlast,
-      probe0(164)             => m01_axi_wready,
-      probe0(172 downto 165)  => m01_axi_awlen,
-      probe0(179 downto 173)  => std_logic_vector(fifo_rd_counter),
-      probe0(180)             => axi_wdata_fifo_full,
-      probe0(181)             => axi_wdata_fifo_empty,
-      probe0(182)             => m01_fifo_rd_en,
-      probe0(183)             => awfifo_wren,
-      probe0(184)             => awfifo_rden,
-      probe0(185)             => awlenfifo_rden,
-      probe0(186)             => fifo_rd_en,
-      probe0(187)             => fifo_wr_en,
-      probe0(191 downto 188)  => input_fsm_state_count
-   );
+--      probe0(161)             => m01_axi_awvalid,
+--      probe0(162)             => m01_axi_awready,
+--      probe0(163)             => m01_axi_wlast,
+--      probe0(164)             => m01_axi_wready,
+--      probe0(172 downto 165)  => m01_axi_awlen,
+--      probe0(179 downto 173)  => std_logic_vector(fifo_rd_counter),
+--      probe0(180)             => axi_wdata_fifo_full,
+--      probe0(181)             => axi_wdata_fifo_empty,
+--      probe0(182)             => m01_fifo_rd_en,
+--      probe0(183)             => awfifo_wren,
+--      probe0(184)             => awfifo_rden,
+--      probe0(185)             => awlenfifo_rden,
+--      probe0(186)             => fifo_rd_en,
+--      probe0(187)             => fifo_wr_en,
+--      probe0(191 downto 188)  => input_fsm_state_count
+--   );
 
 hbm_playout_ila : ila_0
    port map (
@@ -2673,7 +2680,40 @@ hbm_rd_ila : ila_0
       probe0(191 downto 186)  => ( others => '0' )
       
    );
-    
+
+   cnic_tx_ila : ila_0
+   port map (
+      clk                    => i_shared_clk,
+      probe0(3 downto 0)     => rd_fsm_debug,
+      --probe0(35 downto 4)    => std_logic_vector(total_beat_count(31 downto 0)),
+      --probe0(67 downto 36)   => std_logic_vector(beat_count(31 downto 0)),
+
+      probe0(35 downto 4)    => std_logic_vector(ns_total_time_100Mhz(31 downto 0)),
+      probe0(67 downto 36)   => std_logic_vector(target_time_100Mhz(31 downto 0)),
+
+      probe0(68)             => preload,
+      probe0(69)             => FIFO_empty,
+      probe0(70)             => FIFO_rst,
+      probe0(72 downto 71)   => (others => '0'),
+      probe0(76 downto 73)   => output_fsm_debug,
+
+      probe0(89 downto 77)   => FIFO_WrDataCount,
+      probe0(90)             => '0',
+      probe0(91)             => FIFO_prog_full,
+      probe0(92)             => FIFO_full,
+      probe0(93)             => FIFO_wr_en,
+      probe0(109 downto 94)  => FIFO_din(15 downto 0), 
+      probe0(122 downto 110) => FIFO_RdDataCount,
+      probe0(123)            => '0',
+      probe0(124)            => FIFO_rd_en,
+      probe0(144 downto 125) => std_logic_vector(target_packets(19 downto 0)), 
+      probe0(164 downto 145) => std_logic_vector(total_pkts_to_mac(19 downto 0)), 
+      probe0(184 downto 165) => std_logic_vector(burst_count(19 downto 0)),
+      probe0(190 downto 185) => std_logic_vector(fpga_pkt_count_in_this_burst(5 downto 0)), 
+
+      probe0(191) => start_next_burst
+   );
+  
 END GENERATE;
 
     
