@@ -62,7 +62,7 @@ ENTITY cnic_core IS
         g_FIRMWARE_MINOR_VERSION        : std_logic_vector(15 downto 0) := x"0000";
         g_FIRMWARE_PATCH_VERSION        : std_logic_vector(15 downto 0) := x"0000";
         g_FIRMWARE_LABEL                : std_logic_vector(31 downto 0) := x"00000000";
-        g_FIRMWARE_PERSONALITY          : std_logic_vector(31 downto 0) := x"00000000";
+        g_FIRMWARE_PERSONALITY          : std_logic_vector(31 downto 0) := x"434E4943";
         g_FIRMWARE_BUILD_DATE           : std_logic_vector(31 downto 0) := x"01011970";
         -- GENERICS for SHELL INTERACTION
         C_S_AXI_CONTROL_ADDR_WIDTH : integer := 7;
