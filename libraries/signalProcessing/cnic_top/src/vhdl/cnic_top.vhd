@@ -395,6 +395,7 @@ i_HBM_PktController : entity HBM_PktController_lib.HBM_PktController
         -- tx
         i_tx_packet_size                    => config_rw.tx_packet_size(13 downto 0),
         i_start_tx                          => config_rw.tx_enable,
+        i_reset_tx                          => config_rw.tx_reset,
       
         i_loop_tx                           => config_rw.tx_loop_enable,
         i_expected_number_of_loops          => config_rw.tx_loops,

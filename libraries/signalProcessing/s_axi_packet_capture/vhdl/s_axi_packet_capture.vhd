@@ -52,7 +52,7 @@ use UNISIM.VComponents.all;
 
 entity s_axi_packet_capture is
     Generic (
-        g_DEBUG_ILA             : IN BOOLEAN := TRUE
+        g_DEBUG_ILA             : IN BOOLEAN := FALSE
     );
     Port ( 
         --------------------------------------------------------

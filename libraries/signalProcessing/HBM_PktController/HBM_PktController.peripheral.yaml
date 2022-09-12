@@ -22,6 +22,12 @@ peripherals:
               reset_value       : 0x0
               field_description : "Start or stop the HBM_PktController."
 
+          - - field_name        : tx_reset 
+              width             : 1
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "Reset the tx SMs and logic in the HBM controller. Other variables for TX should be update while this is held high."
+
           - - field_name        : tx_running #running
               width             : 1
               access_mode       : RO

@@ -25,7 +25,8 @@ Vivado/Vitis 2021.2
 
 Target Devices - ALVEO U50LV, ALVEO U55C
 
-1 x 100 GbE port is supported. In the case of 2 it is the furthest from the PCIe connector.
+1 x 100 GbE port is supported for capture and playout. In the case of the U55C it is the furthest from the PCIe connector.
+
 
 ## Getting started on a developer machine
 Clone this repository onto your machine.
@@ -41,10 +42,26 @@ RunMe.sh will create project.
 Note CI configuration imported from
 
 
-Version number is taken from the `version` file in the project root directory.
+Version number is taken from the `release` file in the project root directory.
 This file must contain three numbers separated by dots, e.g. `1.2.3`.
 See also [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+Command sequence to update for a patch version example:
+* make bump-patch-release
+* make git-create-tag
+* make git-push-tag
 
-# Changelog
+Reference this;
+https://developer.skao.int/en/latest/tools/software-package-release-procedure.html#release-management
 
+## Changelog
+* 0.1.2 - 
+    * CNIC TX will now pre-fill the TX FIFO after reset has been released and be ready within 1us for transmit.
+    * CNIC TX timer has been updated to remove burst behaviour during initial packet play out.
+    * Personality register configured to ASCII value of CNIC.
+    * U55C 
+        * Second 100GbE port enabled with timeslave to allow timing of packets through network switches.
+        * PTP for time stamping or scheduling can be sourced from either 100GbE port.
+
+* 0.1.1 - 
+    * Initial release
