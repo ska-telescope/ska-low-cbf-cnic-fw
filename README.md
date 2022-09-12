@@ -47,9 +47,9 @@ This file must contain three numbers separated by dots, e.g. `1.2.3`.
 See also [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Command sequence to update for a patch version example:
-make bump-patch-release
-make git-create-tag
-make git-push-tag
+* make bump-patch-release
+* make git-create-tag
+* make git-push-tag
 
 Reference this;
 https://developer.skao.int/en/latest/tools/software-package-release-procedure.html#release-management
@@ -62,6 +62,6 @@ https://developer.skao.int/en/latest/tools/software-package-release-procedure.ht
     * U55C 
         * Second 100GbE port enabled with timeslave to allow timing of packets through network switches.
         * PTP for time stamping or scheduling can be sourced from either 100GbE port.
-        
+
 * 0.1.1 - 
     * Initial release
