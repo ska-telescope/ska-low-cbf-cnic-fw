@@ -54,10 +54,14 @@ make git-push-tag
 Reference this;
 https://developer.skao.int/en/latest/tools/software-package-release-procedure.html#release-management
 
-# Changelog
-0.1.2 - CNIC TX will now pre-fill the TX FIFO after reset has been released and be ready within 1us for transmit.
-        CNIC TX timer has been updated to remove burst behaviour during initial packet play out.
-        Personality register configured to ASCII value of CNIC.
-        U55C - Second 100GbE port enabled with timeslave to allow timing of packets through network switches.
-             - PTP for time stamping or scheduling can be sourced from either 100GbE port.
-0.1.1 - Initial release
+## Changelog
+* 0.1.2 - 
+    * CNIC TX will now pre-fill the TX FIFO after reset has been released and be ready within 1us for transmit.
+    * CNIC TX timer has been updated to remove burst behaviour during initial packet play out.
+    * Personality register configured to ASCII value of CNIC.
+    * U55C 
+        * Second 100GbE port enabled with timeslave to allow timing of packets through network switches.
+        * PTP for time stamping or scheduling can be sourced from either 100GbE port.
+        
+* 0.1.1 - 
+    * Initial release
