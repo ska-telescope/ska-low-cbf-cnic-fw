@@ -2135,8 +2135,8 @@ end process;
             if (FIFO_full = '1') then
                o_axi_rvalid_but_fifo_full <= '1'; 
             else
-               FIFO_din <= i_axi_rdata;
-               tx_FIFO_wr_en <= '1';
+               FIFO_din         <= i_axi_rdata;
+               tx_FIFO_wr_en    <= '1';
             end if;
          end if;
 
@@ -2219,7 +2219,7 @@ end process;
 
                if (start_stop_tx = '1') then
                   output_fsm <= output_next_burst;
-                  start_next_loop <= '1';
+                  --start_next_loop <= '1';
                end if;
 
             when output_next_burst =>  
@@ -2316,6 +2316,7 @@ end process;
                            output_fsm <= output_idle;
                            looping <= '1';
                            loop_cnt <= loop_cnt + 1;
+                           start_next_loop <= '1';
                      end if;
                   end if;
                end if;
@@ -2346,7 +2347,7 @@ end process;
          start_next_burst_100Mhz       <= '0';
          time_between_packets_100Mhz   <= resize(unsigned(time_between_bursts_ns_100Mhz), target_time_100Mhz'length);
          
-         if (reset_state_100Mhz = '0') then
+         if (reset_state_100Mhz = '1') then
             ns_burst_timer_100Mhz   <= (others => '0');
             ns_total_time_100Mhz    <= (others => '0');
             start_next_burst_100Mhz <= '0';
@@ -2459,7 +2460,7 @@ end process;
         dest_clk        => clk_freerun,   
         dest_out        => reset_state_100Mhz, 
         src_clk         => i_shared_clk,    
-        src_in          => running     
+        src_in          => tx_reset_state     
     );
 
     xpm_cdc_inst11 : xpm_cdc_single
@@ -2702,7 +2703,7 @@ hbm_rd_ila : ila_0
       probe0(91)             => FIFO_prog_full,
       probe0(92)             => FIFO_full,
       probe0(93)             => FIFO_wr_en,
-      probe0(109 downto 94)  => FIFO_din(15 downto 0), 
+      probe0(109 downto 94)  => i_expected_total_number_of_bursts(15 downto 0), 
       probe0(122 downto 110) => FIFO_RdDataCount,
       probe0(123)            => '0',
       probe0(124)            => FIFO_rd_en,
