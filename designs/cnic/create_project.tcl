@@ -321,11 +321,13 @@ add_files -fileset sources_1 [glob \
  $RLIBRARIES_PATH/signalProcessing/common/src/vhdl/sync.vhd \
  $RLIBRARIES_PATH/signalProcessing/common/src/vhdl/sync_vector.vhd \
  $RLIBRARIES_PATH/signalProcessing/common/src/vhdl/memory_dp_wrapper.vhd \
+ $RLIBRARIES_PATH/signalProcessing/common/src/vhdl/args_axi_terminus.vhd \
 ]
 set_property library signal_processing_common [get_files {\
  *libraries/signalProcessing/common/src/vhdl/sync.vhd \
  *libraries/signalProcessing/common/src/vhdl/sync_vector.vhd \
  *libraries/signalProcessing/common/src/vhdl/memory_dp_wrapper.vhd \
+ *libraries/signalProcessing/common/src/vhdl/args_axi_terminus.vhd \
 }]
 
 ## tcl scripts for ip generation
