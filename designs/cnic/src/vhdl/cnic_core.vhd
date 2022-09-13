@@ -1004,8 +1004,8 @@ zero_args_no_synth : IF (g_ALVEO_U50) GENERATE
     system_fields_ro.eth100g_b_ptp_nano_seconds     <= zero_dword;
     system_fields_ro.eth100g_b_ptp_lower_seconds    <= zero_dword;
     system_fields_ro.eth100g_b_ptp_upper_seconds    <= zero_dword;
--- attached 2nd timeslave to dummy component to stop card crashes
-
+    
+-- For u50, attach 2nd timeslave to dummy component to stop card crashes
     no_timeslave_b : entity signal_processing_common.args_axi_terminus
     port map ( 
         -- ARGS interface
@@ -1013,8 +1013,8 @@ zero_args_no_synth : IF (g_ALVEO_U50) GENERATE
         i_MACE_clk                          => ap_clk,
         i_MACE_rst                          => ap_rst,
                 
-        i_args_axi_terminus_full_axi_mosi   => mc_full_mosi(c_timeslave_full_index),
-        o_args_axi_terminus_full_axi_miso   => mc_full_miso(c_timeslave_full_index)
+        i_args_axi_terminus_full_axi_mosi   => mc_full_mosi(c_timeslave_b_full_index),
+        o_args_axi_terminus_full_axi_miso   => mc_full_miso(c_timeslave_b_full_index)
 
     );
 
