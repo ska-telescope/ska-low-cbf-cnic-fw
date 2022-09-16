@@ -72,6 +72,9 @@ entity s_axi_packet_capture is
         o_LFAA_spead_count      : out std_logic_vector(31 downto 0);
         o_PSR_PST_count         : out std_logic_vector(31 downto 0);
         o_CODIF_2154_count      : out std_logic_vector(31 downto 0);
+        o_rx_complete           : out std_logic;
+        
+        i_rx_packets_to_capture : in std_logic_vector(31 downto 0);
 
         -- 100G RX S_AXI interface ~322 MHz
         i_rx_axis_tdata         : in std_logic_vector ( 511 downto 0 );
@@ -152,7 +155,7 @@ signal no_remainder,whole_interval  : std_logic;
 signal cmac_rx_reset_capture        : std_logic;
 signal cmac_rx_packet_size          : std_logic_vector(13 downto 0);
 
-type hbm_streaming_statemachine is (IDLE, PREP, DATA, FINISH, STAMP);
+type hbm_streaming_statemachine is (IDLE, PREP, DATA, FINISH, STAMP, COMPLETE);
 signal hbm_streaming_sm : hbm_streaming_statemachine;
 
 type packet_check_statemachine is (IDLE, PREP, DATA, FINISH);
@@ -172,6 +175,7 @@ signal timestamp                    : std_logic_vector(79 downto 0);
 
 signal timestamp_data_fifo_wr       : std_logic;
 signal timestamp_data_fifo_rd       : std_logic;
+signal timestamp_data_fifo_empty    : std_logic;
 signal timestamp_data_fifo_data     : std_logic_vector(79 downto 0);
 signal timestamp_data_fifo_q        : std_logic_vector(79 downto 0);
 
@@ -201,6 +205,10 @@ signal CODIF_2154_length_detect                         : std_logic;
 signal PST_PSR_length_detect                            : std_logic;
 signal SPEAD_LFAA_length_detect                         : std_logic;
 
+signal target_count_int                                 : std_logic_vector(31 downto 0);
+
+signal rx_complete_int                                  : std_logic;
+
 constant STAT_REGISTERS                                 : integer := 5;
 
 signal stats_count                                      : t_slv_32_arr(0 to (STAT_REGISTERS-1));
@@ -217,7 +225,7 @@ begin
 o_rx_axis_tready        <= rx_axis_tready_int;
 o_data_to_hbm           <= data_to_hbm;
 o_data_to_hbm_wr        <= data_to_hbm_wr;
-
+o_rx_complete           <= rx_complete_int;
 
 -- register AXI bus
 s_axi_proc : process(i_clk_100GE)
@@ -393,7 +401,7 @@ time_stamp_fifo : entity PSR_Packetiser_lib.xpm_fifo_wrapper
     )
     Port Map ( 
         -- WR clk reset
-        fifo_reset      => cmac_reset,
+        fifo_reset      => cmac_reset_combined,
 
         -- WR        
         fifo_wr_clk     => i_clk_100GE,
@@ -407,7 +415,7 @@ time_stamp_fifo : entity PSR_Packetiser_lib.xpm_fifo_wrapper
         fifo_rd         => timestamp_data_fifo_rd,
         fifo_q          => timestamp_data_fifo_q,
         fifo_q_valid    => open,
-        fifo_empty      => open,
+        fifo_empty      => timestamp_data_fifo_empty,
         fifo_rd_count   => open
     );
 
@@ -462,7 +470,7 @@ config_proc : process(i_clk_300)
 begin
     if rising_edge(i_clk_300) then
         -- ARGS axi Reset
-        if i_clk_300_rst = '1' then
+        if (i_clk_300_rst = '1') OR (i_rx_reset_capture = '1' ) then
             rd_addr                 <= x"00";
             hbm_streaming_sm        <= IDLE;
             data_to_hbm_wr_int      <= '0';
@@ -481,6 +489,7 @@ begin
                     rd_addr                 <= x"00";
                     data_to_hbm_wr_int      <= '0';
                     timestamp_data_fifo_rd  <= '0';
+                    rx_complete_int         <= '0';
                     
                     if rd_page_cache /= rd_page(0) then
                         hbm_streaming_sm    <= PREP;
@@ -509,9 +518,20 @@ begin
                     end if;
                     
                 when STAMP => 
-                    hbm_streaming_sm        <= IDLE;
+                    if (i_rx_packets_to_capture = target_count_int) then
+                        hbm_streaming_sm    <= COMPLETE;
+                    else
+                        hbm_streaming_sm    <= IDLE;
+                    end if;
+
                     timestamp_data_fifo_rd  <= '1';
-                
+                    
+
+                when COMPLETE =>
+                    rx_complete_int         <= '1';
+                    data_to_hbm_wr_int      <= '0';        
+                    timestamp_data_fifo_rd  <= '0';
+                    hold                    <= '0';
                 
                 when OTHERS =>
                     hbm_streaming_sm        <= IDLE;
@@ -519,7 +539,7 @@ begin
             end case;
         end if;
         
-        if (hbm_streaming_sm = IDLE) then
+        if (hbm_streaming_sm = IDLE) OR (hbm_streaming_sm = COMPLETE) then
             data_to_hbm <= timestamp_out;
         else
             data_to_hbm <= rx_buffer_ram_dout;
@@ -675,7 +695,9 @@ sync_stats_to_Host: FOR i IN 0 TO (STAT_REGISTERS-1) GENERATE
 
 END GENERATE;
 
-o_target_count          <= stats_to_host_data_out(0);
+target_count_int        <= stats_to_host_data_out(0);
+o_target_count          <= target_count_int;
+
 o_nontarget_count       <= stats_to_host_data_out(1);
 o_CODIF_2154_count      <= stats_to_host_data_out(2);
 o_PSR_PST_count         <= stats_to_host_data_out(3);
@@ -717,12 +739,19 @@ end process;
     hbm_out_ila : ila_0
     port map (
         clk                     => i_clk_300, 
-        probe0(127 downto 0)    => data_to_hbm(127 downto 0),
+        probe0(79 downto 0)     => timestamp_data_fifo_q,
+        probe0(127 downto 80)   => data_to_hbm(47 downto 0),
         probe0(136 downto 128)  => rx_buffer_ram_addr_out,
         probe0(137)             => data_to_hbm_wr_int, 
         probe0(145 downto 138)  => words_to_send_to_hbm,
-
-        probe0(191 downto 146)  => (others => '0')
+        --probe0(147 downto 146)  => (others => '0'),
+        probe0(146)             => timestamp_data_fifo_empty,
+        probe0(147)             => timestamp_data_fifo_rd,
+        probe0(148)             => rx_complete_int,
+        probe0(149)             => hold,
+        probe0(165 downto 150)  => target_count_int(15 downto 0),
+        probe0(181 downto 166)  => i_rx_packets_to_capture(15 downto 0),
+        probe0(191 downto 182)  => (others => '0')
     );
 
 end generate;

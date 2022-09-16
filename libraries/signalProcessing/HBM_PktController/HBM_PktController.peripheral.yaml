@@ -233,12 +233,24 @@ peripherals:
               access_mode       : RO
               reset_value       : 0x0
               field_description : "input_fsm_debug, the current state of the RX StateMachine between data from CMAC and HBM"
- 
+         #################################
           - - field_name        : debug_FIFO_DataCount
               width             : 32
               access_mode       : RO
               reset_value       : 0x0
               field_description : "Read and Write counts from the FIFO cache in HBM controller holding the data from HBM before sending to CMAC"      
+         #################################
+          - - field_name        : debug_capture_filter_target
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Number of target packets to make it past filter and to the HBM"      
+         #################################
+          - - field_name        : debug_capture_filter_non_target
+              width             : 32
+              access_mode       : RO
+              reset_value       : 0x0
+              field_description : "Number of target packets to not make it past filter and to the HBM"      
 
           - - field_name        : ns_total_time
               width             : 32

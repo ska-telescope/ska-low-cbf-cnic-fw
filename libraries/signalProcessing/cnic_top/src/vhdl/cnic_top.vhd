@@ -306,8 +306,12 @@ begin
         i_rx_packet_size        => config_rw.rx_packet_size(13 downto 0),
         i_rx_reset_capture      => config_rw.rx_reset_capture,
         i_reset_counter         => config_rw.rx_reset_counter,
-        o_target_count          => open,
-        o_nontarget_count       => open,
+        o_target_count          => config_ro.debug_capture_filter_target,
+        o_nontarget_count       => config_ro.debug_capture_filter_non_target,
+
+        o_rx_complete           => config_ro.rx_complete,
+
+        i_rx_packets_to_capture => config_rw.rx_packets_to_capture,
 
         -- 100G RX S_AXI interface ~322 MHz
         i_rx_axis_tdata         => i_rx_axis_tdata,
@@ -389,7 +393,7 @@ i_HBM_PktController : entity HBM_PktController_lib.HBM_PktController
         o_3rd_4GB_rx_addr                   => config_ro.rx_hbm_3_end_addr,
         o_4th_4GB_rx_addr                   => config_ro.rx_hbm_4_end_addr,
 
-        o_capture_done                      => config_ro.rx_complete,
+        o_capture_done                      => open,--config_ro.rx_complete,
         o_num_packets_received              => config_ro.rx_packet_count_lo,
 
         -- tx
