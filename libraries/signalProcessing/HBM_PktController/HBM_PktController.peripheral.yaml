@@ -215,21 +215,21 @@ peripherals:
               access_mode       : RO
               reset_value       : 0x0
               field_description : "current count in a burst" 
-              
+         #################################
           - - field_name        : debug_rd_fsm_debug
-              width             : 32
+              width             : 8
               access_mode       : RO
               reset_value       : 0x0
               field_description : "rd_fsm_debug, the current state of the RD request to HBM StateMachine"
-
+         #################################
           - - field_name        : debug_output_fsm_debug
-              width             : 32
+              width             : 8
               access_mode       : RO
               reset_value       : 0x0
               field_description : "output_fsm_debug, the current state of the Send packet to 100G StateMachine"
-
+         #################################
           - - field_name        : debug_input_fsm_debug
-              width             : 32
+              width             : 8
               access_mode       : RO
               reset_value       : 0x0
               field_description : "input_fsm_debug, the current state of the RX StateMachine between data from CMAC and HBM"
@@ -336,3 +336,9 @@ peripherals:
               access_mode       : RO
               reset_value       : 0x0
               field_description : "Total number of captured packets lower 32 bits of 64"  
+         #################################
+          - - field_name        : rx_bank_enable #
+              width             : 8
+              access_mode       : RW
+              reset_value       : 0x0
+              field_description : "Set 1 to disable the bank, Bit 0 will enable capture for the first buffer, 1 for the second, etc. For full 16GB set to 0x0, for 8GB starting in 3rd buffer set to 0x3, defaulting to all banks enable."

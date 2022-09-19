@@ -101,15 +101,16 @@ entity HBM_PktController is
       ------------------------------------------------------------------------------------
       -- config and status registers interface
       -- rx
-      i_rx_packet_size                : in  std_logic_vector(13 downto 0);   -- MODULO 64!!
-      i_rx_soft_reset                 : in  std_logic;
-      i_enable_capture                : in  std_logic;
+      i_rx_packet_size                : in std_logic_vector(13 downto 0);   -- MODULO 64!!
+      i_rx_soft_reset                 : in std_logic;
+      i_enable_capture                : in std_logic;
 
-      i_lfaa_bank1_addr               : in  std_logic_vector(31 downto 0);
-      i_lfaa_bank2_addr               : in  std_logic_vector(31 downto 0);
-      i_lfaa_bank3_addr               : in  std_logic_vector(31 downto 0);
-      i_lfaa_bank4_addr               : in  std_logic_vector(31 downto 0);
-      update_start_addr               : in  std_logic; --pulse signal to update each 4GB bank start address
+      i_lfaa_bank1_addr               : in std_logic_vector(31 downto 0);
+      i_lfaa_bank2_addr               : in std_logic_vector(31 downto 0);
+      i_lfaa_bank3_addr               : in std_logic_vector(31 downto 0);
+      i_lfaa_bank4_addr               : in std_logic_vector(31 downto 0);
+      update_start_addr               : in std_logic; --pulse signal to update each 4GB bank start address
+      i_rx_bank_enable                : in std_logic_vector(3 downto 0);
 
       o_1st_4GB_rx_addr               : out std_logic_vector(31 downto 0);
       o_2nd_4GB_rx_addr               : out std_logic_vector(31 downto 0);
@@ -147,6 +148,7 @@ entity HBM_PktController is
       -- debug ports
       o_rd_fsm_debug                      : out std_logic_vector(3 downto 0);
       o_output_fsm_debug                  : out std_logic_vector(3 downto 0);
+      o_input_fsm_debug                   : out std_logic_vector(3 downto 0);
          
 ------------------------------------------------------------------------------------
       -- Data output, to the packetizer
@@ -499,7 +501,7 @@ begin
     
     o_rd_fsm_debug              <= rd_fsm_debug;
     o_output_fsm_debug          <= output_fsm_debug;
-    
+    o_input_fsm_debug           <= input_fsm_state_count;
     ---------------------------------------------------------------------------------------------------
     --HBM AXI write transaction part, it is assumed that the recevied packet is always multiple of 64B,
     --i.e no residual AXI trans where less then 64B trans is needed, all the bits of imcoming data is 
@@ -628,13 +630,17 @@ begin
                   awfifo_wren <= '0';
                   --if one 4GB bank is full, then move to next bank
                   --for m04 4GB bank, if when a whole packet is tried to be filled in, it will across the 16GB, then abort this packet
-                  if i_valid_rising = '1'    and enable_capture_int = '1' and m03_axi_4G_full = '1' and m04_axi_4G_full = '0' and m04_4095MB_packet_across = '0' then     
+                                                                           -- Upper bank will always be on.
+                                                                           -- if Bank 3 is full or set to bypass.
+                  if i_valid_rising = '1'    and enable_capture_int = '1' and ((m03_axi_4G_full = '1') OR (i_rx_bank_enable(2) = '1')) and m04_axi_4G_full = '0' and m04_4095MB_packet_across = '0' then     
                      first_awfifo_wren <= '1';     
                      input_fsm     <= generate_aw4_shadow_addr;	     
-                  elsif i_valid_rising = '1' and enable_capture_int = '1' and m02_axi_4G_full = '1' and m04_axi_4G_full = '0' then
+                                                                           -- if Bank 2 is full or set to bypass.
+                  elsif i_valid_rising = '1' and enable_capture_int = '1' and ((m02_axi_4G_full = '1') OR (i_rx_bank_enable(1) = '1')) and m04_axi_4G_full = '0' then
                      first_awfifo_wren <= '1';     
                      input_fsm     <= generate_aw3_shadow_addr;
-                  elsif i_valid_rising = '1' and enable_capture_int = '1' and m01_axi_4G_full = '1' and m04_axi_4G_full = '0' then
+                                                                           -- if Bank 1 is full or set to bypass.
+                  elsif i_valid_rising = '1' and enable_capture_int = '1' and ((m01_axi_4G_full = '1') OR (i_rx_bank_enable(0) = '1')) and m04_axi_4G_full = '0' then
                      first_awfifo_wren <= '1';     
                      input_fsm     <= generate_aw2_shadow_addr;
                   elsif i_valid_rising = '1' and enable_capture_int = '1' and m04_axi_4G_full = '0' then
@@ -2540,6 +2546,21 @@ end process;
 ----------------------------------------------------------------------------------------------------------
 -- debug
 
+input_fsm_state_count <=    x"0" when input_fsm = idle else 
+                            x"1" when input_fsm = generate_aw1_shadow_addr else
+                            x"2" when input_fsm = check_aw1_addr_range else
+                            x"3" when input_fsm = generate_aw1 else
+                            x"4" when input_fsm = generate_aw2_shadow_addr else
+                            x"5" when input_fsm = check_aw2_addr_range else
+                            x"6" when input_fsm = generate_aw2 else
+                            x"7" when input_fsm = generate_aw3_shadow_addr else
+                            x"8" when input_fsm = check_aw3_addr_range else
+                            x"9" when input_fsm = generate_aw3 else
+                            x"A" when input_fsm = generate_aw4_shadow_addr else
+                            x"B" when input_fsm = check_aw4_addr_range else
+                            x"C" when input_fsm = generate_aw4 else
+                            x"F";
+
 debug_gen : IF g_DEBUG_ILAs GENERATE
 
     --------------------------------------------------------------------------------------------
@@ -2588,63 +2609,49 @@ debug_gen : IF g_DEBUG_ILAs GENERATE
       end if;
     end process;
     
-    input_fsm_state_count <=    x"0" when input_fsm = idle else 
-                                x"1" when input_fsm = generate_aw1_shadow_addr else
-                                x"2" when input_fsm = check_aw1_addr_range else
-                                x"3" when input_fsm = generate_aw1 else
-                                x"4" when input_fsm = generate_aw2_shadow_addr else
-                                x"5" when input_fsm = check_aw2_addr_range else
-                                x"6" when input_fsm = generate_aw2 else
-                                x"7" when input_fsm = generate_aw3_shadow_addr else
-                                x"8" when input_fsm = check_aw3_addr_range else
-                                x"9" when input_fsm = generate_aw3 else
-                                x"A" when input_fsm = generate_aw4_shadow_addr else
-                                x"B" when input_fsm = check_aw4_addr_range else
-                                x"C" when input_fsm = generate_aw4 else
-                                x"F";
 
---hbm_capture_ila : ila_0
---   port map (
---      clk                     => i_shared_clk, 
---      probe0(28 downto 0)     => m01_axi_wdata(28 downto 0),
---      probe0(29)              => last_aw_trans,
---      probe0(30)              => m02_wr,
---      probe0(31)              => m01_wr,
+hbm_capture_ila : ila_0
+  port map (
+     clk                     => i_shared_clk, 
+     probe0(28 downto 0)     => m01_axi_wdata(28 downto 0),
+     probe0(29)              => last_aw_trans,
+     probe0(30)              => m02_wr,
+     probe0(31)              => m01_wr,
       
 
---      probe0(63 downto 32)    => axi_wdata(31 downto 0),
---      probe0(95 downto 64)    => m02_axi_awaddr,
---      probe0(96)              => m02_axi_wvalid, 
+     probe0(63 downto 32)    => axi_wdata(31 downto 0),
+     probe0(95 downto 64)    => m02_axi_awaddr,
+     probe0(96)              => m02_axi_wvalid, 
       
---      probe0(97)              => m02_axi_awvalid,
---      probe0(98)              => m02_axi_awready,
---      probe0(99)              => m02_axi_wlast,
---      probe0(100)             => m02_axi_wready,
---      probe0(108 downto 101)  => m02_axi_awlen,
---      probe0(109)             => m02_fifo_rd_en,
---      probe0(125 downto 110)  => m02_axi_wdata(15 downto 0),
---      probe0(126)             => last_trans,
---      --probe0(126 downto 64)   => i_data_from_cmac(62 downto 0),
---      probe0(127)             => m01_axi_4G_full,
---      probe0(159 downto 128)  => m01_axi_awaddr,
---      probe0(160)             => m01_axi_wvalid, 
+     probe0(97)              => m02_axi_awvalid,
+     probe0(98)              => m02_axi_awready,
+     probe0(99)              => m02_axi_wlast,
+     probe0(100)             => m02_axi_wready,
+     probe0(108 downto 101)  => m02_axi_awlen,
+     probe0(109)             => m02_fifo_rd_en,
+     probe0(125 downto 110)  => m02_axi_wdata(15 downto 0),
+     probe0(126)             => last_trans,
+     --probe0(126 downto 64)   => i_data_from_cmac(62 downto 0),
+     probe0(127)             => m02_axi_4G_full,
+     probe0(159 downto 128)  => m03_axi_awaddr,
+     probe0(160)             => m03_axi_wvalid, 
       
---      probe0(161)             => m01_axi_awvalid,
---      probe0(162)             => m01_axi_awready,
---      probe0(163)             => m01_axi_wlast,
---      probe0(164)             => m01_axi_wready,
---      probe0(172 downto 165)  => m01_axi_awlen,
---      probe0(179 downto 173)  => std_logic_vector(fifo_rd_counter),
---      probe0(180)             => axi_wdata_fifo_full,
---      probe0(181)             => axi_wdata_fifo_empty,
---      probe0(182)             => m01_fifo_rd_en,
---      probe0(183)             => awfifo_wren,
---      probe0(184)             => awfifo_rden,
---      probe0(185)             => awlenfifo_rden,
---      probe0(186)             => fifo_rd_en,
---      probe0(187)             => fifo_wr_en,
---      probe0(191 downto 188)  => input_fsm_state_count
---   );
+     probe0(161)             => m03_axi_awvalid,
+     probe0(162)             => m03_axi_awready,
+     probe0(163)             => m03_axi_wlast,
+     probe0(164)             => m03_axi_wready,
+     probe0(172 downto 165)  => m03_axi_awlen,
+     probe0(179 downto 173)  => std_logic_vector(fifo_rd_counter),
+     probe0(180)             => axi_wdata_fifo_full,
+     probe0(181)             => axi_wdata_fifo_empty,
+     probe0(182)             => m03_fifo_rd_en,
+     probe0(183)             => awfifo_wren,
+     probe0(184)             => awfifo_rden,
+     probe0(185)             => awlenfifo_rden,
+     probe0(186)             => fifo_rd_en,
+     probe0(187)             => fifo_wr_en,
+     probe0(191 downto 188)  => input_fsm_state_count
+  );
 
 hbm_playout_ila : ila_0
    port map (
