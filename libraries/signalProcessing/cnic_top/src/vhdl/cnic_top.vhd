@@ -289,9 +289,16 @@ ARCHITECTURE structure OF cnic_top IS
     signal packet_size_calc         : std_logic_vector(13 downto 0);
     signal packet_size_calc_b       : std_logic_vector(13 downto 0);
     signal packet_size_ceil         : std_logic_vector(5 downto 0) := "000000";
+
+    signal rx_complete_s_axi        : std_logic;
+    signal rx_complete_hbm          : std_logic;
     
 begin
-    
+-------------------------------------------------------------------------------------------------------------    
+
+config_ro.rx_complete   <= rx_complete_hbm OR rx_complete_s_axi;
+
+-------------------------------------------------------------------------------------------------------------        
     rx_s_axi : entity cmac_s_axi_lib.s_axi_packet_capture 
     Port map ( 
         --------------------------------------------------------
@@ -309,7 +316,7 @@ begin
         o_target_count          => config_ro.debug_capture_filter_target,
         o_nontarget_count       => config_ro.debug_capture_filter_non_target,
 
-        o_rx_complete           => config_ro.rx_complete,
+        o_rx_complete           => rx_complete_s_axi,
 
         i_rx_packets_to_capture => config_rw.rx_packets_to_capture,
 
@@ -394,7 +401,7 @@ i_HBM_PktController : entity HBM_PktController_lib.HBM_PktController
         o_3rd_4GB_rx_addr                   => config_ro.rx_hbm_3_end_addr,
         o_4th_4GB_rx_addr                   => config_ro.rx_hbm_4_end_addr,
 
-        o_capture_done                      => open,--config_ro.rx_complete,
+        o_capture_done                      => rx_complete_hbm,
         o_num_packets_received              => config_ro.rx_packet_count_lo,
 
         -- tx
