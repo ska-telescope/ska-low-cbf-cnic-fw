@@ -360,123 +360,125 @@ architecture RTL of HBM_PktController is
     signal enable_capture_int                             : std_logic := '0';
 
     ---------------------------
-    --packet TX related signals
-    ---------------------------
+   --packet TX related signals
+   ---------------------------
 
-    -- NEEDS TO BE AT LEAST 4K deep to handle the HBM requests when there is slow playout on the 100G.
-    constant SYNC_FIFO_DEPTH : integer := 4096;
+   -- NEEDS TO BE AT LEAST 4K deep to handle the HBM requests when there is slow playout on the 100G.
+   constant SYNC_FIFO_DEPTH : integer := 4096;
 
-    signal o_axi_arvalid :  std_logic;
-    signal i_axi_arready :  std_logic;
-    signal o_axi_araddr  :  std_logic_vector(31 downto 0);
-    signal o_axi_arlen   :  std_logic_vector(7 downto 0);
+   signal o_axi_arvalid :  std_logic;
+   signal i_axi_arready :  std_logic;
+   signal o_axi_araddr  :  std_logic_vector(31 downto 0);
+   signal o_axi_arlen   :  std_logic_vector(7 downto 0);
 
-    signal i_axi_rvalid  :  std_logic;
-    signal o_axi_rready  :  std_logic;
-    signal i_axi_rdata   :  std_logic_vector(511 downto 0);
-    signal i_axi_rlast   :  std_logic;
-    signal i_axi_rresp   :  std_logic_vector(1 downto 0);
+   signal i_axi_rvalid  :  std_logic;
+   signal o_axi_rready  :  std_logic;
+   signal i_axi_rdata   :  std_logic_vector(511 downto 0);
+   signal i_axi_rlast   :  std_logic;
+   signal i_axi_rresp   :  std_logic_vector(1 downto 0);
+   
+   signal running         : std_logic := '0';
+   signal preload         : std_logic := '0';
+   signal tx_complete     : std_logic := '0';
+   signal axi_4k_finished : std_logic := '0';
+
+   type rd_fsm_type is (idle, wait_fifo_reset, wait_arready, rd_4064b, wait_fifo ,finished, loopit, wait_current_bank_finish);
+   signal rd_fsm : rd_fsm_type := idle;
+
+   type output_fsm_type is (initial_state, output_first_run0, output_first_run1 ,output_first_idle, output_idle, output_next_burst, output_next_packet, output_wait_burst_counter, read_full_packet, output_packet_finished, output_tx_complete, output_loopit, output_thats_all_folks, output_check_burst_count);
+   signal output_fsm       : output_fsm_type := initial_state;
+   
+   signal n_fifo_cache_in_reset : std_logic;
+   signal packetizer_wr    : std_logic;
+   signal packetizer_dout  :  std_logic_vector(511 downto 0);
+   
+   signal readaddr, readaddr_reg   : unsigned(31 downto 0);    -- 30 bits = 1GB, 33 bits = 8GB
     
-    signal running         : std_logic := '0';
-    signal preload         : std_logic := '0';
-    signal tx_complete     : std_logic := '0';
-    signal axi_4k_finished : std_logic := '0';
+   signal total_beat_count                : unsigned(31 downto 0) := (others => '0');
+   signal current_axi_4k_count            : unsigned(31 downto 0);
+   signal wait_counter                    : unsigned(7 downto 0);
+   signal current_pkt_count               : unsigned(63 downto 0) := (others=>'0');
+   signal fpga_beat_in_burst_counter      : unsigned(31 downto 0) := (others=>'0');
+   
+   signal fpga_axi_beats_per_packet       : unsigned(7 downto 0) := (others=>'0');
+   signal beats                           : unsigned(7 downto 0);
+   signal number_of_burst_beats           : unsigned(15 downto 0) := (others=>'0');
+   signal total_number_of_512b            : unsigned(31 downto 0) := (others=>'0');
+   signal beat_count                      : unsigned(31 downto 0) := (others=> '0');
+   signal end_of_packet                   : std_logic;
+   signal start_of_packet                 : std_logic;
+   signal start_stop_tx                   : std_logic;
+   signal wait_fifo_resetting             : std_logic;
+   signal error_fifo_stall                : std_logic;
 
-    type rd_fsm_type is (idle, wait_fifo_reset, wait_arready, rd_4064b, wait_fifo ,finished, loopit, wait_current_bank_finish);
-    signal rd_fsm : rd_fsm_type := idle;
+   signal FIFO_dout                       : std_logic_vector(511 downto 0);     
+   signal FIFO_empty                      : std_logic; 
+   signal FIFO_full                       : std_logic;      
+   signal FIFO_prog_full                  : std_logic;
+   signal FIFO_almost_full                : std_logic;     
+   signal FIFO_RdDataCount                : std_logic_vector(((ceil_log2(SYNC_FIFO_DEPTH))) downto 0);
+   signal FIFO_WrDataCount                : std_logic_vector(((ceil_log2(SYNC_FIFO_DEPTH))) downto 0);
+   signal FIFO_din                        : std_logic_vector(511 downto 0);      
+   signal tx_FIFO_rd_en                   : std_logic;  
+   signal FIFO_rst                        : std_logic;    
+   signal tx_fifo_cache_reset             : std_logic;    
+   signal tx_FIFO_wr_en                   : std_logic;     
+   signal tx_reset_state                  : std_logic;
+   signal ns_burst_timer_std_logic        : std_logic_vector(31 downto 0) := (others=>'0');
+   signal ns_total_time_std_logic         : std_logic_vector(31 downto 0) := (others=>'0');
+   signal ns_burst_timer_100Mhz           : unsigned(31 downto 0) := (others=>'0');
+   signal ns_total_time_100Mhz            : unsigned(47 downto 0) := (others=>'0');
 
-    type output_fsm_type is (initial_state, output_first_run0, output_first_run1 ,output_first_idle, output_idle, output_next_burst, output_next_packet, output_wait_burst_counter, read_full_packet, output_packet_finished, output_tx_complete, output_loopit, output_thats_all_folks, output_check_burst_count);
-    signal output_fsm       : output_fsm_type := initial_state;
-    
-    signal n_fifo_cache_in_reset : std_logic;
-    signal packetizer_wr    : std_logic;
-    signal packetizer_dout  :  std_logic_vector(511 downto 0);
-    signal from_current_bank_finish : std_logic := '0';
+   signal target_time_100Mhz              : unsigned(47 downto 0) := (others=>'0');
+   signal target_time                     : unsigned(47 downto 0) := (others=>'0');
+   signal time_between_packets_100Mhz     : unsigned(47 downto 0) := (others=>'0');
+   signal target_packets_100Mhz           : unsigned(63 downto 0) := (others=>'0');
+   signal target_packets                  : unsigned(63 downto 0) := (others=>'0');
+   signal target_packets_std_logic        : std_logic_vector(63 downto 0) := (others=>'0');
 
-    signal readaddr, readaddr_reg   : unsigned(31 downto 0);    -- 30 bits = 1GB, 33 bits = 8GB
-    
-    signal total_beat_count   :  unsigned(31 downto 0) := (others => '0');
-    signal current_axi_4k_count   :  unsigned(21 downto 0);
-    signal wait_counter     :  unsigned(7 downto 0);
-    signal current_pkt_count : unsigned(63 downto 0) := (others=>'0');
-    signal fpga_beat_in_burst_counter : unsigned(31 downto 0) := (others=>'0');
-    
-    signal fpga_axi_beats_per_packet : unsigned(7 downto 0) := (others=>'0');
-    signal beats : unsigned(7 downto 0);
-    signal number_of_burst_beats : unsigned(15 downto 0) := (others=>'0');
-    signal total_number_of_512b : unsigned(31 downto 0) := (others=>'0');
-    signal beat_count : unsigned(31 downto 0) := (others=> '0');
-    signal end_of_packet : std_logic;
-    signal start_of_packet : std_logic;
-    signal start_stop_tx : std_logic;
-    signal wait_fifo_resetting : std_logic;
-    signal error_fifo_stall : std_logic;
+   signal time_between_bursts_ns_100Mhz   : std_logic_vector(31 downto 0) := (others=>'0');
+   signal run_timing, run_timing_100Mhz   : std_logic;
+   signal reset_state_100Mhz              : std_logic;
+   signal start_next_burst                : std_logic;
+   signal start_next_burst_100Mhz         : std_logic;
+   signal fpga_pkt_count_in_this_burst    : unsigned(31 downto 0);
+   signal burst_count                     : unsigned(31 downto 0) := (others=>'0');
+   signal reset_ns_burst_timer            : std_logic;
+   signal looping                         : std_logic := '0';
+   signal loop_cnt                        : unsigned(31 downto 0) := (others=>'0');
+   signal start_next_loop                 : std_logic := '0';
+   signal wait_fifo_reset_cnt             : unsigned(31 downto 0) := (others=>'0');
+   signal rd_rst_busy ,wr_rst_busy        : std_logic := '0';
+   signal axi_r_num                       : unsigned(31 downto 0) := (others => '0');
+   signal clear_axi_r_num                 : std_logic := '0';
 
-    signal FIFO_dout : std_logic_vector(511 downto 0);     
-    signal FIFO_empty : std_logic; 
-    signal FIFO_full : std_logic;      
-    signal FIFO_prog_full, FIFO_almost_full : std_logic;      
-    signal FIFO_RdDataCount : std_logic_vector(((ceil_log2(SYNC_FIFO_DEPTH))) downto 0);
-    signal FIFO_WrDataCount : std_logic_vector(((ceil_log2(SYNC_FIFO_DEPTH))) downto 0);
-    signal FIFO_din : std_logic_vector(511 downto 0);      
-    signal tx_FIFO_rd_en : std_logic;  
-    signal FIFO_rst : std_logic;    
-    signal tx_fifo_cache_reset : std_logic;    
-    signal tx_FIFO_wr_en : std_logic;     
-    signal tx_reset_state : std_logic;
-    signal ns_burst_timer_std_logic, ns_total_time_std_logic : std_logic_vector(31 downto 0) := (others=>'0');
-    signal ns_burst_timer_100Mhz : unsigned(31 downto 0) := (others=>'0');
-    signal ns_total_time_100Mhz : unsigned(47 downto 0) := (others=>'0');
+   signal rd_fsm_debug                    : std_logic_vector(3 downto 0);
+   signal output_fsm_debug                : std_logic_vector(3 downto 0);
 
-    signal target_time_100Mhz, target_time         : unsigned(47 downto 0) := (others=>'0');
-    signal time_between_packets_100Mhz             : unsigned(47 downto 0) := (others=>'0');
-    signal target_packets_100Mhz, target_packets   : unsigned(63 downto 0) := (others=>'0');
-    signal target_packets_std_logic                : std_logic_vector(63 downto 0) := (others=>'0');
+   signal total_pkts_to_mac               : unsigned(63 downto 0) := (others=>'0');
+   signal reset_cnt                       : unsigned(3 downto 0);
 
-    signal time_between_bursts_ns_100Mhz : std_logic_vector(31 downto 0) := (others=>'0');
+   signal num_residual_bytes_after_4k, num_residual_bytes_after_4k_curr_4G, num_residual_bytes_after_4k_next_4G : unsigned(13 downto 0);
+   signal first_time, compare_vectors, vectors_equal, vectors_not_equal, o_packetiser_data_in_wr_prev : std_logic;
+   
+   signal boundary_across_num             : unsigned(1 downto 0) := "00";
 
-    signal run_timing, run_timing_100Mhz : std_logic;
+   signal axi_wdata_fifo_full             : std_logic;
+   signal awfifo_valid_del                : std_logic := '0';
+   signal awfifo_valid_rising_edge        : std_logic;
 
-    signal reset_state_100Mhz : std_logic;
-    signal start_next_burst : std_logic;
-    signal start_next_burst_100Mhz : std_logic;
-    signal fpga_pkt_count_in_this_burst : unsigned(31 downto 0);
-    signal burst_count: unsigned(31 downto 0) := (others=>'0');
-    signal reset_ns_burst_timer : std_logic;
-    signal looping : std_logic := '0';
-    signal loop_cnt: unsigned(31 downto 0) := (others=>'0');
-    signal start_next_loop : std_logic := '0';
-    signal wait_fifo_reset_cnt: unsigned(31 downto 0) := (others=>'0');
-    signal rd_rst_busy ,wr_rst_busy : std_logic := '0';
-    signal axi_r_num : unsigned(21 downto 0) := (others => '0');
-    signal clear_axi_r_num : std_logic := '0';
+   signal awfifo_cnt                      : unsigned(2 downto 0) := (others => '0');
+   signal awfifo_cnt_en                   : std_logic := '0';
+   signal awfifo_wren_del1, awfifo_wren_del2, awfifo_wren_del3, awfifo_wren_del4, awfifo_wren_del5, awfifo_wren_del6, awfifo_wren_del7 : std_logic := '0';
+   signal axi_wdata_fifo_empty            : std_logic;
+   signal axi_wdata_fifo_empty_falling_edge : std_logic;
+   signal axi_wdata_fifo_empty_reg        : std_logic := '0';
+   signal axi_wlast_asserted              : std_logic := '0';
+   signal size_64B                        : std_logic;
+   signal first_awfifo_wren, first_awfifo_wren_del   : std_logic := '0';
+   signal first_awfifo_wren_falling       : std_logic;
 
-    signal rd_fsm_debug : std_logic_vector(3 downto 0);
-    signal output_fsm_debug : std_logic_vector(3 downto 0);
-
-    signal total_pkts_to_mac : unsigned(63 downto 0) := (others=>'0');
-    signal reset_cnt : unsigned(3 downto 0);
-
-    signal num_residual_bytes_after_4k, num_residual_bytes_after_4k_curr_4G, num_residual_bytes_after_4k_next_4G : unsigned(13 downto 0);
-    signal first_time, compare_vectors, vectors_equal, vectors_not_equal, o_packetiser_data_in_wr_prev : std_logic;
-    signal first_packet_golden_data : std_logic_vector(511 downto 0); 
-    signal boundary_across_num : unsigned(1 downto 0) := "00";
-
-    signal axi_wdata_fifo_full : std_logic;
-    signal awfifo_valid_del    : std_logic := '0';
-    signal awfifo_valid_rising_edge : std_logic;
-
-    signal awfifo_cnt          : unsigned(2 downto 0) := (others => '0');
-    signal awfifo_cnt_en       : std_logic := '0';
-    signal awfifo_wren_del1, awfifo_wren_del2, awfifo_wren_del3, awfifo_wren_del4, awfifo_wren_del5, awfifo_wren_del6, awfifo_wren_del7 : std_logic := '0';
-    signal axi_wdata_fifo_empty : std_logic;
-    signal axi_wdata_fifo_empty_falling_edge : std_logic;
-    signal axi_wdata_fifo_empty_reg : std_logic := '0';
-    signal axi_wlast_asserted  : std_logic := '0';
-    signal size_64B            : std_logic;
-    signal first_awfifo_wren, first_awfifo_wren_del   : std_logic := '0';
-    signal first_awfifo_wren_falling                  : std_logic;
-
+   signal buf_num_of_4k_current           : unsigned(21 downto 0);
 begin
     
     ---------------------------------------------------------------------------------------------------
@@ -2023,9 +2025,9 @@ end process;
             axi_r_num <= (others => '0');
          else	    
             if (m01_axi_rvalid = '1' and m01_axi_rlast = '1' and m01_axi_rready = '1') or 
-	       (m02_axi_rvalid = '1' and m02_axi_rlast = '1' and m02_axi_rready = '1') or
-	       (m03_axi_rvalid = '1' and m03_axi_rlast = '1' and m03_axi_rready = '1') or 
-	       (m04_axi_rvalid = '1' and m04_axi_rlast = '1' and m04_axi_rready = '1') then
+	            (m02_axi_rvalid = '1' and m02_axi_rlast = '1' and m02_axi_rready = '1') or
+	            (m03_axi_rvalid = '1' and m03_axi_rlast = '1' and m03_axi_rready = '1') or 
+	            (m04_axi_rvalid = '1' and m04_axi_rlast = '1' and m04_axi_rready = '1') then
                axi_r_num <= axi_r_num + 1;
             end if;
          end if;
@@ -2063,6 +2065,14 @@ end process;
 
                when wait_fifo_reset =>
                   rd_fsm_debug <= x"1";
+
+                  -- buffer tracking
+                  -- each buffer is 4095MB of a possible 4096MB due to XRT limitations. 
+                  -- The design retrieves from HBM in lots of 4096 (4K), therefore each buffer has 0xFFF00 transactions.
+                  -- This loop is only interested in retrieving in lots of 4096 up to the desired number
+                  -- Which is stipulated by the software via - i_expected_total_number_of_4k_axi
+
+                  buf_num_of_4k_current <= max_space_4095MB_4k_num;
                   
                   if (start_next_loop = '1' OR (preload = '1')) then
                      o_axi_arvalid   <= '1';
@@ -2078,47 +2088,45 @@ end process;
                      o_axi_arvalid        <= '0';
                      readaddr             <= readaddr + 4096;
                      current_axi_4k_count <= current_axi_4k_count + 1;
-                  
-               --when all the AXI AR 4k transactions for current 4GB has been transfered, then wait for all the pending AXi R transactions finish
-                  if ((current_axi_4k_count = (max_space_4095MB_4k_num   - resize(readaddr_reg(31 downto 12),22) - 1) and boundary_across_num = 0) or
-                     (current_axi_4k_count = (max_space_4095MB_4kx2_num - resize(readaddr_reg(31 downto 12),22) - 1) and boundary_across_num = 1) or 
-                     (current_axi_4k_count = (max_space_4095MB_4kx3_num - resize(readaddr_reg(31 downto 12),22) - 1) and boundary_across_num = 2) or 
-                     (current_axi_4k_count = (max_space_4095MB_4kx4_num - resize(readaddr_reg(31 downto 12),22) - 1) and boundary_across_num = 3)) and 
-                     (current_axi_4k_count < resize((unsigned(i_expected_total_number_of_4k_axi) - 1),22))                                          and 
-                     (resize(unsigned(i_expected_total_number_of_4k_axi),22) > (max_space_4095MB(31 downto 12) - readaddr_reg(31 downto 12) - 1))   then
-                     
-                     rd_fsm <= wait_current_bank_finish; 		
-                  elsif (current_axi_4k_count = (unsigned(i_expected_total_number_of_4k_axi))) then 
-                     rd_fsm <= finished; 
-                  else
-                     rd_fsm <= wait_fifo;
-                  end if;
-               end if;
-               
-               if from_current_bank_finish = '1' then
-                  if (readaddr = max_space_4095MB and boundary_across_num /= 3) then
-                     readaddr <= X"00000000";
-                     boundary_across_num <= boundary_across_num + 1;
-                  end if;
-                  from_current_bank_finish <= '0';
-               end if;		
-         
-            when wait_current_bank_finish =>
-               rd_fsm_debug <= x"6";	   
-                  if (axi_r_num = current_axi_4k_count) then
-                     rd_fsm <= wait_arready;
-                  end if;		
-               from_current_bank_finish <= '1';
+                     buf_num_of_4k_current <= buf_num_of_4k_current - 1;
 
-            when wait_fifo => --issued read request on bus and now drive arvalid low
-               rd_fsm_debug <= x"3";
-               o_axi_arvalid <= '0';
-               if (FIFO_prog_full = '1') then  -- request in lots of 64.
-                  rd_fsm <= wait_fifo;
-               else
-                  rd_fsm <= wait_arready;
-                  o_axi_arvalid <= '1';
-               end if;
+                     -- --when all the AXI AR 4k transactions for current 4GB has been transfered, then wait for all the pending AXi R transactions finish
+                     -- three conditions to evaluate.
+                     -- 1. Are we waiting for the current 4GB buffer to finish, ie have we requested the last transfer? if so go to wait_current_bank_finish
+                     -- 2. Have we retrieved the total number of 4K transfers required by software?
+                     -- 3. Check RX buffer FIFO has room and loop thru.   
+
+                     if (current_axi_4k_count = (unsigned(i_expected_total_number_of_4k_axi))) then 
+                        rd_fsm <= finished; 
+                     elsif buf_num_of_4k_current = 1 then
+                        rd_fsm <= wait_current_bank_finish;
+                     else
+                        rd_fsm <= wait_fifo;
+                     end if;
+                  end if;
+         
+               when wait_current_bank_finish =>
+                  rd_fsm_debug <= x"6";	   
+                     o_axi_arvalid  <= '0';
+                  if (axi_r_num = current_axi_4k_count) then
+                     rd_fsm         <= wait_arready;
+                     o_axi_arvalid  <= '1';
+                     if (readaddr = max_space_4095MB and boundary_across_num /= 3) then
+                        readaddr                <= X"00000000";
+                        boundary_across_num     <= boundary_across_num + 1;
+                        buf_num_of_4k_current   <= max_space_4095MB_4k_num;
+                     end if;
+                  end if;		
+
+               when wait_fifo => --issued read request on bus and now drive arvalid low
+                  rd_fsm_debug <= x"3";
+                  o_axi_arvalid <= '0';
+                  if (FIFO_prog_full = '1') then  -- request in lots of 64.
+                     rd_fsm <= wait_fifo;
+                  else
+                     rd_fsm <= wait_arready;
+                     o_axi_arvalid <= '1';
+                  end if;
 
                when finished =>
                   rd_fsm_debug <= x"4";
@@ -2131,13 +2139,13 @@ end process;
                      rd_fsm          <= finished;
                   end if;
 
-            when loopit =>
-               rd_fsm_debug <= x"5";
-               axi_4k_finished <= '1';
-               rd_fsm <= idle;
+               when loopit =>
+                  rd_fsm_debug <= x"5";
+                  axi_4k_finished <= '1';
+                  rd_fsm <= idle;
 
-            when others =>
-               rd_fsm <= idle;
+               when others =>
+                  rd_fsm <= idle;
             end case; 
          end if;
       end if;
@@ -2568,90 +2576,49 @@ debug_gen : IF g_DEBUG_ILAs GENERATE
     -- of packet for subsequent packets and trigger on corrupt packets.
     --------------------------------------------------------------------------------------------
 
-    process(i_shared_clk)
-    begin
-      if rising_edge(i_shared_clk) then
-         if (tx_reset_state = '1') then
-            first_time <= '1';
-         else
-            if (first_time = '1') then
-               if (o_packetiser_data_in_wr = '1') then
-                  first_time <= '0';
-                  first_packet_golden_data <= o_packetiser_data;
-               end if;
-            end if;
-         end if;
-      end if;
-    end process;
 
-    process(i_shared_clk)
-    begin
-      if rising_edge(i_shared_clk) then
-         compare_vectors <= '0';
-         vectors_equal <= '0';
-         vectors_not_equal <= '0';
-
-         if (tx_reset_state = '1') then
-            o_packetiser_data_in_wr_prev <= '0';
-         else
-            o_packetiser_data_in_wr_prev <= o_packetiser_data_in_wr;
-            if (first_time = '0') then
-               if (o_packetiser_data_in_wr = '1' and o_packetiser_data_in_wr_prev = '0') then
-                  compare_vectors <= '1';
-                  if (first_packet_golden_data(255 downto 0) = o_packetiser_data(255 downto 0)) then
-                     vectors_equal <= '1';
-                  else
-                     vectors_not_equal <= '1';
-                  end if;
-               end if;
-            end if;
-         end if;
-      end if;
-    end process;
-    
-
-hbm_capture_ila : ila_0
-  port map (
-     clk                     => i_shared_clk, 
-     probe0(28 downto 0)     => m01_axi_wdata(28 downto 0),
-     probe0(29)              => last_aw_trans,
-     probe0(30)              => m02_wr,
-     probe0(31)              => m01_wr,
+--hbm_capture_ila : ila_0
+--  port map (
+--     clk                     => i_shared_clk, 
+--     probe0(28 downto 0)     => m01_axi_wdata(28 downto 0),
+--     probe0(29)              => last_aw_trans,
+--     probe0(30)              => m02_wr,
+--     probe0(31)              => m01_wr,
       
 
-     probe0(63 downto 32)    => axi_wdata(31 downto 0),
-     probe0(95 downto 64)    => m02_axi_awaddr,
-     probe0(96)              => m02_axi_wvalid, 
+--     probe0(63 downto 32)    => axi_wdata(31 downto 0),
+--     probe0(95 downto 64)    => m02_axi_awaddr,
+--     probe0(96)              => m02_axi_wvalid, 
       
-     probe0(97)              => m02_axi_awvalid,
-     probe0(98)              => m02_axi_awready,
-     probe0(99)              => m02_axi_wlast,
-     probe0(100)             => m02_axi_wready,
-     probe0(108 downto 101)  => m02_axi_awlen,
-     probe0(109)             => m02_fifo_rd_en,
-     probe0(125 downto 110)  => m02_axi_wdata(15 downto 0),
-     probe0(126)             => last_trans,
-     --probe0(126 downto 64)   => i_data_from_cmac(62 downto 0),
-     probe0(127)             => m02_axi_4G_full,
-     probe0(159 downto 128)  => m03_axi_awaddr,
-     probe0(160)             => m03_axi_wvalid, 
+--     probe0(97)              => m02_axi_awvalid,
+--     probe0(98)              => m02_axi_awready,
+--     probe0(99)              => m02_axi_wlast,
+--     probe0(100)             => m02_axi_wready,
+--     probe0(108 downto 101)  => m02_axi_awlen,
+--     probe0(109)             => m02_fifo_rd_en,
+--     probe0(125 downto 110)  => m02_axi_wdata(15 downto 0),
+--     probe0(126)             => last_trans,
+--     --probe0(126 downto 64)   => i_data_from_cmac(62 downto 0),
+--     probe0(127)             => m02_axi_4G_full,
+--     probe0(159 downto 128)  => m03_axi_awaddr,
+--     probe0(160)             => m03_axi_wvalid, 
       
-     probe0(161)             => m03_axi_awvalid,
-     probe0(162)             => m03_axi_awready,
-     probe0(163)             => m03_axi_wlast,
-     probe0(164)             => m03_axi_wready,
-     probe0(172 downto 165)  => m03_axi_awlen,
-     probe0(179 downto 173)  => std_logic_vector(fifo_rd_counter),
-     probe0(180)             => axi_wdata_fifo_full,
-     probe0(181)             => axi_wdata_fifo_empty,
-     probe0(182)             => m03_fifo_rd_en,
-     probe0(183)             => awfifo_wren,
-     probe0(184)             => awfifo_rden,
-     probe0(185)             => awlenfifo_rden,
-     probe0(186)             => fifo_rd_en,
-     probe0(187)             => fifo_wr_en,
-     probe0(191 downto 188)  => input_fsm_state_count
-  );
+--     probe0(161)             => m03_axi_awvalid,
+--     probe0(162)             => m03_axi_awready,
+--     probe0(163)             => m03_axi_wlast,
+--     probe0(164)             => m03_axi_wready,
+--     probe0(172 downto 165)  => m03_axi_awlen,
+--     probe0(179 downto 173)  => std_logic_vector(fifo_rd_counter),
+--     probe0(180)             => axi_wdata_fifo_full,
+--     probe0(181)             => axi_wdata_fifo_empty,
+--     probe0(182)             => m03_fifo_rd_en,
+--     probe0(183)             => awfifo_wren,
+--     probe0(184)             => awfifo_rden,
+--     probe0(185)             => awlenfifo_rden,
+--     probe0(186)             => fifo_rd_en,
+--     probe0(187)             => fifo_wr_en,
+--     probe0(191 downto 188)  => input_fsm_state_count
+--  );
 
 hbm_playout_ila : ila_0
    port map (
@@ -2682,10 +2649,14 @@ hbm_playout_ila : ila_0
 hbm_rd_ila : ila_0
    port map (
       clk                     => i_shared_clk, 
-      probe0(31 downto 0)     => m01_axi_araddr(31 downto 0),
-      probe0(63 downto 32)    => m02_axi_araddr(31 downto 0),
-      probe0(95 downto 64)    => m03_axi_araddr(31 downto 0),
-      probe0(127 downto 96)   => m04_axi_araddr(31 downto 0),
+      probe0(19 downto 0)     => m01_axi_araddr(31 downto 12),
+      probe0(39 downto 20)    => m02_axi_araddr(31 downto 12),
+      probe0(40)              => o_axi_arvalid,
+      probe0(41)              => '0',
+
+      probe0(73 downto 42)    => std_logic_vector(readaddr),
+      probe0(95 downto 74)    => std_logic_vector(buf_num_of_4k_current),
+      probe0(127 downto 96)   => std_logic_vector(axi_r_num),
       
       probe0(128)             => m01_axi_arvalid,
       probe0(129)             => m02_axi_arvalid,        
@@ -2696,9 +2667,12 @@ hbm_rd_ila : ila_0
       
       probe0(137 downto 134)  => rd_fsm_debug,
       probe0(141 downto 138)  => output_fsm_debug,
-      probe0(163 downto 142)  => std_logic_vector(axi_r_num),
-      probe0(185 downto 164)  => std_logic_vector(current_axi_4k_count),
-      probe0(191 downto 186)  => ( others => '0' )
+      probe0(173 downto 142)  => std_logic_vector(current_axi_4k_count),
+      probe0(174)             => '0',
+      probe0(182 downto 175)  => m03_axi_araddr(31 downto 24),
+      probe0(190 downto 183)  => m04_axi_araddr(31 downto 24),
+      probe0(191)             => i_axi_arready
+      --probe0(191 downto 190)  => ( others => '0' )
       
    );
 
