@@ -480,118 +480,118 @@ architecture RTL of HBM_PktController is
 
    signal buf_num_of_4k_current           : unsigned(21 downto 0);
 begin
-    
-    ---------------------------------------------------------------------------------------------------
-    -- MAP internal signals to ports.
-    
-    o_1st_4GB_rx_addr           <= LFAAaddr1(31 downto 0);
-    o_2nd_4GB_rx_addr           <= LFAAaddr2(31 downto 0);
-    o_3rd_4GB_rx_addr           <= LFAAaddr3(31 downto 0);
-    o_4th_4GB_rx_addr           <= LFAAaddr4(31 downto 0);
+   
+   ---------------------------------------------------------------------------------------------------
+   -- MAP internal signals to ports.
+   
+   o_1st_4GB_rx_addr           <= LFAAaddr1(31 downto 0);
+   o_2nd_4GB_rx_addr           <= LFAAaddr2(31 downto 0);
+   o_3rd_4GB_rx_addr           <= LFAAaddr3(31 downto 0);
+   o_4th_4GB_rx_addr           <= LFAAaddr4(31 downto 0);
 
-    o_capture_done              <= m04_axi_4G_full;
-    o_num_packets_received      <= std_logic_vector(recv_pkt_counter);
+   o_capture_done              <= m04_axi_4G_full;
+   o_num_packets_received      <= std_logic_vector(recv_pkt_counter);
 
-    o_tx_addr                   <= std_logic_vector(readaddr);
-    o_tx_boundary_across_num    <= std_logic_vector(boundary_across_num);
-    
-    
-    o_tx_complete               <= tx_complete;
-    
-    o_tx_packets_to_mac         <= std_logic_vector(total_pkts_to_mac);
-    o_tx_packet_count           <= std_logic_vector(current_pkt_count);
-    
-    o_rd_fsm_debug              <= rd_fsm_debug;
-    o_output_fsm_debug          <= output_fsm_debug;
-    o_input_fsm_debug           <= input_fsm_state_count;
-    ---------------------------------------------------------------------------------------------------
-    --HBM AXI write transaction part, it is assumed that the recevied packet is always multiple of 64B,
-    --i.e no residual AXI trans where less then 64B trans is needed, all the bits of imcoming data is 
-    --    valid
-    ---------------------------------------------------------------------------------------------------
+   o_tx_addr                   <= std_logic_vector(readaddr);
+   o_tx_boundary_across_num    <= std_logic_vector(boundary_across_num);
+   
+   
+   o_tx_complete               <= tx_complete;
+   
+   o_tx_packets_to_mac         <= std_logic_vector(total_pkts_to_mac);
+   o_tx_packet_count           <= std_logic_vector(current_pkt_count);
+   
+   o_rd_fsm_debug              <= rd_fsm_debug;
+   o_output_fsm_debug          <= output_fsm_debug;
+   o_input_fsm_debug           <= input_fsm_state_count;
+   ---------------------------------------------------------------------------------------------------
+   --HBM AXI write transaction part, it is assumed that the recevied packet is always multiple of 64B,
+   --i.e no residual AXI trans where less then 64B trans is needed, all the bits of imcoming data is 
+   --    valid
+   ---------------------------------------------------------------------------------------------------
 
-    --following is the AXI transaction parameter calculation
-    --num_rx_4k_axi_trans  is number of AXI 4k transactions for one packet
-    --num_rx_64B_axi_beats is number of beats of AXI transaction after number of 4k minused out for one packet
-    num_rx_64B_axi_beats                   <=   num_residual_bytes_after_4k(13 downto 6); -- 64 bytes multiple beat transaction
-    
-    num_rx_4k_axi_trans                    <=   "10" when (unsigned(i_rx_packet_size(13 downto 0)) >= 8192) else
-	   			                                "01" when (unsigned(i_rx_packet_size(13 downto 0)) >= 4096) else
-				                                "00";
+   --following is the AXI transaction parameter calculation
+   --num_rx_4k_axi_trans  is number of AXI 4k transactions for one packet
+   --num_rx_64B_axi_beats is number of beats of AXI transaction after number of 4k minused out for one packet
+   num_rx_64B_axi_beats                   <= num_residual_bytes_after_4k(13 downto 6); -- 64 bytes multiple beat transaction
+   
+   num_rx_4k_axi_trans                    <= "10" when (unsigned(i_rx_packet_size(13 downto 0)) >= 8192) else
+                                             "01" when (unsigned(i_rx_packet_size(13 downto 0)) >= 4096) else
+                                             "00";
 				                                
-    num_residual_bytes_after_4k            <=   (unsigned(i_rx_packet_size(13 downto 0)) - 8192) when (unsigned(i_rx_packet_size(13 downto 0)) >= 8192) else 
-				                                (unsigned(i_rx_packet_size(13 downto 0)) - 4096) when (unsigned(i_rx_packet_size(13 downto 0)) >= 4096) else
-				                                unsigned(i_rx_packet_size(13 downto 0));
+   num_residual_bytes_after_4k            <= (unsigned(i_rx_packet_size(13 downto 0)) - 8192) when (unsigned(i_rx_packet_size(13 downto 0)) >= 8192) else 
+                                             (unsigned(i_rx_packet_size(13 downto 0)) - 4096) when (unsigned(i_rx_packet_size(13 downto 0)) >= 4096) else
+                                             unsigned(i_rx_packet_size(13 downto 0));
 
-    --first part of split AXI transaction at the 4GB boundary, fit to the current 4GB section 
-    num_rx_64B_axi_beats_curr_4G           <=   num_residual_bytes_after_4k_curr_4G(13 downto 6);
-    
-    num_rx_4k_axi_trans_curr_4G            <=   "10" when num_rx_bytes_curr_4G >= 8192 else
-                                                "01" when num_rx_bytes_curr_4G >= 4096 else
-                                                "00";
-                                                
-    num_residual_bytes_after_4k_curr_4G    <=   (num_rx_bytes_curr_4G - 8192) when num_rx_bytes_curr_4G >= 8192 else
-					                            (num_rx_bytes_curr_4G - 4096) when num_rx_bytes_curr_4G >= 4096 else
-					                            num_rx_bytes_curr_4G;
+   --first part of split AXI transaction at the 4GB boundary, fit to the current 4GB section 
+   num_rx_64B_axi_beats_curr_4G           <= num_residual_bytes_after_4k_curr_4G(13 downto 6);
+   
+   num_rx_4k_axi_trans_curr_4G            <= "10" when num_rx_bytes_curr_4G >= 8192 else
+                                             "01" when num_rx_bytes_curr_4G >= 4096 else
+                                             "00";
+                                             
+   num_residual_bytes_after_4k_curr_4G    <= (num_rx_bytes_curr_4G - 8192) when num_rx_bytes_curr_4G >= 8192 else
+                                             (num_rx_bytes_curr_4G - 4096) when num_rx_bytes_curr_4G >= 4096 else
+                                             num_rx_bytes_curr_4G;
 
-    --second part of split AXI transaction at the 4GB boundary, fit to the next 4GB section
-    num_rx_64B_axi_beats_next_4G           <= num_residual_bytes_after_4k_next_4G(13 downto 6);
-    num_rx_4k_axi_trans_next_4G            <= "10" when num_rx_bytes_next_4G >= 8192 else
-                                              "01" when num_rx_bytes_next_4G >= 4096 else
-                                              "00";
-    num_residual_bytes_after_4k_next_4G    <= (num_rx_bytes_next_4G - 8192) when num_rx_bytes_next_4G >= 8192 else
-                                              (num_rx_bytes_next_4G - 4096) when num_rx_bytes_next_4G >= 4096 else
-                                               num_rx_bytes_next_4G;
+   --second part of split AXI transaction at the 4GB boundary, fit to the next 4GB section
+   num_rx_64B_axi_beats_next_4G           <= num_residual_bytes_after_4k_next_4G(13 downto 6);
+   num_rx_4k_axi_trans_next_4G            <= "10" when num_rx_bytes_next_4G >= 8192 else
+                                             "01" when num_rx_bytes_next_4G >= 4096 else
+                                             "00";
+   num_residual_bytes_after_4k_next_4G    <= (num_rx_bytes_next_4G - 8192) when num_rx_bytes_next_4G >= 8192 else
+                                             (num_rx_bytes_next_4G - 4096) when num_rx_bytes_next_4G >= 4096 else
+                                             num_rx_bytes_next_4G;
 
-    m04_4095MB_packet_across  <= '1' when (unsigned(LFAAaddr4_shadow(31 downto 0)) + resize(unsigned(i_rx_packet_size(13 downto 0)), 32)) > max_space_4095MB else 					  '0';    
+   m04_4095MB_packet_across  <= '1' when (unsigned(LFAAaddr4_shadow(31 downto 0)) + resize(unsigned(i_rx_packet_size(13 downto 0)), 32)) > max_space_4095MB else '0';    
 
-    size_64B                  <= '1' when (i_rx_packet_size(13 downto 0) = "00000001000000") else '0';
+   size_64B                  <= '1' when (i_rx_packet_size(13 downto 0) = "00000001000000") else '0';
 
-    --HBM bank boundary cross condition logic, due to the fact that XRT cannot allocate 4GB size of HBM buffer, so
-    --need to support the size of HBM bank to be any size, currently 4095MB is by default, and still 4096MB is second
-    --choice
-    g_4095MB_condition : if g_HBM_bank_size="4095MB" generate
-      wr_bank1_boundary_corss                 <= '1' when (LFAAaddr1_shadow(31 downto 16) = X"FFF0") else '0';
-      wr_bank2_boundary_corss		          <= '1' when (LFAAaddr2_shadow(31 downto 16) = X"FFF0") else '0';
-      wr_bank3_boundary_corss                 <= '1' when (LFAAaddr3_shadow(31 downto 16) = X"FFF0") else '0';
-      wr_bank4_boundary_corss                 <= '1' when (LFAAaddr4_shadow(31 downto 16) = X"FFF0") else '0'; 
-      wr_bank1_boundary_corss_curr_4G_size    <= resize((max_space_4095MB - unsigned(LFAAaddr1(31 downto 0))), 14);
-      wr_bank2_boundary_corss_curr_4G_size    <= resize((max_space_4095MB - unsigned(LFAAaddr2(31 downto 0))), 14);
-      wr_bank3_boundary_corss_curr_4G_size    <= resize((max_space_4095MB - unsigned(LFAAaddr3(31 downto 0))), 14);
-      wr_bank4_boundary_corss_curr_4G_size    <= resize((max_space_4095MB - unsigned(LFAAaddr4(31 downto 0))), 14);
-    end generate g_4095MB_condition;					      
+   --HBM bank boundary cross condition logic, due to the fact that XRT cannot allocate 4GB size of HBM buffer, so
+   --need to support the size of HBM bank to be any size, currently 4095MB is by default, and still 4096MB is second
+   --choice
+   g_4095MB_condition : if g_HBM_bank_size="4095MB" generate
+      wr_bank1_boundary_corss                <= '1' when (LFAAaddr1_shadow(31 downto 16) = X"FFF0") else '0';
+      wr_bank2_boundary_corss		            <= '1' when (LFAAaddr2_shadow(31 downto 16) = X"FFF0") else '0';
+      wr_bank3_boundary_corss                <= '1' when (LFAAaddr3_shadow(31 downto 16) = X"FFF0") else '0';
+      wr_bank4_boundary_corss                <= '1' when (LFAAaddr4_shadow(31 downto 16) = X"FFF0") else '0'; 
+      wr_bank1_boundary_corss_curr_4G_size   <= resize((max_space_4095MB - unsigned(LFAAaddr1(31 downto 0))), 14);
+      wr_bank2_boundary_corss_curr_4G_size   <= resize((max_space_4095MB - unsigned(LFAAaddr2(31 downto 0))), 14);
+      wr_bank3_boundary_corss_curr_4G_size   <= resize((max_space_4095MB - unsigned(LFAAaddr3(31 downto 0))), 14);
+      wr_bank4_boundary_corss_curr_4G_size   <= resize((max_space_4095MB - unsigned(LFAAaddr4(31 downto 0))), 14);
+   end generate g_4095MB_condition;					      
 
-    g_4096MB_condition : if g_HBM_bank_size/="4095MB" generate
-      wr_bank1_boundary_corss                 <= '1' when LFAAaddr1_shadow(32)='1' else '0';
-      wr_bank2_boundary_corss                 <= '1' when LFAAaddr2_shadow(32)='1' else '0';
-      wr_bank3_boundary_corss                 <= '1' when LFAAaddr3_shadow(32)='1' else '0';
-      wr_bank4_boundary_corss                 <= '1' when LFAAaddr4_shadow(32)='1' else '0';
-      wr_bank1_boundary_corss_curr_4G_size    <= resize((max_space - unsigned(LFAAaddr1(31 downto 0))), 14);
-      wr_bank2_boundary_corss_curr_4G_size    <= resize((max_space - unsigned(LFAAaddr2(31 downto 0))), 14);
-      wr_bank3_boundary_corss_curr_4G_size    <= resize((max_space - unsigned(LFAAaddr3(31 downto 0))), 14);
-      wr_bank4_boundary_corss_curr_4G_size    <= resize((max_space - unsigned(LFAAaddr4(31 downto 0))), 14);
-    end generate g_4096MB_condition;
+   g_4096MB_condition : if g_HBM_bank_size/="4095MB" generate
+      wr_bank1_boundary_corss                <= '1' when LFAAaddr1_shadow(32)='1' else '0';
+      wr_bank2_boundary_corss                <= '1' when LFAAaddr2_shadow(32)='1' else '0';
+      wr_bank3_boundary_corss                <= '1' when LFAAaddr3_shadow(32)='1' else '0';
+      wr_bank4_boundary_corss                <= '1' when LFAAaddr4_shadow(32)='1' else '0';
+      wr_bank1_boundary_corss_curr_4G_size   <= resize((max_space - unsigned(LFAAaddr1(31 downto 0))), 14);
+      wr_bank2_boundary_corss_curr_4G_size   <= resize((max_space - unsigned(LFAAaddr2(31 downto 0))), 14);
+      wr_bank3_boundary_corss_curr_4G_size   <= resize((max_space - unsigned(LFAAaddr3(31 downto 0))), 14);
+      wr_bank4_boundary_corss_curr_4G_size   <= resize((max_space - unsigned(LFAAaddr4(31 downto 0))), 14);
+   end generate g_4096MB_condition;
 
-    process(i_shared_clk)
-    begin
-      if rising_edge(i_shared_clk) then
-         i_data_valid_del <= i_data_valid_from_cmac;
-      end if;
-    end process;      
+   process(i_shared_clk)
+   begin
+   if rising_edge(i_shared_clk) then
+      i_data_valid_del <= i_data_valid_from_cmac;
+   end if;
+   end process;      
 
-    i_valid_rising  <= i_data_valid_from_cmac and (not i_data_valid_del);
-    i_valid_falling <= (not i_data_valid_from_cmac) and i_data_valid_del;
+   i_valid_rising  <= i_data_valid_from_cmac and (not i_data_valid_del);
+   i_valid_falling <= (not i_data_valid_from_cmac) and i_data_valid_del;
 
-    process(i_shared_clk)
-    begin	    
-      if rising_edge(i_shared_clk) then
-         update_start_addr_del <= update_start_addr;
-	 update_readaddr_del  <= update_readaddr;
-      end if;
-    end process;      
+   process(i_shared_clk)
+   begin	    
+   if rising_edge(i_shared_clk) then
+      update_start_addr_del <= update_start_addr;
+      update_readaddr_del  <= update_readaddr;
+   end if;
+   end process;      
 
-    update_start_addr_p   <= update_start_addr and (not update_start_addr_del);
-    update_readaddr_p     <= update_readaddr and (not update_readaddr_del);
+   update_start_addr_p   <= update_start_addr and (not update_start_addr_del);
+   update_readaddr_p     <= update_readaddr and (not update_readaddr_del);
 
     --//AXI AW FSM for m01, m02, m03, m04
    process(i_shared_clk)
