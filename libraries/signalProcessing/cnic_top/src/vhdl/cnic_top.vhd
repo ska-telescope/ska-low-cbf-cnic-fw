@@ -289,9 +289,16 @@ ARCHITECTURE structure OF cnic_top IS
     signal packet_size_calc         : std_logic_vector(13 downto 0);
     signal packet_size_calc_b       : std_logic_vector(13 downto 0);
     signal packet_size_ceil         : std_logic_vector(5 downto 0) := "000000";
+
+    signal rx_complete_s_axi        : std_logic;
+    signal rx_complete_hbm          : std_logic;
     
 begin
-    
+-------------------------------------------------------------------------------------------------------------    
+
+config_ro.rx_complete   <= rx_complete_hbm OR rx_complete_s_axi;
+
+-------------------------------------------------------------------------------------------------------------        
     rx_s_axi : entity cmac_s_axi_lib.s_axi_packet_capture 
     Port map ( 
         --------------------------------------------------------
@@ -306,8 +313,12 @@ begin
         i_rx_packet_size        => config_rw.rx_packet_size(13 downto 0),
         i_rx_reset_capture      => config_rw.rx_reset_capture,
         i_reset_counter         => config_rw.rx_reset_counter,
-        o_target_count          => open,
-        o_nontarget_count       => open,
+        o_target_count          => config_ro.debug_capture_filter_target,
+        o_nontarget_count       => config_ro.debug_capture_filter_non_target,
+
+        o_rx_complete           => rx_complete_s_axi,
+
+        i_rx_packets_to_capture => config_rw.rx_packets_to_capture,
 
         -- 100G RX S_AXI interface ~322 MHz
         i_rx_axis_tdata         => i_rx_axis_tdata,
@@ -383,13 +394,14 @@ i_HBM_PktController : entity HBM_PktController_lib.HBM_PktController
         i_lfaa_bank3_addr                   => x"00000000",
         i_lfaa_bank4_addr                   => x"00000000",
         update_start_addr                   => '0',
+        i_rx_bank_enable                    => config_rw.rx_bank_enable(3 downto 0),
 
         o_1st_4GB_rx_addr                   => config_ro.rx_hbm_1_end_addr,
         o_2nd_4GB_rx_addr                   => config_ro.rx_hbm_2_end_addr,
         o_3rd_4GB_rx_addr                   => config_ro.rx_hbm_3_end_addr,
         o_4th_4GB_rx_addr                   => config_ro.rx_hbm_4_end_addr,
 
-        o_capture_done                      => config_ro.rx_complete,
+        o_capture_done                      => rx_complete_hbm,
         o_num_packets_received              => config_ro.rx_packet_count_lo,
 
         -- tx
@@ -412,19 +424,20 @@ i_HBM_PktController : entity HBM_PktController_lib.HBM_PktController
         i_readaddr                          => x"00000000", 
         update_readaddr                     => '0',
 
-        o_tx_addr                         => open,
-        o_tx_boundary_across_num          => open,
-	    o_axi_rvalid_but_fifo_full        => open,
-	    
-	    o_tx_complete                       => config_ro.tx_complete,
-	    o_tx_packets_to_mac(63 downto 32)   => config_ro.tx_packets_to_mac_hi,
-	    o_tx_packets_to_mac(31 downto 0)    => config_ro.tx_packets_to_mac_lo,
+        o_tx_addr                           => open,
+        o_tx_boundary_across_num            => open,
+        o_axi_rvalid_but_fifo_full          => open,
+
+        o_tx_complete                       => config_ro.tx_complete,
+        o_tx_packets_to_mac(63 downto 32)   => config_ro.tx_packets_to_mac_hi,
+        o_tx_packets_to_mac(31 downto 0)    => config_ro.tx_packets_to_mac_lo,
         o_tx_packet_count(63 downto 32)     => config_ro.tx_packet_count_hi,
         o_tx_packet_count(31 downto 0)      => config_ro.tx_packet_count_lo,
-	------------------------------------------------------------------------------------
-	
+        ------------------------------------------------------------------------------------
+
         o_rd_fsm_debug                      => config_ro.debug_rd_fsm_debug(3 downto 0),
         o_output_fsm_debug                  => config_ro.debug_output_fsm_debug(3 downto 0),
+        o_input_fsm_debug                   => config_ro.debug_input_fsm_debug(3 downto 0),
         
     ------------------------------------------------------------------------------------
         -- Data output, to the packetizer
