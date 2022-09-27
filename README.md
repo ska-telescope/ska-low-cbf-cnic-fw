@@ -59,6 +59,7 @@ https://developer.skao.int/en/latest/tools/software-package-release-procedure.ht
     * CNIC TX will now pre-fill the TX FIFO after reset has been released and be ready within 1us for transmit.
     * CNIC TX timer has been updated to remove burst behaviour during initial packet play out.
     * Personality register configured to ASCII value of CNIC.
+    * Common VHDL source files moved to common repo.
     * U55C 
         * Second 100GbE port enabled with timeslave to allow timing of packets through network switches.
         * PTP for time stamping or scheduling can be sourced from either 100GbE port.
