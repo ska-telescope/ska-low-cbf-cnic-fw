@@ -20,7 +20,7 @@ set proj_dir "$env(RADIOHDL)/build/$env(PERSONALITY)/$env(PERSONALITY)_${CNIC_TA
 set ARGS_PATH "$env(RADIOHDL)/build/ARGS/$env(PERSONALITY)"
 set DESIGN_PATH "$env(RADIOHDL)/designs/$env(PERSONALITY)"
 set RLIBRARIES_PATH "$env(RADIOHDL)/libraries"
-
+set COMMON_PATH "$env(RADIOHDL)/common/libraries"
 
 
 puts "RADIOHDL directory:"
@@ -154,7 +154,7 @@ update_ip_catalog
 # only generate this if u55.
 if { ${VITIS_TARGET} == "u55" } {
   # generate_ref design - Instance 1 - U55C TOP PORT.
-  source $RLIBRARIES_PATH/ptp/src/genBD_timeslave.tcl
+  source $COMMON_PATH/ptp/src/genBD_timeslave.tcl
 
   make_wrapper -files [get_files $workingDir/$env(PERSONALITY).srcs/sources_1/bd/ts/ts.bd] -top
   add_files -norecurse $workingDir/$env(PERSONALITY).gen/sources_1/bd/ts/hdl/ts_wrapper.vhd
@@ -162,16 +162,16 @@ if { ${VITIS_TARGET} == "u55" } {
 
 if { ${VITIS_TARGET} == "u50" || ${VITIS_TARGET} == "u55"} {
     # generate_ref design - Instance 2, timeslave_b has equivalent CMAC GTs for U50 and U55C BOTTOM PORT.
-    source $RLIBRARIES_PATH/ptp/src/genBD_timeslave_b.tcl
+    source $COMMON_PATH/ptp/src/genBD_timeslave_b.tcl
 
     make_wrapper -files [get_files $workingDir/$env(PERSONALITY).srcs/sources_1/bd/ts_b/ts_b.bd] -top
     add_files -norecurse $workingDir/$env(PERSONALITY).gen/sources_1/bd/ts_b/hdl/ts_b_wrapper.vhd
 }
 
 add_files -fileset sources_1 [glob \
- $RLIBRARIES_PATH/ptp/src/CMAC_100G_wrap_w_timeslave.vhd \
- $RLIBRARIES_PATH/ptp/src/timeslave_stats.vhd \
- $RLIBRARIES_PATH/ptp/src/timeslave_scheduler.vhd \
+ $COMMON_PATH/ptp/src/CMAC_100G_wrap_w_timeslave.vhd \
+ $COMMON_PATH/ptp/src/timeslave_stats.vhd \
+ $COMMON_PATH/ptp/src/timeslave_scheduler.vhd \
 ]
 set_property library Timeslave_CMAC_lib [get_files {\
  */src/CMAC_100G_wrap_w_timeslave.vhd \
@@ -197,10 +197,10 @@ set_property library Timeslave_CMAC_lib [get_files {\
 ############################################################
 # AXI4
 add_files -fileset sources_1 [glob \
-$RLIBRARIES_PATH/base/axi4/src/vhdl/axi4_lite_pkg.vhd \
-$RLIBRARIES_PATH/base/axi4/src/vhdl/axi4_full_pkg.vhd \
-$RLIBRARIES_PATH/base/axi4/src/vhdl/axi4_stream_pkg.vhd \
-$RLIBRARIES_PATH/base/axi4/src/vhdl/mem_to_axi4_lite.vhd \
+$COMMON_PATH/base/axi4/src/vhdl/axi4_lite_pkg.vhd \
+$COMMON_PATH/base/axi4/src/vhdl/axi4_full_pkg.vhd \
+$COMMON_PATH/base/axi4/src/vhdl/axi4_stream_pkg.vhd \
+$COMMON_PATH/base/axi4/src/vhdl/mem_to_axi4_lite.vhd \
 ]
 set_property library axi4_lib [get_files {\
 *libraries/base/axi4/src/vhdl/axi4_lite_pkg.vhd \
@@ -223,13 +223,13 @@ set_property library technology_lib [get_files {\
 # #############################################################
 # # Common
  add_files -fileset sources_1 [glob \
-  $RLIBRARIES_PATH/base/common/src/vhdl/common_reg_r_w.vhd \
-  $RLIBRARIES_PATH/base/common/src/vhdl/common_pkg.vhd \
-  $RLIBRARIES_PATH/base/common/src/vhdl/common_str_pkg.vhd \
-  $RLIBRARIES_PATH/base/common/src/vhdl/common_mem_pkg.vhd \
-  $RLIBRARIES_PATH/base/common/src/vhdl/common_field_pkg.vhd \
-  $RLIBRARIES_PATH/base/common/src/vhdl/common_accumulate.vhd\
-  $RLIBRARIES_PATH/base/common/src/vhdl/common_pipeline.vhd \
+  $COMMON_PATH/base/common/src/vhdl/common_reg_r_w.vhd \
+  $COMMON_PATH/base/common/src/vhdl/common_pkg.vhd \
+  $COMMON_PATH/base/common/src/vhdl/common_str_pkg.vhd \
+  $COMMON_PATH/base/common/src/vhdl/common_mem_pkg.vhd \
+  $COMMON_PATH/base/common/src/vhdl/common_field_pkg.vhd \
+  $COMMON_PATH/base/common/src/vhdl/common_accumulate.vhd\
+  $COMMON_PATH/base/common/src/vhdl/common_pipeline.vhd \
 
  ]
 
@@ -247,12 +247,10 @@ set_property library common_lib [get_files {\
 # DRP
 
 add_files -fileset sources_1 [glob \
- $ARGS_PATH/DRP/drp/DRP_drp_cmac_data_ram.vhd \
  $ARGS_PATH/DRP/drp/DRP_drp_reg_pkg.vhd \
  $ARGS_PATH/DRP/drp/DRP_drp_reg.vhd \
 ]
 set_property library DRP_lib [get_files {\
- *DRP/drp/DRP_drp_cmac_data_ram.vhd \
  *DRP/drp/DRP_drp_reg_pkg.vhd \
  *DRP/drp/DRP_drp_reg.vhd \
 }]
@@ -273,14 +271,12 @@ add_files -fileset sources_1 [glob \
   $ARGS_PATH/ct_atomic_pst_in/ct_atomic_pst_in/ct_atomic_pst_in_reg_pkg.vhd \
   $ARGS_PATH/HBM_PktController/hbm_pktcontroller/HBM_PktController_hbm_pktcontroller_reg_pkg.vhd \
   $ARGS_PATH/HBM_PktController/hbm_pktcontroller/HBM_PktController_hbm_pktcontroller_reg.vhd \
-  $RLIBRARIES_PATH/signalProcessing/HBM_PktController/ct_atomic_pst_readout.vhd \
   $RLIBRARIES_PATH/signalProcessing/HBM_PktController/HBM_PktController.vhd \
 ]
 
 set_property library HBM_PktController_lib [get_files {\
  *hbm_pktcontroller/HBM_PktController_hbm_pktcontroller_reg_pkg.vhd \
  *hbm_pktcontroller/HBM_PktController_hbm_pktcontroller_reg.vhd \
- *libraries/signalProcessing/HBM_PktController/ct_atomic_pst_readout.vhd \
  *libraries/signalProcessing/HBM_PktController/HBM_PktController.vhd \
  }]
 source $RLIBRARIES_PATH/signalProcessing/HBM_PktController/HBM_PktController.tcl
@@ -290,18 +286,18 @@ set_property file_type {VHDL 2008} [get_files  $RLIBRARIES_PATH/signalProcessing
 #############################################################
 # PSR Packetiser
 add_files -fileset sources_1 [glob \
- $RLIBRARIES_PATH/signalProcessing/Packetiser100G/src/vhdl/ethernet_pkg.vhd \
- $RLIBRARIES_PATH/signalProcessing/Packetiser100G/src/vhdl/cbfpsrheader_pkg.vhd \
- $RLIBRARIES_PATH/signalProcessing/Packetiser100G/src/vhdl/packet_player.vhd \
- $RLIBRARIES_PATH/signalProcessing/Packetiser100G/src/vhdl/xpm_fifo_wrapper.vhd \
- $RLIBRARIES_PATH/signalProcessing/Packetiser100G/src/vhdl/CODIF_header_modifier.vhd \
+ $COMMON_PATH/Packetiser100G/src/vhdl/ethernet_pkg.vhd \
+ $COMMON_PATH/Packetiser100G/src/vhdl/cbfpsrheader_pkg.vhd \
+ $COMMON_PATH/Packetiser100G/src/vhdl/packet_player.vhd \
+ $COMMON_PATH/Packetiser100G/src/vhdl/xpm_fifo_wrapper.vhd \
+ $COMMON_PATH/Packetiser100G/src/vhdl/CODIF_header_modifier.vhd \
 ]
 set_property library PSR_Packetiser_lib [get_files {\
- *libraries/signalProcessing/Packetiser100G/src/vhdl/ethernet_pkg.vhd \
- *libraries/signalProcessing/Packetiser100G/src/vhdl/cbfpsrheader_pkg.vhd \
- *libraries/signalProcessing/Packetiser100G/src/vhdl/packet_player.vhd \
- *libraries/signalProcessing/Packetiser100G/src/vhdl/xpm_fifo_wrapper.vhd \
- *libraries/signalProcessing/Packetiser100G/src/vhdl/CODIF_header_modifier.vhd \
+ */Packetiser100G/src/vhdl/ethernet_pkg.vhd \
+ */Packetiser100G/src/vhdl/cbfpsrheader_pkg.vhd \
+ */Packetiser100G/src/vhdl/packet_player.vhd \
+ */Packetiser100G/src/vhdl/xpm_fifo_wrapper.vhd \
+ */Packetiser100G/src/vhdl/CODIF_header_modifier.vhd \
 }]
 
 #############################################################
@@ -318,16 +314,16 @@ set_property file_type {VHDL 2008} [get_files  $RLIBRARIES_PATH/signalProcessing
 # Signal_processing_common
 
 add_files -fileset sources_1 [glob \
- $RLIBRARIES_PATH/signalProcessing/common/src/vhdl/sync.vhd \
- $RLIBRARIES_PATH/signalProcessing/common/src/vhdl/sync_vector.vhd \
- $RLIBRARIES_PATH/signalProcessing/common/src/vhdl/memory_dp_wrapper.vhd \
- $RLIBRARIES_PATH/signalProcessing/common/src/vhdl/args_axi_terminus.vhd \
+ $COMMON_PATH/common/src/vhdl/sync.vhd \
+ $COMMON_PATH/common/src/vhdl/sync_vector.vhd \
+ $COMMON_PATH/common/src/vhdl/memory_dp_wrapper.vhd \
+ $COMMON_PATH/common/src/vhdl/args_axi_terminus.vhd \
 ]
 set_property library signal_processing_common [get_files {\
- *libraries/signalProcessing/common/src/vhdl/sync.vhd \
- *libraries/signalProcessing/common/src/vhdl/sync_vector.vhd \
- *libraries/signalProcessing/common/src/vhdl/memory_dp_wrapper.vhd \
- *libraries/signalProcessing/common/src/vhdl/args_axi_terminus.vhd \
+ */common/src/vhdl/sync.vhd \
+ */common/src/vhdl/sync_vector.vhd \
+ */common/src/vhdl/memory_dp_wrapper.vhd \
+ */common/src/vhdl/args_axi_terminus.vhd \
 }]
 
 ## tcl scripts for ip generation
